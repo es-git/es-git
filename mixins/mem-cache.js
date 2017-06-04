@@ -1,14 +1,15 @@
 "use strict";
 
-var encoders = require('../lib/object-codec').encoders;
-var decoders = require('../lib/object-codec').decoders;
-var Binary = require('bodec').Binary;
+import {encoders} from '../lib/object-codec';
+import {decoders} from '../lib/object-codec';
+import {Binary} from 'bodec';
 
-var cache = memCache.cache = {};
-module.exports = memCache;
+const cache = {};
 
-function memCache(repo) {
-  var loadAs = repo.loadAs;
+export {cache};
+
+export default function memCache(repo) {
+  const loadAs = repo.loadAs;
   repo.loadAs = loadAsCached;
   function loadAsCached(type, hash, callback) {
     if (!callback) return loadAsCached.bind(this, type, hash);
@@ -22,12 +23,12 @@ function memCache(repo) {
     });
   }
 
-  var saveAs = repo.saveAs;
+  const saveAs = repo.saveAs;
   repo.saveAs = saveAsCached;
   function saveAsCached(type, value, callback) {
     if (!callback) return saveAsCached.bind(this, type, value);
     value = dupe(type, value);
-    saveAs.call(repo, type, value, function (err, hash) {
+    saveAs.call(repo, type, value, (err, hash) => {
       if (err) return callback(err);
       if (type !== "blob" || value.length < 100) {
         cache[hash] = value;
@@ -46,8 +47,8 @@ function dupe(type, value) {
 
 function deepFreeze(obj) {
   Object.freeze(obj);
-  Object.keys(obj).forEach(function (key) {
-    var value = obj[key];
+  Object.keys(obj).forEach(key => {
+    const value = obj[key];
     if (typeof value === "object") deepFreeze(value);
   });
 }

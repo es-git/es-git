@@ -2,15 +2,15 @@
 
 // This replaces loadAs with a version that batches concurrent requests for
 // the same hash.
-module.exports = function (repo) {
-  var pendingReqs = {};
+export default function (repo) {
+  const pendingReqs = {};
 
-  var loadAs = repo.loadAs;
+  const loadAs = repo.loadAs;
   repo.loadAs = newLoadAs;
 
   function newLoadAs(type, hash, callback) {
     if (!callback) return newLoadAs.bind(null, type, hash);
-    var list = pendingReqs[hash];
+    let list = pendingReqs[hash];
     if (list) {
       if (list.type !== type) callback(new Error("Type mismatch"));
       else list.push(callback);
@@ -20,7 +20,7 @@ module.exports = function (repo) {
     list.type = type;
     loadAs.call(repo, type, hash, function () {
       delete pendingReqs[hash];
-      for (var i = 0, l = list.length; i < l; i++) {
+      for (let i = 0, l = list.length; i < l; i++) {
         list[i].apply(this, arguments);
       }
     });

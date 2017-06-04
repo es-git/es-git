@@ -1,8 +1,8 @@
 "use strict";
 
-var modes = require('../lib/modes');
+import modes from '../lib/modes';
 
-module.exports = function (local, remote) {
+export default function (local, remote) {
   local.fetch = fetch;
   local.send = send;
   local.readRemoteRef = remote.readRef.bind(remote);
@@ -26,11 +26,11 @@ function sync(local, remote, ref, depth, callback) {
   if (typeof ref !== "string") throw new TypeError("ref must be string");
   if (typeof depth !== "number") throw new TypeError("depth must be number");
 
-  var hasCache = {};
+  const hasCache = {};
 
-  remote.readRef(ref, function (err, hash) {
+  remote.readRef(ref, (err, hash) => {
     if (!hash) return callback(err);
-    importCommit(hash, depth, function (err) {
+    importCommit(hash, depth, err => {
       if (err) return callback(err);
       callback(null, hash);
     });
@@ -41,7 +41,7 @@ function sync(local, remote, ref, depth, callback) {
     if (typeof type !== "string") throw new TypeError("type must be string");
     if (typeof hash !== "string") throw new TypeError("hash must be string");
     if (hasCache[hash]) return callback(null, true);
-    local.hasHash(hash, function (err, has) {
+    local.hasHash(hash, (err, has) => {
       if (err) return callback(err);
       hasCache[hash] = has;
       callback(null, has);
@@ -58,7 +58,7 @@ function sync(local, remote, ref, depth, callback) {
 
     function onLoad(err, commit) {
       if (!commit) return callback(err || new Error("Missing commit " + hash));
-      var i = 0;
+      let i = 0;
       importTree(commit.tree, onImport);
 
       function onImport(err) {
@@ -90,8 +90,8 @@ function sync(local, remote, ref, depth, callback) {
 
     function onLoad(err, tree) {
       if (!tree) return callback(err || new Error("Missing tree " + hash));
-      var i = 0;
-      var names = Object.keys(tree);
+      let i = 0;
+      const names = Object.keys(tree);
       onImport();
 
       function onImport(err) {
@@ -99,8 +99,8 @@ function sync(local, remote, ref, depth, callback) {
         if (i >= names.length) {
           return local.saveAs("tree", tree, onSave);
         }
-        var name = names[i++];
-        var entry = tree[name];
+        const name = names[i++];
+        const entry = tree[name];
         if (modes.isBlob(entry.mode)) {
           return importBlob(entry.hash, onImport);
         }

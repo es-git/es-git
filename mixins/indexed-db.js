@@ -1,25 +1,21 @@
 "use strict";
+
 /*global indexedDB*/
 
-var codec = require('../lib/object-codec.js');
-var sha1 = require('git-sha1');
-var modes = require('../lib/modes.js');
-var db;
+import * as codec from '../lib/object-codec.js';
 
-mixin.init = init;
+import sha1 from 'git-sha1';
+import modes from '../lib/modes.js';
+let db;
 
-mixin.loadAs = loadAs;
-mixin.saveAs = saveAs;
-module.exports = mixin;
-
-function init(callback) {
+export function init(callback) {
 
   db = null;
-  var request = indexedDB.open("tedit", 1);
+  const request = indexedDB.open("tedit", 1);
 
   // We can only create Object stores in a versionchange transaction.
-  request.onupgradeneeded = function(evt) {
-    var db = evt.target.result;
+  request.onupgradeneeded = evt => {
+    const db = evt.target.result;
 
     if (evt.dataLoss && evt.dataLoss !== "none") {
       return callback(new Error(evt.dataLoss + ": " + evt.dataLossMessage));
@@ -39,7 +35,7 @@ function init(callback) {
     db.createObjectStore("refs", {keyPath: "path"});
   };
 
-  request.onsuccess = function (evt) {
+  request.onsuccess = evt => {
     db = evt.target.result;
     callback();
   };
@@ -47,7 +43,7 @@ function init(callback) {
 }
 
 
-function mixin(repo, prefix) {
+export default function mixin(repo, prefix) {
   if (!prefix) throw new Error("Prefix required");
   repo.refPrefix = prefix;
   repo.saveAs = saveAs;
@@ -61,30 +57,30 @@ function onError(evt) {
   console.error("error", evt.target.error);
 }
 
-function saveAs(type, body, callback, forcedHash) {
+export function saveAs(type, body, callback, forcedHash) {
   if (!callback) return saveAs.bind(this, type, body);
-  var hash;
+  let hash;
   try {
-    var buffer = codec.frame({type:type,body:body});
+    const buffer = codec.frame({type:type,body:body});
     hash = forcedHash || sha1(buffer);
   }
   catch (err) { return callback(err); }
-  var trans = db.transaction(["objects"], "readwrite");
-  var store = trans.objectStore("objects");
-  var entry = { hash: hash, type: type, body: body };
-  var request = store.put(entry);
-  request.onsuccess = function() {
+  const trans = db.transaction(["objects"], "readwrite");
+  const store = trans.objectStore("objects");
+  const entry = { hash: hash, type: type, body: body };
+  const request = store.put(entry);
+  request.onsuccess = () => {
     // console.warn("SAVE", type, hash);
     callback(null, hash, body);
   };
-  request.onerror = function(evt) {
+  request.onerror = evt => {
     callback(new Error(evt.value));
   };
 }
 
-function loadAs(type, hash, callback) {
+export function loadAs(type, hash, callback) {
   if (!callback) return loadAs.bind(this, type, hash);
-  loadRaw(hash, function (err, entry) {
+  loadRaw(hash, (err, entry) => {
     if (!entry) return callback(err);
     if (type !== entry.type) {
       return callback(new TypeError("Type mismatch"));
@@ -94,22 +90,22 @@ function loadAs(type, hash, callback) {
 }
 
 function loadRaw(hash, callback) {
-  var trans = db.transaction(["objects"], "readwrite");
-  var store = trans.objectStore("objects");
-  var request = store.get(hash);
-  request.onsuccess = function(evt) {
-    var entry = evt.target.result;
+  const trans = db.transaction(["objects"], "readwrite");
+  const store = trans.objectStore("objects");
+  const request = store.get(hash);
+  request.onsuccess = evt => {
+    const entry = evt.target.result;
     if (!entry) return callback();
     return callback(null, entry);
   };
-  request.onerror = function(evt) {
+  request.onerror = evt => {
     callback(new Error(evt.value));
   };
 }
 
 function hasHash(hash, callback) {
   if (!callback) return hasHash.bind(this, hash);
-  loadRaw(hash, function (err, body) {
+  loadRaw(hash, (err, body) => {
     if (err) return callback(err);
     return callback(null, !!body);
   });
@@ -117,31 +113,31 @@ function hasHash(hash, callback) {
 
 function readRef(ref, callback) {
   if (!callback) return readRef.bind(this, ref);
-  var key = this.refPrefix + "/" + ref;
-  var trans = db.transaction(["refs"], "readwrite");
-  var store = trans.objectStore("refs");
-  var request = store.get(key);
-  request.onsuccess = function(evt) {
-    var entry = evt.target.result;
+  const key = this.refPrefix + "/" + ref;
+  const trans = db.transaction(["refs"], "readwrite");
+  const store = trans.objectStore("refs");
+  const request = store.get(key);
+  request.onsuccess = evt => {
+    const entry = evt.target.result;
     if (!entry) return callback();
     callback(null, entry.hash);
   };
-  request.onerror = function(evt) {
+  request.onerror = evt => {
     callback(new Error(evt.value));
   };
 }
 
 function updateRef(ref, hash, callback) {
   if (!callback) return updateRef.bind(this, ref, hash);
-  var key = this.refPrefix + "/" + ref;
-  var trans = db.transaction(["refs"], "readwrite");
-  var store = trans.objectStore("refs");
-  var entry = { path: key, hash: hash };
-  var request = store.put(entry);
-  request.onsuccess = function() {
+  const key = this.refPrefix + "/" + ref;
+  const trans = db.transaction(["refs"], "readwrite");
+  const store = trans.objectStore("refs");
+  const entry = { path: key, hash: hash };
+  const request = store.put(entry);
+  request.onsuccess = () => {
     callback();
   };
-  request.onerror = function(evt) {
+  request.onerror = evt => {
     callback(new Error(evt.value));
   };
 }

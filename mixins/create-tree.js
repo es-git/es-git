@@ -1,23 +1,23 @@
 "use strict";
 
-var modes = require('../lib/modes.js');
+import modes from '../lib/modes.js';
 
-module.exports = function (repo) {
+export default function (repo) {
   repo.createTree = createTree;
 
   function createTree(entries, callback) {
     if (!callback) return createTree.bind(null, entries);
     callback = singleCall(callback);
     if (!Array.isArray(entries)) {
-      entries = Object.keys(entries).map(function (path) {
-        var entry = entries[path];
+      entries = Object.keys(entries).map(path => {
+        const entry = entries[path];
         entry.path = path;
         return entry;
       });
     }
 
     // Tree paths that we need loaded
-    var toLoad = {};
+    const toLoad = {};
     function markTree(path) {
       while(true) {
         if (toLoad[path]) return;
@@ -33,27 +33,27 @@ module.exports = function (repo) {
     }
 
     // Commands to run organized by tree path
-    var trees = {};
+    const trees = {};
 
     // Counter for parallel I/O operations
-    var left = 1; // One extra counter to protect again zalgo cache callbacks.
+    let left = 1; // One extra counter to protect again zalgo cache callbacks.
 
     // First pass, stubs out the trees structure, sorts adds from deletes,
     // and saves any inline content blobs.
-    entries.forEach(function (entry) {
-      var index = entry.path.lastIndexOf("/");
-      var parentPath = entry.path.substr(0, index);
-      var name = entry.path.substr(index + 1);
+    entries.forEach(entry => {
+      const index = entry.path.lastIndexOf("/");
+      const parentPath = entry.path.substr(0, index);
+      const name = entry.path.substr(index + 1);
       markTree(parentPath);
-      var tree = trees[parentPath];
-      var adds = tree.add;
-      var dels = tree.del;
+      const tree = trees[parentPath];
+      const adds = tree.add;
+      const dels = tree.del;
 
       if (!entry.mode) {
         dels.push(name);
         return;
       }
-      var add = {
+      const add = {
         name: name,
         mode: entry.mode,
         hash: entry.hash
@@ -61,7 +61,7 @@ module.exports = function (repo) {
       adds.push(add);
       if (entry.hash) return;
       left++;
-      repo.saveAs("blob", entry.content, function (err, hash) {
+      repo.saveAs("blob", entry.content, (err, hash) => {
         if (err) return callback(err);
         add.hash = hash;
         check();
@@ -77,11 +77,11 @@ module.exports = function (repo) {
     function loadTree(path, hash) {
       left++;
       delete toLoad[path];
-      repo.loadAs("tree", hash, function (err, tree) {
+      repo.loadAs("tree", hash, (err, tree) => {
         if (err) return callback(err);
         trees[path].tree = tree;
-        Object.keys(tree).forEach(function (name) {
-          var childPath = path ? path + "/" + name : name;
+        Object.keys(tree).forEach(name => {
+          const childPath = path ? path + "/" + name : name;
           if (toLoad[childPath]) loadTree(childPath, tree[name].hash);
         });
         check();
@@ -94,25 +94,25 @@ module.exports = function (repo) {
     }
 
     function processLeaf(path) {
-      var entry = trees[path];
+      const entry = trees[path];
       delete trees[path];
-      var tree = entry.tree;
-      entry.del.forEach(function (name) {
+      const tree = entry.tree;
+      entry.del.forEach(name => {
         delete tree[name];
       });
-      entry.add.forEach(function (item) {
+      entry.add.forEach(item => {
         tree[item.name] = {
           mode: item.mode,
           hash: item.hash
         };
       });
       left++;
-      repo.saveAs("tree", tree, function (err, hash, tree) {
+      repo.saveAs("tree", tree, (err, hash, tree) => {
         if (err) return callback(err);
         if (!path) return callback(null, hash, tree);
-        var index = path.lastIndexOf("/");
-        var parentPath = path.substring(0, index);
-        var name = path.substring(index + 1);
+        const index = path.lastIndexOf("/");
+        const parentPath = path.substring(0, index);
+        const name = path.substring(index + 1);
         trees[parentPath].add.push({
           name: name,
           mode: modes.tree,
@@ -124,22 +124,20 @@ module.exports = function (repo) {
     }
 
     function findLeaves() {
-      var paths = Object.keys(trees);
-      var parents = {};
-      paths.forEach(function (path) {
+      const paths = Object.keys(trees);
+      const parents = {};
+      paths.forEach(path => {
         if (!path) return;
-        var parent = path.substring(0, path.lastIndexOf("/"));
+        const parent = path.substring(0, path.lastIndexOf("/"));
         parents[parent] = true;
       });
-      return paths.filter(function (path) {
-        return !parents[path];
-      });
+      return paths.filter(path => !parents[path]);
     }
   }
 };
 
 function singleCall(callback) {
-  var done = false;
+  let done = false;
   return function () {
     if (done) return console.warn("Discarding extra callback");
     done = true;

@@ -1,15 +1,14 @@
 "use strict";
 
-var defer = require('../lib/defer.js');
-var codec = require('../lib/object-codec.js');
-var sha1 = require('git-sha1');
-
-module.exports = mixin;
-var isHash = /^[0-9a-f]{40}$/;
+import defer from '../lib/defer.js';
+import * as codec from '../lib/object-codec.js';
+import sha1 from 'git-sha1';
+export default mixin;
+const isHash = /^[0-9a-f]{40}$/;
 
 function mixin(repo) {
-  var objects = {};
-  var refs = {};
+  const objects = {};
+  const refs = {};
 
   repo.saveAs = saveAs;
   repo.loadAs = loadAs;
@@ -21,16 +20,14 @@ function mixin(repo) {
   repo.listRefs = listRefs;
 
   function readRef(ref, callback) {
-    return makeAsync(function () {
-      return refs[ref];
-    }, callback);
+    return makeAsync(() => refs[ref], callback);
   }
 
   function listRefs(prefix, callback) {
-    return makeAsync(function () {
-      var regex = prefix && new RegExp("^" + prefix + "[/$]");
-      var out = {};
-      Object.keys(refs).forEach(function (name) {
+    return makeAsync(() => {
+      const regex = prefix && new RegExp("^" + prefix + "[/$]");
+      const out = {};
+      Object.keys(refs).forEach(name => {
         if (regex && !regex.test(name)) return;
         out[name] = refs[name];
       });
@@ -39,55 +36,51 @@ function mixin(repo) {
   }
 
   function updateRef(ref, hash, callback) {
-    return makeAsync(function () {
-      return (refs[ref] = hash);
-    }, callback);
+    return makeAsync(() => refs[ref] = hash, callback);
   }
 
   function hasHash(hash, callback) {
-    return makeAsync(function () {
+    return makeAsync(() => {
       if (!isHash.test(hash)) hash = refs[hash];
       return hash in objects;
     }, callback);
   }
 
   function saveAs(type, body, callback) {
-    return makeAsync(function () {
-      var buffer = codec.frame({type:type,body:body});
-      var hash = sha1(buffer);
+    return makeAsync(() => {
+      const buffer = codec.frame({type:type,body:body});
+      const hash = sha1(buffer);
       objects[hash] = buffer;
       return hash;
     }, callback);
   }
 
   function saveRaw(hash, buffer, callback) {
-    return makeAsync(function () {
+    return makeAsync(() => {
       objects[hash] = buffer;
     }, callback);
   }
 
   function loadAs(type, hash, callback) {
-    return makeAsync(function () {
+    return makeAsync(() => {
       if (!isHash.test(hash)) hash = refs[hash];
-      var buffer = objects[hash];
+      const buffer = objects[hash];
       if (!buffer) return [];
-      var obj = codec.deframe(buffer, true);
+      const obj = codec.deframe(buffer, true);
       if (obj.type !== type) throw new TypeError("Type mismatch");
       return obj.body;
     }, callback);
   }
 
   function loadRaw(hash, callback) {
-    return makeAsync(function () {
-      return objects[hash];
-    }, callback);
+    return makeAsync(() => objects[hash], callback);
   }
 }
 
 function makeAsync(fn, callback) {
   if (!callback) return makeAsync.bind(null, fn);
-  defer(function () {
-    var out;
+  defer(() => {
+    let out;
     try { out = fn(); }
     catch (err) { return callback(err); }
     callback(null, out);

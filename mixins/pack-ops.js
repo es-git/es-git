@@ -1,13 +1,13 @@
 "use strict";
 
-var sha1 = require('git-sha1');
-var applyDelta = require('../lib/apply-delta.js');
-var codec = require('../lib/object-codec.js');
-var decodePack = require('../lib/pack-codec.js').decodePack;
-var encodePack = require('../lib/pack-codec.js').encodePack;
-var makeChannel = require('culvert');
+import sha1 from 'git-sha1';
+import applyDelta from '../lib/apply-delta.js';
+import * as codec from '../lib/object-codec.js';
+import {decodePack} from '../lib/pack-codec.js';
+import {encodePack} from '../lib/pack-codec.js';
+import makeChannel from 'culvert';
 
-module.exports = function (repo) {
+export default function (repo) {
   // packChannel is a writable culvert channel {put,drain} containing raw packfile binary data
   // opts can contain "onProgress" or "onError" hook functions.
   // callback will be called with a list of all unpacked hashes on success.
@@ -24,17 +24,17 @@ function unpack(packChannel, opts, callback) {
 
   packChannel = applyParser(packChannel, decodePack, callback);
 
-  var repo = this;
+  const repo = this;
 
-  var version, num, numDeltas = 0, count = 0, countDeltas = 0;
-  var done, startDeltaProgress = false;
+  let version, num, numDeltas = 0, count = 0, countDeltas = 0;
+  let done, startDeltaProgress = false;
 
   // hashes keyed by offset for ofs-delta resolving
-  var hashes = {};
+  const hashes = {};
   // key is hash, boolean is cached "has" value of true or false
-  var has = {};
+  const has = {};
   // key is hash we're waiting for, value is array of items that are waiting.
-  var pending = {};
+  const pending = {};
 
   return packChannel.take(onStats);
 
@@ -54,13 +54,13 @@ function unpack(packChannel, opts, callback) {
 
   function objectProgress(more) {
     if (!more) startDeltaProgress = true;
-    var percent = Math.round(count / num * 100);
+    const percent = Math.round(count / num * 100);
     return opts.onProgress("Receiving objects: " + percent + "% (" + (count++) + "/" + num + ")   " + (more ? "\r" : "\n"));
   }
 
   function deltaProgress(more) {
     if (!startDeltaProgress) return;
-    var percent = Math.round(countDeltas / numDeltas * 100);
+    const percent = Math.round(countDeltas / numDeltas * 100);
     return opts.onProgress("Applying deltas: " + percent + "% (" + (countDeltas++) + "/" + numDeltas + ")   " + (more ? "\r" : "\n"));
   }
 
@@ -85,10 +85,10 @@ function unpack(packChannel, opts, callback) {
 
   function resolveDelta(item) {
     if (opts.onProgress) deltaProgress();
-    return repo.loadRaw(item.ref, function (err, buffer) {
+    return repo.loadRaw(item.ref, (err, buffer) => {
       if (err) return onDone(err);
       if (!buffer) return onDone(new Error("Missing base image at " + item.ref));
-      var target = codec.deframe(buffer);
+      const target = codec.deframe(buffer);
       item.type = target.type;
       item.body = applyDelta(item.body, target.body);
       return saveValue(item);
@@ -96,10 +96,10 @@ function unpack(packChannel, opts, callback) {
   }
 
   function checkDelta(item) {
-    var hasTarget = has[item.ref];
+    const hasTarget = has[item.ref];
     if (hasTarget === true) return resolveDelta(item);
     if (hasTarget === false) return enqueueDelta(item);
-    return repo.hasHash(item.ref, function (err, value) {
+    return repo.hasHash(item.ref, (err, value) => {
       if (err) return onDone(err);
       has[item.ref] = value;
       if (value) return resolveDelta(item);
@@ -108,8 +108,8 @@ function unpack(packChannel, opts, callback) {
   }
 
   function saveValue(item) {
-    var buffer = codec.frame(item);
-    var hash = sha1(buffer);
+    const buffer = codec.frame(item);
+    const hash = sha1(buffer);
     hashes[item.offset] = hash;
     has[hash] = true;
     if (hash in pending) {
@@ -130,7 +130,7 @@ function unpack(packChannel, opts, callback) {
   }
 
   function enqueueDelta(item) {
-    var list = pending[item.ref];
+    const list = pending[item.ref];
     if (!list) pending[item.ref] = [item];
     else list.push(item);
     packChannel.take(onRead);
@@ -142,18 +142,20 @@ function unpack(packChannel, opts, callback) {
 function pack(hashes, opts, callback) {
   /*jshint validthis:true*/
   if (!callback) return pack.bind(this, hashes, opts);
-  var repo = this;
-  var i = 0, first = true, done = false;
+  const repo = this;
+  let i = 0;
+  let first = true;
+  const done = false;
   return callback(null, applyParser({ take: take }, encodePack));
 
   function take(callback) {
     if (done) return callback();
     if (first) return readFirst(callback);
-    var hash = hashes[i++];
+    const hash = hashes[i++];
     if (hash === undefined) {
       return callback();
     }
-    repo.loadRaw(hash, function (err, buffer) {
+    repo.loadRaw(hash, (err, buffer) => {
       if (err) return callback(err);
       if (!buffer) return callback(new Error("Missing hash: " + hash));
       // Reframe with pack format header
@@ -168,10 +170,10 @@ function pack(hashes, opts, callback) {
 }
 
 function values(object) {
-  var keys = Object.keys(object);
-  var length = keys.length;
-  var out = new Array(length);
-  for (var i = 0; i < length; i++) {
+  const keys = Object.keys(object);
+  const length = keys.length;
+  const out = new Array(length);
+  for (let i = 0; i < length; i++) {
     out[i] = object[keys[i]];
   }
   return out;
@@ -179,13 +181,13 @@ function values(object) {
 
 
 function applyParser(stream, parser, onError) {
-  var extra = makeChannel();
+  const extra = makeChannel();
   extra.put = parser(extra.put);
   stream.take(onData);
 
   function onData(err, item) {
     if (err) return onError(err);
-    var more;
+    let more;
     try { more = extra.put(item); }
     catch (err) { return onError(err); }
     if (more) stream.take(onData);

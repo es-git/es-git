@@ -1,17 +1,17 @@
 "use strict";
 
-var bodec = require('bodec');
-var treeMap = require('../lib/object-codec').treeMap;
+import bodec from 'bodec';
+import {treeMap} from '../lib/object-codec';
 
-module.exports = function (repo) {
-  var loadAs = repo.loadAs;
+export default function (repo) {
+  const loadAs = repo.loadAs;
   repo.loadAs = newLoadAs;
-  var saveAs = repo.saveAs;
+  const saveAs = repo.saveAs;
   repo.saveAs = newSaveAs;
 
   function newLoadAs(type, hash, callback) {
     if (!callback) return newLoadAs.bind(repo, type, hash);
-    var realType = type === "text" ? "blob":
+    const realType = type === "text" ? "blob":
                    type === "array" ? "tree" : type;
     return loadAs.call(repo, realType, hash, onLoad);
 
@@ -51,11 +51,14 @@ function toArray(tree) {
 }
 
 function normalizeTree(body) {
-  var type = body && typeof body;
+  const type = body && typeof body;
   if (type !== "object") {
     throw new TypeError("Tree body must be array or object");
   }
-  var tree = {}, i, l, entry;
+  const tree = {};
+  let i;
+  let l;
+  let entry;
   // If array form is passed in, convert to object form.
   if (Array.isArray(body)) {
     for (i = 0, l = body.length; i < l; i++) {
@@ -67,9 +70,9 @@ function normalizeTree(body) {
     }
   }
   else {
-    var names = Object.keys(body);
+    const names = Object.keys(body);
     for (i = 0, l = names.length; i < l; i++) {
-      var name = names[i];
+      const name = names[i];
       entry = body[name];
       tree[name] = {
         mode: entry.mode,
@@ -87,12 +90,12 @@ function normalizeCommit(body) {
   if (!(body.tree && body.author && body.message)) {
     throw new TypeError("Tree, author, and message are required for commits");
   }
-  var parents = body.parents || (body.parent ? [ body.parent ] : []);
+  const parents = body.parents || (body.parent ? [ body.parent ] : []);
   if (!Array.isArray(parents)) {
     throw new TypeError("Parents must be an array");
   }
-  var author = normalizePerson(body.author);
-  var committer = body.committer ? normalizePerson(body.committer) : author;
+  const author = normalizePerson(body.author);
+  const committer = body.committer ? normalizePerson(body.committer) : author;
   return {
     tree: body.tree,
     parents: parents,

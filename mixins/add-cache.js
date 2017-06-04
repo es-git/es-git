@@ -1,12 +1,11 @@
 "use strict";
 
-module.exports = addCache;
-function addCache(repo, cache) {
-  var loadAs = repo.loadAs;
+export default function addCache(repo, cache) {
+  const loadAs = repo.loadAs;
   if (loadAs) repo.loadAs = loadAsCached;
-  var saveAs = repo.saveAs;
+  const saveAs = repo.saveAs;
   if (saveAs) repo.saveAs = saveAsCached;
-  var createTree = repo.createTree;
+  const createTree = repo.createTree;
   if (createTree) repo.createTree = createTreeCached;
 
   function loadAsCached(type, hash, callback) {
