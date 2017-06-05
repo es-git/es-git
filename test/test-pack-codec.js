@@ -1,20 +1,22 @@
-var bodec = require('bodec');
-var run = require('./run.js');
-var decoders = require('../lib/object-codec.js').decoders;
-var encoders = require('../lib/object-codec.js').encoders;
+import bodec from 'bodec';
+import run from './run.js';
+import {decoders} from '../lib/object-codec.js';
+import {encoders} from '../lib/object-codec.js';
 
 // The thing we mean to test.
-var codec = require('../lib/pack-codec.js');
+import codec from '../lib/pack-codec.js';
 
-var pack = require('./sample-pack.js');
-var items = [];
-var newPack;
+import pack from './sample-pack.js';
+let items = [];
+let newPack;
 
 function unpackStream(stream) {
-  var meta, out = [], finished = false;
-  var write = codec.decodePack(onItem);
-  for (var i = 0, l = stream.length; i < l; i += 128) {
-    var slice = bodec.slice(stream, i, i + 128);
+  let meta;
+  const out = [];
+  let finished = false;
+  const write = codec.decodePack(onItem);
+  for (let i = 0, l = stream.length; i < l; i += 128) {
+    const slice = bodec.slice(stream, i, i + 128);
     try {
       // console.log("SLICE", slice);
       write(slice);
@@ -45,8 +47,8 @@ function unpackStream(stream) {
 
 run([
   function testDecodePack() {
-    var counts = {};
-    items = unpackStream(pack).map(function (item) {
+    const counts = {};
+    items = unpackStream(pack).map(item => {
       counts[item.type] = counts[item.type] || 0;
       counts[item.type]++;
       if (item.type === "tree" || item.type === "tag" || item.type === "commit") {
@@ -60,10 +62,10 @@ run([
     if (counts['ofs-delta'] !== 2) throw new Error("Wrong number of offset deltas parsed");
   },
   function testEncodePack() {
-    var done = false;
-    var outs = [];
+    let done = false;
+    const outs = [];
 
-    var write = codec.encodePack(function (item) {
+    const write = codec.encodePack(item => {
       if (item === undefined) {
         done = true;
         return;
@@ -72,7 +74,7 @@ run([
       outs.push(item);
     });
     write({num:items.length});
-    items.forEach(function (item) {
+    items.forEach(item => {
       if (!bodec.isBinary(item.body)) {
         item.body = encoders[item.type](item.body);
         }

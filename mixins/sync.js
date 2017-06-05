@@ -8,140 +8,95 @@ export default function (local, remote) {
   local.readRemoteRef = remote.readRef.bind(remote);
   local.updateRemoteRef = remote.updateRef.bind(remote);
 
-  function fetch(ref, depth, callback) {
-    if (!callback) return fetch.bind(local, ref, depth);
-    sync(local, remote, ref, depth, callback);
+  function fetch(ref, depth) {
+    return sync(local, remote, ref, depth);
   }
 
-  function send(ref, callback) {
-    if (!callback) return send.bind(local, ref);
-    sync(remote, local, ref, Infinity, callback);
+  function send(ref) {
+    return sync(remote, local, ref, Infinity);
   }
 };
 
 // Download remote ref with depth
 // Make sure to use Infinity for depth on github mounts or anything that
 // doesn't allow shallow clones.
-function sync(local, remote, ref, depth, callback) {
+async function sync(local, remote, ref, depth) {
   if (typeof ref !== "string") throw new TypeError("ref must be string");
   if (typeof depth !== "number") throw new TypeError("depth must be number");
 
   const hasCache = {};
 
-  remote.readRef(ref, (err, hash) => {
-    if (!hash) return callback(err);
-    importCommit(hash, depth, err => {
-      if (err) return callback(err);
-      callback(null, hash);
-    });
-  });
+  const hash = await remote.readRef(ref);
+  await importCommit(hash, depth);
+  return hash;
 
   // Caching has check.
-  function check(type, hash, callback) {
+  async function check(type, hash) {
     if (typeof type !== "string") throw new TypeError("type must be string");
     if (typeof hash !== "string") throw new TypeError("hash must be string");
-    if (hasCache[hash]) return callback(null, true);
-    local.hasHash(hash, (err, has) => {
-      if (err) return callback(err);
-      hasCache[hash] = has;
-      callback(null, has);
-    });
+    if (hasCache[hash]) return true;
+    const has = await local.hasHash(hash);
+    hasCache[hash] = has;
+    return has;
   }
 
-  function importCommit(hash, depth, callback) {
-    check("commit", hash, onCheck);
+  async function importCommit(hash, depth) {
+    const has = await check("commit", hash);
 
-    function onCheck(err, has) {
-      if (err || has) return callback(err);
-      remote.loadAs("commit", hash, onLoad);
-    }
+    const commit = await remote.loadAs("commit", hash);
 
-    function onLoad(err, commit) {
-      if (!commit) return callback(err || new Error("Missing commit " + hash));
-      let i = 0;
-      importTree(commit.tree, onImport);
-
-      function onImport(err) {
-        if (err) return callback(err);
-        if (i >= commit.parents.length || depth <= 1) {
-          return local.saveAs("commit", commit, onSave);
-        }
-        importCommit(commit.parents[i++], depth - 1, onImport);
-      }
-    }
-
-    function onSave(err, newHash) {
-      if (err) return callback(err);
+    if (!commit) throw new Error("Missing commit " + hash);
+    let i = 0;
+    await importTree(commit.tree);
+    if (i >= commit.parents.length || depth <= 1) {
+      const newHash = await local.saveAs("commit", commit);
       if (newHash !== hash) {
-        return callback(new Error("Commit hash mismatch " + hash + " != " + newHash));
+        throw new Error("Commit hash mismatch " + hash + " != " + newHash);
       }
       hasCache[hash] = true;
-      callback();
+      return
     }
+    await importCommit(commit.parents[i++], depth - 1);
   }
 
-  function importTree(hash, callback) {
-    check("tree", hash, onCheck);
+  async function importTree(hash) {
+    const has = await check("tree", hash);
+    if(has) return;
 
-    function onCheck(err, has) {
-      if (err || has) return callback(err);
-      remote.loadAs("tree", hash, onLoad);
-    }
+    const tree = await remote.loadAs("tree", hash);
+    if (!tree) throw new Error("Missing tree " + hash);
+    let i = 0;
+    const names = Object.keys(tree);
 
-    function onLoad(err, tree) {
-      if (!tree) return callback(err || new Error("Missing tree " + hash));
-      let i = 0;
-      const names = Object.keys(tree);
-      onImport();
-
-      function onImport(err) {
-        if (err) return callback(err);
-        if (i >= names.length) {
-          return local.saveAs("tree", tree, onSave);
+    while(true){
+      if (i >= names.length) {
+        const newHash = await local.saveAs("tree", tree);
+        if (newHash !== hash) {
+          throw new Error("Tree hash mismatch " + hash + " != " + newHash);
         }
-        const name = names[i++];
-        const entry = tree[name];
-        if (modes.isBlob(entry.mode)) {
-          return importBlob(entry.hash, onImport);
-        }
-        if (entry.mode === modes.tree) {
-          return importTree(entry.hash, onImport);
-        }
-        // Skip others.
-        onImport();
+        hasCache[hash] = true;
+        return
       }
-    }
-
-    function onSave(err, newHash) {
-      if (err) return callback(err);
-      if (newHash !== hash) {
-        return callback(new Error("Tree hash mismatch " + hash + " != " + newHash));
+      const name = names[i++];
+      const entry = tree[name];
+      if (modes.isBlob(entry.mode)) {
+        return await importBlob(entry.hash);
+      }else if (entry.mode === modes.tree) {
+        return await importTree(entry.hash);
       }
-      hasCache[hash] = true;
-      callback();
+      // Skip others.
     }
   }
 
-  function importBlob(hash, callback) {
-    check("blob", hash, onCheck);
+  async function importBlob(hash) {
+    const has = await check("blob", hash);
+    if(has) return;
 
-    function onCheck(err, has) {
-      if (err || has) return callback(err);
-      remote.loadAs("blob", hash, onLoad);
-    }
+    const blob = await remote.loadAs("blob", hash);
 
-    function onLoad(err, blob) {
-      if (!blob) return callback(err || new Error("Missing blob " + hash));
-      local.saveAs("blob", blob, onSave);
-    }
-
-    function onSave(err, newHash) {
-      if (err) return callback(err);
-      if (newHash !== hash) {
-        return callback(new Error("Blob hash mismatch " + hash + " != " + newHash));
-      }
-      hasCache[hash] = true;
-      callback();
-    }
+    if (!blob) throw new Error("Missing blob " + hash);
+    const newHash = await local.saveAs("blob", blob);
+    if (newHash !== hash) throw new Error("Blob hash mismatch " + hash + " != " + newHash);
+    hasCache[hash] = true;
   }
 }

@@ -1,36 +1,32 @@
 "use strict";
 
-module.exports = request;
+export default request;
 
-function request(method, url, headers, body, callback) {
-  if (typeof body === "function") {
-    callback = body;
-    body = undefined;
-  }
-  if (!callback) {
-    return request.bind(null, method, url, headers, body);
-  }
-  var xhr = new XMLHttpRequest();
+function request(method, url, headers, body) {
+  const xhr = new XMLHttpRequest();
   xhr.open(method, url, true);
   xhr.responseType = "arraybuffer";
 
-  Object.keys(headers).forEach(function (name) {
+  Object.keys(headers).forEach(name => {
     xhr.setRequestHeader(name, headers[name]);
   });
-
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) return;
-    var resHeaders = {};
-    xhr.getAllResponseHeaders().trim().split("\r\n").forEach(function (line) {
-      var index = line.indexOf(":");
-      resHeaders[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
-    });
-
-    callback(null, {
-      statusCode: xhr.status,
-      headers: resHeaders,
-      body: xhr.response && new Uint8Array(xhr.response)
-    });
-  };
   xhr.send(body);
+
+  return new Promise((res, rej) => {
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState !== 4) return;
+      const resHeaders = {};
+      xhr.getAllResponseHeaders().trim().split("\r\n").forEach(line => {
+        const index = line.indexOf(":");
+        resHeaders[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
+      });
+
+      res({
+        statusCode: xhr.status,
+        headers: resHeaders,
+        body: xhr.response && new Uint8Array(xhr.response)
+      });
+    };
+    xhr.onerror = rej;
+  });
 }

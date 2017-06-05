@@ -1,27 +1,27 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var bodec = require('bodec');
-var pktLine = require('../lib/pkt-line');
-var wrapHandler = require('../lib/wrap-handler');
+import makeChannel from 'culvert';
+import bodec from 'bodec';
+import pktLine from '../lib/pkt-line';
+import wrapHandler from '../lib/wrap-handler';
 
-module.exports = function (connect) {
+export default function (connect) {
 
   return function tcpTransport(path, host, port) {
     port = (port|0) || 9418;
     if (!path || !host) throw new Error("path and host are required");
 
-    return function (serviceName, onError) {
+    return (serviceName, onError) => {
 
       onData = wrapHandler(onData, onError);
       onDrain = wrapHandler(onDrain, onError);
 
-      var socket = connect(host, port, onError);
-      var inter = makeChannel();
+      const socket = connect(host, port, onError);
+      const inter = makeChannel();
       inter.put = pktLine.deframer(inter.put);
 
       socket.put = pktLine.framer(socket.put);
-      var greeting = bodec.fromRaw(serviceName + " " + path + "\0host=" + host + "\0");
+      const greeting = bodec.fromRaw(serviceName + " " + path + "\0host=" + host + "\0");
       socket.put(greeting);
 
       // Pipe socket to inter with backpressure

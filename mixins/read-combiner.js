@@ -5,24 +5,17 @@
 export default function (repo) {
   const pendingReqs = {};
 
-  const loadAs = repo.loadAs;
+  const loadAs = (type, hash) => repo.loadAs(type, hash);
   repo.loadAs = newLoadAs;
 
-  function newLoadAs(type, hash, callback) {
-    if (!callback) return newLoadAs.bind(null, type, hash);
-    let list = pendingReqs[hash];
-    if (list) {
-      if (list.type !== type) callback(new Error("Type mismatch"));
-      else list.push(callback);
-      return;
+  async function newLoadAs(type, hash) {
+    let promise = pendingReqs[hash];
+    if (promise) {
+      if (promise.type !== type) throw new Error("Type mismatch");
+      else return promise;
     }
-    list = pendingReqs[hash] = [callback];
-    list.type = type;
-    loadAs.call(repo, type, hash, function () {
-      delete pendingReqs[hash];
-      for (let i = 0, l = list.length; i < l; i++) {
-        list[i].apply(this, arguments);
-      }
-    });
+    promise = pendingReqs[hash] = loadAs(type, hash);
+    promise.type = type;
+    promise.then(() => {delete pendingReqs[hash]});
   }
 };

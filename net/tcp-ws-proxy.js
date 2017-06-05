@@ -1,9 +1,9 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var wrapHandler = require('../lib/wrap-handler');
+import makeChannel from 'culvert';
+import wrapHandler from '../lib/wrap-handler';
 
-module.exports = function (proxyUrl) {
+export default function (proxyUrl) {
   if (proxyUrl[proxyUrl.length - 1] !== "/") proxyUrl += "/";
 
   return function connect(host, port, onError) {
@@ -13,16 +13,16 @@ module.exports = function (proxyUrl) {
 
     onData = wrapHandler(onData, onError);
 
-    var serverChannel = makeChannel();
-    var clientChannel = makeChannel();
-    var socket = {
+    const serverChannel = makeChannel();
+    const clientChannel = makeChannel();
+    const socket = {
       put: serverChannel.put,
       drain: serverChannel.drain,
       take: clientChannel.take
     };
 
-    var connected = false;
-    var ws = new WebSocket(proxyUrl  + "tcp/" + host + "/" + port);
+    let connected = false;
+    const ws = new WebSocket(proxyUrl  + "tcp/" + host + "/" + port);
     ws.binaryType = "arraybuffer";
 
     ws.onopen = wrap(onOpen, onError);

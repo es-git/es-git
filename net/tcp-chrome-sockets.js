@@ -1,11 +1,11 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var wrapHandler = require('../lib/wrap-handler');
-var tcp = window.chrome.sockets.tcp;
-var runtime = window.chrome.runtime;
+import makeChannel from 'culvert';
+import wrapHandler from '../lib/wrap-handler';
+const tcp = window.chrome.sockets.tcp;
+const runtime = window.chrome.runtime;
 
-module.exports = connect;
+export default connect;
 
 function connect(host, port, onError) {
   port = port|0;
@@ -20,13 +20,13 @@ function connect(host, port, onError) {
   onData = wrapHandler(onData, onError);
   onWrite = wrap(onWrite, onError);
 
-  var paused = false;
-  var open = false;
-  var socketId;
+  let paused = false;
+  let open = false;
+  let socketId;
 
-  var serverChannel = makeChannel();
-  var clientChannel = makeChannel();
-  var socket = {
+  const serverChannel = makeChannel();
+  const clientChannel = makeChannel();
+  const socket = {
     put: serverChannel.put,
     drain: serverChannel.drain,
     take: clientChannel.take

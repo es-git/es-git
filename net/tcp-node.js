@@ -1,10 +1,9 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var wrapHandler = require('../lib/wrap-handler');
-var net = require('net');
-
-module.exports = connect;
+import makeChannel from 'culvert';
+import wrapHandler from '../lib/wrap-handler';
+import net from 'net';
+export default connect;
 
 function connect(host, port, onError) {
   port = port|0;
@@ -20,15 +19,15 @@ function connect(host, port, onError) {
   // Wrap event handlers from culvert socket
   onTake = wrapHandler(onTake, onError);
 
-  var serverChannel = makeChannel();
-  var clientChannel = makeChannel();
-  var socket = {
+  const serverChannel = makeChannel();
+  const clientChannel = makeChannel();
+  const socket = {
     put: serverChannel.put,
     drain: serverChannel.drain,
     take: clientChannel.take
   };
 
-  var client = net.connect({ host: host, port: port }, onConnect);
+  const client = net.connect({ host: host, port: port }, onConnect);
   if (onError) client.on("error", onError);
 
   return {
@@ -46,7 +45,7 @@ function connect(host, port, onError) {
   }
 
   function pump() {
-    var chunk;
+    let chunk;
     do {
       chunk = client.read();
       if (!chunk) return;

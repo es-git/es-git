@@ -1,20 +1,20 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var bodec = require('bodec');
-var pktLine = require('../lib/pkt-line');
-var wrapHandler = require('../lib/wrap-handler');
+import makeChannel from 'culvert';
+import bodec from 'bodec';
+import pktLine from '../lib/pkt-line';
+import wrapHandler from '../lib/wrap-handler';
 
-module.exports = function (request) {
+export default function (request) {
 
   return function httpTransport(gitUrl, username, password) {
     // Send Auth header if username is set
-    var auth;
+    let auth;
     if (username) {
       auth = "Basic " + btoa(username + ":" + (password || ""));
     }
 
-    return function (serviceName, onError) {
+    return (serviceName, onError) => {
 
       // Wrap our handler functions to route errors properly.
       onResponse = wrapHandler(onResponse, onError);
@@ -22,29 +22,29 @@ module.exports = function (request) {
       onResult = wrapHandler(onResult, onError);
 
       // Create a duplex channel with transform for internal use.
-      var serverChannel = makeChannel();//0, "server");
-      var clientChannel = makeChannel();//0, "client");
-      var socket = {
+      const serverChannel = makeChannel();//0, "server");
+      const clientChannel = makeChannel();//0, "client");
+      const socket = {
         put: serverChannel.put,
         drain: serverChannel.drain,
         take: clientChannel.take
       };
 
       // Send the initial request to start the connection.
-      var headers = {};
+      const headers = {};
       if (auth) headers.Authorization = auth;
       request("GET", gitUrl + "/info/refs?service=" + serviceName, headers, onResponse);
 
       // Prep for later requests
-      var bodyParts = [];
-      var bodyWrite = pktLine.framer(function (chunk) {
+      const bodyParts = [];
+      const bodyWrite = pktLine.framer(chunk => {
         bodyParts.push(chunk);
       });
       headers["Content-Type"] = "application/x-" + serviceName + "-request";
       socket.take(onWrite);
 
-      var verified = 0;
-      var parseResponse = pktLine.deframer(function (line) {
+      let verified = 0;
+      const parseResponse = pktLine.deframer(line => {
         if (verified === 2) {
           socket.put(line);
         }
@@ -84,7 +84,7 @@ module.exports = function (request) {
         bodyWrite(item);
         socket.take(onWrite);
         if (item !== "done\n" || !bodyParts.length) return;
-        var body = bodec.join(bodyParts);
+        const body = bodec.join(bodyParts);
         bodyParts.length = 0;
         request("POST", gitUrl + "/" + serviceName, headers, body, onResult);
       }

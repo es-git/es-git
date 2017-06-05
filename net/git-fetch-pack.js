@@ -1,10 +1,9 @@
 "use strict";
 
-var makeChannel = require('culvert');
-var wrapHandler = require('../lib/wrap-handler');
-var bodec = require('bodec');
-
-module.exports = fetchPack;
+import makeChannel from 'culvert';
+import wrapHandler from '../lib/wrap-handler';
+import bodec from 'bodec';
+export default fetchPack;
 
 function fetchPack(transport, onError) {
 
@@ -17,23 +16,23 @@ function fetchPack(transport, onError) {
   onMore = wrapHandler(onMore, onError);
   onReady = wrapHandler(onReady, onError);
 
-  var caps = null;
-  var capsSent = false;
-  var refs = {};
-  var haves = {};
-  var havesCount = 0;
+  let caps = null;
+  let capsSent = false;
+  const refs = {};
+  const haves = {};
+  let havesCount = 0;
 
   // Create a duplex channel for talking with the agent.
-  var libraryChannel = makeChannel();
-  var agentChannel = makeChannel();
-  var api = {
+  const libraryChannel = makeChannel();
+  const agentChannel = makeChannel();
+  const api = {
     put: libraryChannel.put,
     drain: libraryChannel.drain,
     take: agentChannel.take
   };
 
   // Start the connection and listen for the response.
-  var socket = transport("git-upload-pack", onError);
+  const socket = transport("git-upload-pack", onError);
   socket.take(onRef);
 
   // Return the other half of the duplex API channel.
@@ -56,10 +55,10 @@ function fetchPack(transport, onError) {
       caps = {};
       Object.defineProperty(refs, "caps", {value: caps});
       Object.defineProperty(refs, "shallows", {value:[]});
-      var index = line.indexOf("\0");
+      const index = line.indexOf("\0");
       if (index >= 0) {
-        line.substring(index + 1).split(" ").forEach(function (cap) {
-          var i = cap.indexOf("=");
+        line.substring(index + 1).split(" ").forEach(cap => {
+          const i = cap.indexOf("=");
           if (i >= 0) {
             caps[cap.substring(0, i)] = cap.substring(i + 1);
           }
@@ -70,7 +69,7 @@ function fetchPack(transport, onError) {
         line = line.substring(0, index);
       }
     }
-    var match = line.match(/(^[0-9a-f]{40}) (.*)$/);
+    const match = line.match(/(^[0-9a-f]{40}) (.*)$/);
     if (!match) {
       if (typeof line === "string" && /^ERR/i.test(line)) {
         throw new Error(line);
@@ -81,9 +80,9 @@ function fetchPack(transport, onError) {
     socket.take(onRef);
   }
 
-  var packChannel;
-  var progressChannel;
-  var errorChannel;
+  let packChannel;
+  let progressChannel;
+  let errorChannel;
 
   function onWant(line) {
     if (line === undefined) return socket.put();
@@ -102,7 +101,7 @@ function fetchPack(transport, onError) {
       return api.take(onWant);
     }
     if (line.want) {
-      var extra = "";
+      let extra = "";
       if (!capsSent) {
         capsSent = true;
         if (caps["ofs-delta"]) extra += " ofs-delta";
@@ -139,7 +138,7 @@ function fetchPack(transport, onError) {
       });
       return onMore(null, line);
     }
-    var match = line.match(/^shallow ([0-9a-f]{40})$/);
+    let match = line.match(/^shallow ([0-9a-f]{40})$/);
     if (match) {
       refs.shallows.push(match[1]);
       return socket.take(onNak);
@@ -187,9 +186,9 @@ function fetchPack(transport, onError) {
 
 }
 
-var defer = require('js-git/lib/defer');
+import defer from 'js-git/lib/defer';
 function throwIt(err) {
-  defer(function () {
+  defer(() => {
     throw err;
   });
   // throw err;

@@ -33,102 +33,67 @@ export default function (repo, fs) {
   repo.init = init;
   repo.setShallow = setShallow;
 
-  function init(ref, callback) {
-    if (!callback) return init.bind(null, ref);
+  async function init(ref) {
     ref = ref || "refs/heads/master";
     const path = pathJoin(repo.rootPath, "HEAD");
-    fs.writeFile(path, "ref: " + ref, callback);
+    return await fs.writeFile(path, "ref: " + ref);
   }
 
-  function setShallow(ref, callback) {
-    if (!callback) return setShallow.bind(null, ref);
+  async function setShallow(ref) {
     const path = pathJoin(repo.rootPath, "shallow");
-    fs.writeFile(path, ref, callback);
+    return await fs.writeFile(path, ref);
   }
 
-  function updateRef(ref, hash, callback) {
-    if (!callback) return updateRef.bind(repo, ref, hash);
+  async function updateRef(ref, hash) {
     const path = pathJoin(repo.rootPath, ref);
     const lock = path + ".lock";
-    fs.writeFile(lock, bodec.fromRaw(hash + "\n"), err => {
-      if(err) return callback(err);
-      fs.rename(lock, path, callback);
-    });
+    await fs.writeFile(lock, bodec.fromRaw(hash + "\n"));
+    return await fs.rename(lock, path);
   }
 
-  function readRef(ref, callback) {
-    if (!callback) return readRef.bind(repo, ref);
+  async function readRef(ref) {
     const path = pathJoin(repo.rootPath, ref);
-    fs.readFile(path, (err, binary) => {
-      if (err) return callback(err);
-      if (binary === undefined) {
-        return readPackedRef(ref, callback);
-      }
-      let hash;
-      try { hash = bodec.toRaw(binary).trim(); }
-      catch (err) { return callback(err); }
-      callback(null, hash);
-    });
+    const binary = await fs.readFile(path);
+    if (binary === undefined) {
+      return readPackedRef(ref);
+    }
+    return bodec.toRaw(binary).trim();
   }
 
-  function readPackedRef(ref, callback) {
+  async function readPackedRef(ref) {
     const path = pathJoin(repo.rootPath, "packed-refs");
-    fs.readFile(path, (err, binary) => {
-      if (binary === undefined) return callback(err);
-      let hash;
-      try {
-        const text = bodec.toRaw(binary);
-        const index = text.indexOf(ref);
-        if (index >= 0) {
-          hash = text.substring(index - 41, index - 1);
-        }
-      }
-      catch (err) {
-        return callback(err);
-      }
-      callback(null, hash);
-    });
+    const binary = await fs.readFile(path);
+    const text = bodec.toRaw(binary);
+    const index = text.indexOf(ref);
+    if (index >= 0) {
+      return text.substring(index - 41, index - 1);
+    }
   }
 
-  function saveAs(type, body, callback) {
-    if (!callback) return saveAs.bind(repo, type, body);
-    let raw, hash;
-    try {
-      raw = codec.frame({
-        type: type,
-        body: codec.encoders[type](body)
-      });
-      hash = sha1(raw);
-    }
-    catch (err) { return callback(err); }
-    saveRaw(hash, raw, err => {
-      if (err) return callback(err);
-      callback(null, hash);
+  async function saveAs(type, body) {
+    const raw = codec.frame({
+      type: type,
+      body: codec.encoders[type](body)
     });
+    const hash = sha1(raw);
+    await saveRaw(hash, raw);
+    return hash;
   }
 
-  function saveRaw(hash, raw, callback) {
-    if (!callback) return saveRaw.bind(repo, hash, raw);
-    let buffer, path;
-    try {
-      if (sha1(raw) !== hash) {
-        throw new Error("Save data does not match hash");
-      }
-      buffer = deflate(raw);
-      path = hashToPath(hash);
+  async function saveRaw(hash, raw) {
+    if (sha1(raw) !== hash) {
+      throw new Error("Save data does not match hash");
     }
-    catch (err) { return callback(err); }
+    const buffer = deflate(raw);
+    const path = hashToPath(hash);
     // Try to read the object first.
-    loadRaw(hash, (err, data) => {
-      // If it already exists, we're done
-      if (data) return callback();
-      // Otherwise write a new file
-      const tmp = path.replace(/[0-9a-f]+$/, 'tmp_obj_' + Math.random().toString(36).substr(2));
-      fs.writeFile(tmp, buffer, err => {
-        if(err) return callback(err);
-        fs.rename(tmp, path, callback);
-      });
-    });
+    const data = await loadRaw(hash);
+    // If it already exists, we're done
+    if (data) return;
+    // Otherwise write a new file
+    const tmp = path.replace(/[0-9a-f]+$/, 'tmp_obj_' + Math.random().toString(36).substr(2));
+    await fs.writeFile(tmp, buffer);
+    return await fs.rename(tmp, path);
   }
 
   function loadAs(type, hash, callback) {

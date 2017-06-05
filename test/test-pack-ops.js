@@ -1,10 +1,10 @@
-var run = require('./run.js');
+import run from './run.js';
 
-var repo = {};
+const repo = {};
 require('../mixins/mem-db.js')(repo);
 
-var pack = require('./sample-pack.js');
-var hashes;
+import pack from './sample-pack.js';
+let hashes;
 
 run([
   function setup() {
@@ -13,7 +13,7 @@ run([
   function testUnpack(end) {
     repo.unpack(singleStream(pack), {
       onProgress: onProgress
-    }, function (err, result) {
+    }, (err, result) => {
       if (err) return end(err);
       hashes = result;
       if (hashes.length !== 16) {
@@ -26,9 +26,9 @@ run([
     }
   },
   function testPack(end) {
-    var stream;
-    var parts = [];
-    repo.pack(hashes, {}, function (err, result) {
+    let stream;
+    const parts = [];
+    repo.pack(hashes, {}, (err, result) => {
       if (err) return end(err);
       stream = result;
       stream.take(onRead);
@@ -46,7 +46,7 @@ run([
 ]);
 
 function singleStream(item) {
-  var done = false;
+  let done = false;
   return { take: function (callback) {
     if (done) return callback();
     done = true;

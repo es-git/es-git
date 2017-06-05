@@ -4,27 +4,21 @@ import bodec from 'bodec';
 import {treeMap} from '../lib/object-codec';
 
 export default function (repo) {
-  const loadAs = repo.loadAs;
+  const loadAs = (type, hash) => repo.loadAs(type, hash);
   repo.loadAs = newLoadAs;
-  const saveAs = repo.saveAs;
+  const saveAs = (type, body) => repo.saveAs(type, body);
   repo.saveAs = newSaveAs;
 
-  function newLoadAs(type, hash, callback) {
-    if (!callback) return newLoadAs.bind(repo, type, hash);
+  async function newLoadAs(type, hash) {
     const realType = type === "text" ? "blob":
                    type === "array" ? "tree" : type;
-    return loadAs.call(repo, realType, hash, onLoad);
-
-    function onLoad(err, body, hash) {
-      if (body === undefined) return callback(err);
-      if (type === "text") body = bodec.toUnicode(body);
-      if (type === "array") body = toArray(body);
-      return callback(err, body, hash);
-    }
+    const body = await loadAs(realType, hash);
+    if (type === "text") return bodec.toUnicode(body);
+    if (type === "array") return toArray(body);
+    return body;
   }
 
-  function newSaveAs(type, body, callback) {
-    if (!callback) return newSaveAs.bind(repo, type, body);
+  async function newSaveAs(type, body) {
     type = type === "text" ? "blob":
            type === "array" ? "tree" : type;
     if (type === "blob") {
@@ -41,7 +35,7 @@ export default function (repo) {
     else if (type === "tag") {
       body = normalizeTag(body);
     }
-    return saveAs.call(repo, type, body, callback);
+    return await saveAs(type, body);
   }
 
 };

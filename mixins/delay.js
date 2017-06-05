@@ -1,11 +1,11 @@
 "use strict";
 
 export default function (repo, ms) {
-  const saveAs = repo.saveAs;
-  const loadAs = repo.loadAs;
-  const readRef = repo.readRef;
-  const updateRef = repo.updateRef;
-  const createTree = repo.createTree;
+  const saveAs = (type, value) => repo.saveAs(type, value);
+  const loadAs = (type, hash) => repo.loadAs(type, hash);
+  const readRef = ref => repo.readRef(ref);
+  const updateRef = (ref, hash) => repo.updateRef(ref, hash);
+  const createTree = entries => repo.createTree(entries);
 
   repo.saveAs = saveAsDelayed;
   repo.loadAs = loadAsDelayed;
@@ -13,29 +13,32 @@ export default function (repo, ms) {
   repo.updateRed = updateRefDelayed;
   if (createTree) repo.createTree = createTreeDelayed;
 
-  function saveAsDelayed(type, value, callback) {
-    if (!callback) return saveAsDelayed.bind(repo, type, value);
-    setTimeout(() => saveAs.call(repo, type, value, callback), ms);
+  async function saveAsDelayed(type, value) {
+    await delay(ms);
+    return await saveAs(type, value);
   }
 
-  function loadAsDelayed(type, hash, callback) {
-    if (!callback) return loadAsDelayed.bind(repo, type, hash);
-    setTimeout(() => loadAs.call(repo, type, hash, callback), ms);
+  async function loadAsDelayed(type, hash) {
+    await delay(ms);
+    return await loadAs(type, hash);
   }
 
-  function readRefDelayed(ref, callback) {
-    if (!callback) return readRefDelayed.bind(repo, ref);
-    setTimeout(() => readRef.call(repo, ref, callback), ms);
+  async function readRefDelayed(ref) {
+    await delay(ms);
+    return await readRef(ref);
   }
 
-  function updateRefDelayed(ref, hash, callback) {
-    if (!callback) return updateRefDelayed.bind(repo, ref, hash);
-    setTimeout(() => updateRef.call(repo, ref, hash, callback), ms);
+  async function updateRefDelayed(ref, hash) {
+    await delay(ms);
+    return await updateRef(ref, hash);
   }
 
-  function createTreeDelayed(entries, callback) {
-    if (!callback) return createTreeDelayed.bind(repo, entries);
-    setTimeout(() => createTree.call(repo, entries, callback), ms);
+  async function createTreeDelayed(entries) {
+    await delay(ms);
+    return await createTree(entries);
   }
-
 };
+
+function delay(ms){
+  return new Promise(res => setTimeout(res, ms));
+}

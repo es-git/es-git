@@ -1,9 +1,9 @@
-var run = require('./run.js');
+import run from './run.js';
 
 // The thing we mean to test.
-var codec = require('../lib/config-codec.js');
+import codec from '../lib/config-codec.js';
 
-var sample = '\
+const sample = '\
 [user]\n\
 \tname = Tim Caswell\n\
 \temail = tim@creationix.com\n\
@@ -28,7 +28,7 @@ var sample = '\
 \tuser = creationix\n\
 \ttoken = token';
 
-var config;
+let config;
 
 run([
   function testDecode() {
@@ -44,8 +44,8 @@ run([
     }
   },
   function testEncode() {
-    var encoded = codec.encode(config);
-    var config2 = codec.decode(encoded);
+    const encoded = codec.encode(config);
+    const config2 = codec.decode(encoded);
     if (JSON.stringify(config) !== JSON.stringify(config2)) {
       console.log(config);
       console.log(encoded);
@@ -54,7 +54,7 @@ run([
     }
   },
   function testEncode2() {
-    var encoded = codec.encode({
+    const encoded = codec.encode({
       foo: {
         bar: {
           baz: true

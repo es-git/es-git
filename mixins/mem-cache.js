@@ -9,32 +9,26 @@ const cache = {};
 export {cache};
 
 export default function memCache(repo) {
-  const loadAs = repo.loadAs;
+  const loadAs = (type, hash) => repo.loadAs(type, hash);
   repo.loadAs = loadAsCached;
-  function loadAsCached(type, hash, callback) {
-    if (!callback) return loadAsCached.bind(this, type, hash);
-    if (hash in cache) return callback(null, dupe(type, cache[hash]), hash);
-    loadAs.call(repo, type, hash, function (err, value) {
-      if (value === undefined) return callback(err);
-      if (type !== "blob" || value.length < 100) {
-        cache[hash] = dupe(type, value);
-      }
-      return callback.apply(this, arguments);
-    });
+  async function loadAsCached(type, hash) {
+    if (hash in cache) return dupe(type, cache[hash]);
+    const value = await loadAs.call(repo, type, hash);
+    if (type !== "blob" || value.length < 100) {
+      cache[hash] = dupe(type, value);
+    }
+    return value;
   }
 
-  const saveAs = repo.saveAs;
+  const saveAs = (type, value) => repo.saveAs(type, value);
   repo.saveAs = saveAsCached;
-  function saveAsCached(type, value, callback) {
-    if (!callback) return saveAsCached.bind(this, type, value);
+  async function saveAsCached(type, value) {
     value = dupe(type, value);
-    saveAs.call(repo, type, value, (err, hash) => {
-      if (err) return callback(err);
-      if (type !== "blob" || value.length < 100) {
-        cache[hash] = value;
-      }
-      return callback(null, hash, value);
-    });
+    const hash = await saveAs.call(repo, type, value);
+    if (type !== "blob" || value.length < 100) {
+      cache[hash] = value;
+    }
+    return hash;
   }
 }
 function dupe(type, value) {

@@ -5,9 +5,7 @@ import modes from '../lib/modes.js';
 export default function (repo) {
   repo.createTree = createTree;
 
-  function createTree(entries, callback) {
-    if (!callback) return createTree.bind(null, entries);
-    callback = singleCall(callback);
+  function createTree(entries) {
     if (!Array.isArray(entries)) {
       entries = Object.keys(entries).map(path => {
         const entry = entries[path];
@@ -40,7 +38,7 @@ export default function (repo) {
 
     // First pass, stubs out the trees structure, sorts adds from deletes,
     // and saves any inline content blobs.
-    entries.forEach(entry => {
+    entries.map(async entry => {
       const index = entry.path.lastIndexOf("/");
       const parentPath = entry.path.substr(0, index);
       const name = entry.path.substr(index + 1);
@@ -61,11 +59,9 @@ export default function (repo) {
       adds.push(add);
       if (entry.hash) return;
       left++;
-      repo.saveAs("blob", entry.content, (err, hash) => {
-        if (err) return callback(err);
-        add.hash = hash;
-        check();
-      });
+      const hash = await repo.saveAs("blob", entry.content);
+      add.hash = hash;
+      check();
     });
 
     // Preload the base trees
@@ -74,18 +70,16 @@ export default function (repo) {
     // Check just in case there was no IO to perform
     check();
 
-    function loadTree(path, hash) {
+    async function loadTree(path, hash) {
       left++;
       delete toLoad[path];
-      repo.loadAs("tree", hash, (err, tree) => {
-        if (err) return callback(err);
-        trees[path].tree = tree;
-        Object.keys(tree).forEach(name => {
-          const childPath = path ? path + "/" + name : name;
-          if (toLoad[childPath]) loadTree(childPath, tree[name].hash);
-        });
-        check();
+      const tree = await repo.loadAs("tree", hash);
+      trees[path].tree = tree;
+      Object.keys(tree).forEach(name => {
+        const childPath = path ? path + "/" + name : name;
+        if (toLoad[childPath]) loadTree(childPath, tree[name].hash);
       });
+      check();
     }
 
     function check() {
@@ -93,7 +87,7 @@ export default function (repo) {
       findLeaves().forEach(processLeaf);
     }
 
-    function processLeaf(path) {
+    async function processLeaf(path) {
       const entry = trees[path];
       delete trees[path];
       const tree = entry.tree;
@@ -107,20 +101,18 @@ export default function (repo) {
         };
       });
       left++;
-      repo.saveAs("tree", tree, (err, hash, tree) => {
-        if (err) return callback(err);
-        if (!path) return callback(null, hash, tree);
-        const index = path.lastIndexOf("/");
-        const parentPath = path.substring(0, index);
-        const name = path.substring(index + 1);
-        trees[parentPath].add.push({
-          name: name,
-          mode: modes.tree,
-          hash: hash
-        });
-        if (--left) return;
-        findLeaves().forEach(processLeaf);
+      const hash = await repo.saveAs("tree", tree);
+      if (!path) return hash;
+      const index = path.lastIndexOf("/");
+      const parentPath = path.substring(0, index);
+      const name = path.substring(index + 1);
+      trees[parentPath].add.push({
+        name: name,
+        mode: modes.tree,
+        hash: hash
       });
+      if (--left) return;
+      findLeaves().forEach(processLeaf);
     }
 
     function findLeaves() {
@@ -135,12 +127,3 @@ export default function (repo) {
     }
   }
 };
-
-function singleCall(callback) {
-  let done = false;
-  return function () {
-    if (done) return console.warn("Discarding extra callback");
-    done = true;
-    return callback.apply(this, arguments);
-  };
-}

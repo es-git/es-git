@@ -1,23 +1,24 @@
-var run = require('./run.js');
-var bodec = require('bodec');
+import run from './run.js';
+import bodec from 'bodec';
 
 // The thing we mean to test.
-var inflate = require('../lib/inflate.js');
-var deflate = require('../lib/deflate.js');
-var inflateStream = require('../lib/inflate-stream.js');
+import inflate from '../lib/inflate.js';
 
-var bin = bodec.create(1024);
-for (var i = 0; i < 1024; i++) {
+import deflate from '../lib/deflate.js';
+import inflateStream from '../lib/inflate-stream.js';
+
+const bin = bodec.create(1024);
+for (let i = 0; i < 1024; i++) {
   bin[i] = i >> 2 | i % 4 & 0x7f;
 }
 
 run([
   function testRoundTrip() {
-    var deflated = deflate(bin);
+    const deflated = deflate(bin);
     if (!bodec.isBinary(deflated)) {
       throw new Error("deflate output should be native binary");
     }
-    var inflated = inflate(deflated);
+    const inflated = inflate(deflated);
     if (!bodec.isBinary(inflated)) {
       throw new Error("inflate output should be native binary");
     }
@@ -27,15 +28,15 @@ run([
     }
   },
   function testStream() {
-    var done = false;
-    var chunks = [];
-    var deflated = deflate(bin);
-    var inf = inflateStream();
+    const done = false;
+    const chunks = [];
+    const deflated = deflate(bin);
+    const inf = inflateStream();
 
-    for (var i = 0, l = deflated.length; i < l; ++i) {
+    for (let i = 0, l = deflated.length; i < l; ++i) {
       inf.write(deflated[i]);
     }
-    var inflated = inf.flush();
+    const inflated = inf.flush();
     if (bodec.toRaw(bin) !== bodec.toRaw(inflated)) {
       console.log([bin.length, inflated.length]);
       throw new Error("Problem with roundtrip");

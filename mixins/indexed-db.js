@@ -8,7 +8,7 @@ import sha1 from 'git-sha1';
 import modes from '../lib/modes.js';
 let db;
 
-export function init(callback) {
+export async function init() {
 
   db = null;
   const request = indexedDB.open("tedit", 1);
@@ -18,7 +18,7 @@ export function init(callback) {
     const db = evt.target.result;
 
     if (evt.dataLoss && evt.dataLoss !== "none") {
-      return callback(new Error(evt.dataLoss + ": " + evt.dataLossMessage));
+      return Promise.reject(new Error(evt.dataLoss + ": " + evt.dataLossMessage));
     }
 
     // A versionchange transaction is started automatically.
@@ -35,11 +35,7 @@ export function init(callback) {
     db.createObjectStore("refs", {keyPath: "path"});
   };
 
-  request.onsuccess = evt => {
-    db = evt.target.result;
-    callback();
-  };
-  request.onerror = onError;
+  return await promisify(request, evt => db = evt.target.result, e => e);
 }
 
 
@@ -57,87 +53,56 @@ function onError(evt) {
   console.error("error", evt.target.error);
 }
 
-export function saveAs(type, body, callback, forcedHash) {
-  if (!callback) return saveAs.bind(this, type, body);
-  let hash;
-  try {
-    const buffer = codec.frame({type:type,body:body});
-    hash = forcedHash || sha1(buffer);
-  }
-  catch (err) { return callback(err); }
+export async function saveAs(type, body, forcedHash) {
+  const buffer = codec.frame({type:type,body:body});
+  const hash = forcedHash || sha1(buffer);
   const trans = db.transaction(["objects"], "readwrite");
   const store = trans.objectStore("objects");
   const entry = { hash: hash, type: type, body: body };
   const request = store.put(entry);
-  request.onsuccess = () => {
-    // console.warn("SAVE", type, hash);
-    callback(null, hash, body);
-  };
-  request.onerror = evt => {
-    callback(new Error(evt.value));
-  };
+  return await promisify(request, () => hash, evt => new Error(evt.value));
 }
 
-export function loadAs(type, hash, callback) {
-  if (!callback) return loadAs.bind(this, type, hash);
-  loadRaw(hash, (err, entry) => {
-    if (!entry) return callback(err);
-    if (type !== entry.type) {
-      return callback(new TypeError("Type mismatch"));
-    }
-    callback(null, entry.body, hash);
-  });
+export async function loadAs(type, hash) {
+  const entry = await loadRaw(hash);
+  if (type !== entry.type) {
+    throw new TypeError("Type mismatch");
+  }
+  return entry.body;
 }
 
-function loadRaw(hash, callback) {
+async function loadRaw(hash) {
   const trans = db.transaction(["objects"], "readwrite");
   const store = trans.objectStore("objects");
   const request = store.get(hash);
-  request.onsuccess = evt => {
-    const entry = evt.target.result;
-    if (!entry) return callback();
-    return callback(null, entry);
-  };
-  request.onerror = evt => {
-    callback(new Error(evt.value));
-  };
+  return await promisify(request, evt => evt.target.result, evt => new Error(evt.value));
 }
 
-function hasHash(hash, callback) {
-  if (!callback) return hasHash.bind(this, hash);
-  loadRaw(hash, (err, body) => {
-    if (err) return callback(err);
-    return callback(null, !!body);
-  });
+async function hasHash(hash) {
+  const body = await loadRaw(hash);
+  return !!body;
 }
 
-function readRef(ref, callback) {
-  if (!callback) return readRef.bind(this, ref);
+async function readRef(ref) {
   const key = this.refPrefix + "/" + ref;
   const trans = db.transaction(["refs"], "readwrite");
   const store = trans.objectStore("refs");
   const request = store.get(key);
-  request.onsuccess = evt => {
-    const entry = evt.target.result;
-    if (!entry) return callback();
-    callback(null, entry.hash);
-  };
-  request.onerror = evt => {
-    callback(new Error(evt.value));
-  };
+  return await promisify(request, evt => evt.target.result && evt.target.result.hash, evt => new Error(evt.value));
 }
 
-function updateRef(ref, hash, callback) {
-  if (!callback) return updateRef.bind(this, ref, hash);
+async function updateRef(ref, hash) {
   const key = this.refPrefix + "/" + ref;
   const trans = db.transaction(["refs"], "readwrite");
   const store = trans.objectStore("refs");
   const entry = { path: key, hash: hash };
   const request = store.put(entry);
-  request.onsuccess = () => {
-    callback();
-  };
-  request.onerror = evt => {
-    callback(new Error(evt.value));
-  };
+  return await promisify(request, x => x, evt => new Error(evt.value));
+}
+
+function promisify(request, success, error){
+  return new Promise((res, rej) => {
+    request.onsuccess = evt => res(success);
+    request.onerror = evt => rej(error);
+  });
 }
