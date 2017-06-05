@@ -2,18 +2,20 @@
 
 import modes from '../lib/modes';
 
-export default function (local, remote) {
-  local.fetch = fetch;
-  local.send = send;
-  local.readRemoteRef = remote.readRef.bind(remote);
-  local.updateRemoteRef = remote.updateRef.bind(remote);
-
-  function fetch(ref, depth) {
-    return sync(local, remote, ref, depth);
+export default repo => class extends repo{
+  constructor(remote, ...args) {
+    super(...args);
+    this.remote = remote;
+    this.readRemoteRef = remote.readRef.bind(remote);
+    this.updateRemoteRef = remote.updateRef.bind(remote);
   }
 
-  function send(ref) {
-    return sync(remote, local, ref, Infinity);
+  async fetch(ref, depth) {
+    return sync(this, this.remote, ref, depth);
+  }
+
+  async send(ref) {
+    return sync(this.remote, this, ref, Infinity);
   }
 };
 

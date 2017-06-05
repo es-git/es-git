@@ -4,63 +4,57 @@ import * as codec from '../lib/object-codec.js';
 import sha1 from 'git-sha1';
 const isHash = /^[0-9a-f]{40}$/;
 
-export default function mixin(repo) {
-  const objects = {};
-  const refs = {};
-
-  repo.saveAs = saveAs;
-  repo.loadAs = loadAs;
-  repo.saveRaw = saveRaw;
-  repo.loadRaw = loadRaw;
-  repo.hasHash = hasHash;
-  repo.readRef = readRef;
-  repo.updateRef = updateRef;
-  repo.listRefs = listRefs;
-
-  async function readRef(ref) {
-    return refs[ref];
+export default repo => class extends repo {
+  constructor(...args){
+    super(...args);
+    this.objects = {};
+    this.refs = {};
   }
 
-  async function listRefs(prefix) {
+  async readRef(ref) {
+    return this.refs[ref];
+  }
+
+  async listRefs(prefix) {
     const regex = prefix && new RegExp("^" + prefix + "[/$]");
     const out = {};
-    Object.keys(refs).forEach(name => {
+    Object.keys(this.refs).forEach(name => {
       if (regex && !regex.test(name)) return;
-      out[name] = refs[name];
+      out[name] = this.refs[name];
     });
     return out;
   }
 
-  async function updateRef(ref, hash) {
-    refs[ref] = hash;
+  async updateRef(ref, hash) {
+    this.refs[ref] = hash;
   }
 
-  async function hasHash(hash) {
-    if (!isHash.test(hash)) hash = refs[hash];
-    return hash in objects;
+  async hasHash(hash) {
+    if (!isHash.test(hash)) hash = this.refs[hash];
+    return hash in this.objects;
   }
 
-  async function saveAs(type, body) {
+  async saveAs(type, body) {
     const buffer = codec.frame({type:type,body:body});
     const hash = sha1(buffer);
-    objects[hash] = buffer;
+    this.objects[hash] = buffer;
     return hash;
   }
 
-  async function saveRaw(hash, buffer) {
-    objects[hash] = buffer;
+  async saveRaw(hash, buffer) {
+    this.objects[hash] = buffer;
   }
 
-  async function loadAs(type, hash) {
-    if (!isHash.test(hash)) hash = refs[hash];
-    const buffer = objects[hash];
+  async loadAs(type, hash) {
+    if (!isHash.test(hash)) hash = this.refs[hash];
+    const buffer = this.objects[hash];
     if (!buffer) return [];
     const obj = codec.deframe(buffer, true);
     if (obj.type !== type) throw new TypeError("Type mismatch");
     return obj.body;
   }
 
-  async function loadRaw(hash) {
-    return objects[hash];
+  async loadRaw(hash) {
+    return this.objects[hash];
   }
 }

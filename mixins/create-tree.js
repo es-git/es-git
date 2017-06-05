@@ -2,10 +2,8 @@
 
 import modes from '../lib/modes.js';
 
-export default function (repo) {
-  repo.createTree = createTree;
-
-  function createTree(entries) {
+export default repo => class extends repo {
+  createTree(entries) {
     if (!Array.isArray(entries)) {
       entries = Object.keys(entries).map(path => {
         const entry = entries[path];

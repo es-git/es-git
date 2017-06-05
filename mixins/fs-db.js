@@ -19,50 +19,44 @@ import {join as pathJoin} from 'path';
 //   Must also call callback() with no arguments if the file does not exist.
 // The repo is expected to have a rootPath property that points to
 // the .git folder within the filesystem.
-export default function (repo, fs) {
+export default repo => class extends repo {
+  constructor(fs, ...args) {
+    super(...args);
 
-  const cachedIndexes = {};
+    this.fs = fs;
+    this.cachedIndexes = {};
+  }
 
-  repo.loadAs = loadAs;
-  repo.saveAs = saveAs;
-  repo.loadRaw = loadRaw;
-  repo.saveRaw = saveRaw;
-  repo.readRef = readRef;
-  repo.updateRef = updateRef;
-  repo.hasHash = hasHash;
-  repo.init = init;
-  repo.setShallow = setShallow;
-
-  async function init(ref) {
+  async init(ref) {
     ref = ref || "refs/heads/master";
     const path = pathJoin(repo.rootPath, "HEAD");
-    return await fs.writeFile(path, "ref: " + ref);
+    return await this.fs.writeFile(path, "ref: " + ref);
   }
 
-  async function setShallow(ref) {
+  async setShallow(ref) {
     const path = pathJoin(repo.rootPath, "shallow");
-    return await fs.writeFile(path, ref);
+    return await this.fs.writeFile(path, ref);
   }
 
-  async function updateRef(ref, hash) {
+  async updateRef(ref, hash) {
     const path = pathJoin(repo.rootPath, ref);
     const lock = path + ".lock";
-    await fs.writeFile(lock, bodec.fromRaw(hash + "\n"));
-    return await fs.rename(lock, path);
+    await this.fs.writeFile(lock, bodec.fromRaw(hash + "\n"));
+    return await this.fs.rename(lock, path);
   }
 
-  async function readRef(ref) {
+  async readRef(ref) {
     const path = pathJoin(repo.rootPath, ref);
-    const binary = await fs.readFile(path);
+    const binary = await this.fs.readFile(path);
     if (binary === undefined) {
       return readPackedRef(ref);
     }
     return bodec.toRaw(binary).trim();
   }
 
-  async function readPackedRef(ref) {
+  async readPackedRef(ref) {
     const path = pathJoin(repo.rootPath, "packed-refs");
-    const binary = await fs.readFile(path);
+    const binary = await this.fs.readFile(path);
     const text = bodec.toRaw(binary);
     const index = text.indexOf(ref);
     if (index >= 0) {
@@ -70,17 +64,17 @@ export default function (repo, fs) {
     }
   }
 
-  async function saveAs(type, body) {
+  async saveAs(type, body) {
     const raw = codec.frame({
       type: type,
       body: codec.encoders[type](body)
     });
     const hash = sha1(raw);
-    await saveRaw(hash, raw);
+    await this.saveRaw(hash, raw);
     return hash;
   }
 
-  async function saveRaw(hash, raw) {
+  async saveRaw(hash, raw) {
     if (sha1(raw) !== hash) {
       throw new Error("Save data does not match hash");
     }
@@ -92,133 +86,81 @@ export default function (repo, fs) {
     if (data) return;
     // Otherwise write a new file
     const tmp = path.replace(/[0-9a-f]+$/, 'tmp_obj_' + Math.random().toString(36).substr(2));
-    await fs.writeFile(tmp, buffer);
-    return await fs.rename(tmp, path);
+    await this.fs.writeFile(tmp, buffer);
+    return await this.fs.rename(tmp, path);
   }
 
-  function loadAs(type, hash, callback) {
-    if (!callback) return loadAs.bind(repo, type, hash);
-    loadRaw(hash, (err, raw) => {
-      if (raw === undefined) return callback(err);
-      let body;
-      try {
-        raw = codec.deframe(raw);
-        if (raw.type !== type) throw new TypeError("Type mismatch");
-        body = codec.decoders[raw.type](raw.body);
-      }
-      catch (err) { return callback(err); }
-      callback(null, body);
-    });
+  async loadAs(type, hash) {
+    let raw = await this.loadRaw(hash);
+    raw = codec.deframe(raw);
+    if (raw.type !== type) throw new TypeError("Type mismatch");
+    return codec.decoders[raw.type](raw.body);
   }
 
-  function hasHash(hash, callback) {
-    if (!callback) return hasHash.bind(repo, hash);
-    loadRaw(hash, (err, body) => {
-      if (err) return callback(err);
-      return callback(null, !!body);
-    });
+  async hasHash(hash) {
+    const body = await this.loadRaw(hash);
+    return !!body;
   }
 
-  function loadRaw(hash, callback) {
-    if (!callback) return loadRaw.bind(repo, hash);
+  async loadRaw(hash) {
     const path = hashToPath(hash);
-    fs.readFile(path, (err, buffer) => {
-      if (err) return callback(err);
-      if (buffer) {
-        let raw;
-        try { raw = inflate(buffer); }
-        catch (err) { return callback(err); }
-        return callback(null, raw);
-      }
-      return loadRawPacked(hash, callback);
-    });
+    const buffer = await this.fs.readFile(path);
+    if (buffer) {
+      return inflate(buffer);
+    }
+    return this.loadRawPacked(hash, callback);
   }
 
-  function loadRawPacked(hash, callback) {
+  async loadRawPacked(hash) {
     const packDir = pathJoin(repo.rootPath, "objects/pack");
-    const packHashes = [];
-    fs.readDir(packDir, (err, entries) => {
-      if (!entries) return callback(err);
-      entries.forEach(name => {
-        const match = name.match(/pack-([0-9a-f]{40}).idx/);
-        if (match) packHashes.push(match[1]);
-      });
-      start();
-    });
+    const entries = await this.fs.readDir(packDir);
+    const packHashes = entries
+      .map(name => name.match(/pack-([0-9a-f]{40}).idx/))
+      .filter(match => match)
+      .map(match => match[1]);
+    start();
 
-    function start() {
+    async function start() {
       const packHash = packHashes.pop();
-      let offsets;
-      if (!packHash) return callback();
-      if (!cachedIndexes[packHash]) loadIndex(packHash);
-      else onIndex();
-
-      function loadIndex(packHash) {
+      if (!packHash) return;
+      if (!this.cachedIndexes[packHash]){
         const indexFile = pathJoin(packDir, "pack-" + packHash + ".idx" );
-        fs.readFile(indexFile, (err, buffer) => {
-          if (!buffer) return callback(err);
-          try {
-            cachedIndexes[packHash] = parseIndex(buffer);
-          }
-          catch (err) { return callback(err); }
-          onIndex();
-        });
+        const buffer = await this.fs.readFile(indexFile);
+        this.cachedIndexes[packHash] = parseIndex(buffer);
       }
 
-      function onIndex() {
-        const cached = cachedIndexes[packHash];
-        const packFile = pathJoin(packDir, "pack-" + packHash + ".pack" );
-        const index = cached.byHash[hash];
-        if (!index) return start();
-        offsets = cached.offsets;
-        loadChunk(packFile, index.offset, callback);
-      }
+      const cached = this.cachedIndexes[packHash];
+      const packFile = pathJoin(packDir, "pack-" + packHash + ".pack" );
+      const index = cached.byHash[hash];
+      if (!index) return await start();
+      const offsets = cached.offsets;
+      return await loadChunk(packFile, inde.offset);
 
-      function loadChunk(packFile, start, callback) {
+      async function loadChunk(packFile, start) {
         const index = offsets.indexOf(start);
         if (index < 0) {
-          const error = new Error("Can't find chunk starting at " + start);
-          return callback(error);
+          throw new Error("Can't find chunk starting at " + start);
         }
+
         const end = index + 1 < offsets.length ? offsets[index + 1] : -20;
-        fs.readChunk(packFile, start, end, (err, chunk) => {
-          if (!chunk) return callback(err);
-          let raw;
-          let entry;
-          try {
-            entry = parsePackEntry(chunk);
-            if (entry.type === "ref-delta") {
-              return loadRaw.call(repo, entry.ref, onBase);
-            }
-            else if (entry.type === "ofs-delta") {
-              return loadChunk(packFile, start - entry.ref, onBase);
-            }
-            raw = codec.frame(entry);
-          }
-          catch (err) { return callback(err); }
-          callback(null, raw);
-
-          function onBase(err, base) {
-            if (!base) return callback(err);
-            const object = codec.deframe(base);
-            let buffer;
-            try {
-              object.body = applyDelta(entry.body, object.body);
-              buffer = codec.frame(object);
-            }
-            catch (err) { return callback(err); }
-            callback(null, buffer);
-          }
-        });
+        const chunk = await this.fs.readChunk(packFile, start, end);
+        let entry = parsePackEntry(chunk);
+        if (entry.type === "ref-delta") {
+          return await this.loadRaw(entry.ref);
+        } else if (entry.type === "ofs-delta") {
+          const base = await loadChunk(packFile, start - entry.ref);
+          const object = codec.deframe(base);
+          object.body = applyDelta(entry.body, object.body);
+          return codec.frame(object);
+        }
+        return codec.frame(entry);
       }
-
     }
   }
 
-  function hashToPath(hash) {
+  hashToPath(hash) {
     return pathJoin(repo.rootPath, "objects", hash.substring(0, 2), hash.substring(2));
   }
-
 };
 
 function parseIndex(buffer) {

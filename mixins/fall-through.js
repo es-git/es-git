@@ -1,17 +1,18 @@
 import modes from '../lib/modes';
 
-export default function (local, remote) {
-  const loadAs = (type, hash) => local.loadAs(type, hash);
-  local.loadAs = newLoadAs;
-  async function newLoadAs(type, hash) {
-    const body = await loadAs(type, hash);
-    if (body === undefined) return await remote.loadAs(type, hash);
+export default repo => class extends repo {
+  constructor(remote, ...args) {
+    super(...args);
+    this.remote = remote;
   }
 
-  const readRef = ref => local.readRef(ref);
-  local.readRef = newReadRef;
-  async function newReadRef(ref) {
-    const body = await readRef(ref);
-    if (body === undefined) return await remote.readRef(ref);
+  async loadAs(type, hash) {
+    const body = await super.loadAs(type, hash);
+    if (body === undefined) return await this.remote.loadAs(type, hash);
+  }
+
+  async readRef(ref) {
+    const body = await super.readRef(ref);
+    if (body === undefined) return await this.remote.readRef(ref);
   }
 };

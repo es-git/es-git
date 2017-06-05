@@ -1,43 +1,36 @@
 "use strict";
 
-export default function (repo, ms) {
-  const saveAs = (type, value) => repo.saveAs(type, value);
-  const loadAs = (type, hash) => repo.loadAs(type, hash);
-  const readRef = ref => repo.readRef(ref);
-  const updateRef = (ref, hash) => repo.updateRef(ref, hash);
-  const createTree = entries => repo.createTree(entries);
-
-  repo.saveAs = saveAsDelayed;
-  repo.loadAs = loadAsDelayed;
-  repo.readRef = readRefDelayed;
-  repo.updateRed = updateRefDelayed;
-  if (createTree) repo.createTree = createTreeDelayed;
-
-  async function saveAsDelayed(type, value) {
-    await delay(ms);
-    return await saveAs(type, value);
+export default repo => class extends repo {
+  constructor (ms, ...args) {
+    super(...args);
+    this.ms = ms;
   }
 
-  async function loadAsDelayed(type, hash) {
-    await delay(ms);
-    return await loadAs(type, hash);
+  async saveAs(type, value) {
+    await delay(this.ms);
+    return await super.saveAs(type, value);
   }
 
-  async function readRefDelayed(ref) {
-    await delay(ms);
-    return await readRef(ref);
+  async loadAs(type, hash) {
+    await delay(this.ms);
+    return await super.loadAs(type, hash);
   }
 
-  async function updateRefDelayed(ref, hash) {
-    await delay(ms);
-    return await updateRef(ref, hash);
+  async readRef(ref) {
+    await delay(this.ms);
+    return await super.readRef(ref);
   }
 
-  async function createTreeDelayed(entries) {
-    await delay(ms);
-    return await createTree(entries);
+  async updateRef(ref, hash) {
+    await delay(this.ms);
+    return await super.updateRef(ref, hash);
   }
-};
+
+  async createTree(entries) {
+    await delay(this.ms);
+    return await super.createTree(entries);
+  }
+}
 
 function delay(ms){
   return new Promise(res => setTimeout(res, ms));

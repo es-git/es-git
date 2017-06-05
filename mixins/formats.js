@@ -3,24 +3,19 @@
 import bodec from 'bodec';
 import {treeMap} from '../lib/object-codec';
 
-export default function (repo) {
-  const loadAs = (type, hash) => repo.loadAs(type, hash);
-  repo.loadAs = newLoadAs;
-  const saveAs = (type, body) => repo.saveAs(type, body);
-  repo.saveAs = newSaveAs;
-
-  async function newLoadAs(type, hash) {
+export default repo => class extends repo {
+  async loadAs(type, hash) {
     const realType = type === "text" ? "blob":
-                   type === "array" ? "tree" : type;
-    const body = await loadAs(realType, hash);
+                  type === "array" ? "tree" : type;
+    const body = await super.loadAs(realType, hash);
     if (type === "text") return bodec.toUnicode(body);
     if (type === "array") return toArray(body);
     return body;
   }
 
-  async function newSaveAs(type, body) {
+  async aveAs(type, body) {
     type = type === "text" ? "blob":
-           type === "array" ? "tree" : type;
+          type === "array" ? "tree" : type;
     if (type === "blob") {
       if (typeof body === "string") {
         body = bodec.fromUnicode(body);
@@ -35,9 +30,8 @@ export default function (repo) {
     else if (type === "tag") {
       body = normalizeTag(body);
     }
-    return await saveAs(type, body);
+    return await super.saveAs(type, body);
   }
-
 };
 
 function toArray(tree) {
