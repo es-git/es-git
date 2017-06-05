@@ -4,35 +4,44 @@ import {encoders} from '../lib/object-codec';
 import {decoders} from '../lib/object-codec';
 import {Binary} from 'bodec';
 
-export default repo => class extends repo {
-  constructor(...args) {
-    super(...args);
-    this.cache = {};
-  }
+import {
+  IRepo,
+  Type,
+  Body
+} from '../types'
 
-  async loadAsCached(type, hash) {
-    if (hash in this.cache) return dupe(type, this.cache[hash]);
-    const value = await super.loadAs(type, hash);
-    if (type !== "blob" || value.length < 100) {
-      this.cache[hash] = dupe(type, value);
+export default function mixin(repo : Constructor<IRepo>) : Constructor<IRepo> {
+  return class extends repo implements IRepo {
+    private readonly cache : { [key : string] : any }
+    constructor(...args : any[]) {
+      super(...args);
+      this.cache = {};
     }
-    return value;
-  }
 
-  async saveAsCached(type, value) {
-    value = dupe(type, value);
-    const hash = await super.saveAs(type, value);
-    if (type !== "blob" || value.length < 100) {
-      this.cache[hash] = value;
+    async loadAs(type : Type, hash : string) : Promise<Body> {
+      if (hash in this.cache) return dupe(type, this.cache[hash]);
+      const value = await super.loadAs(type, hash);
+      if (type !== "blob" || (value as any).length < 100) {
+        this.cache[hash] = dupe(type, value);
+      }
+      return value;
     }
-    return hash;
+
+    async saveAs(type : Type, value : Body) {
+      value = dupe(type, value);
+      const hash = await super.saveAs(type, value);
+      if (type !== "blob" || (value as any).length < 100) {
+        this.cache[hash] = value;
+      }
+      return hash;
+    }
   }
 }
 
-function dupe(type, value) {
+function dupe(type : Type, value : Body) {
   if (type === "blob") {
     if (type.length >= 100) return value;
-    return new Binary(value);
+    return new Binary(value as Uint8Array);
   }
-  return decoders[type](encoders[type](value));
+  return decoders[type]((encoders[type] as any)(value as any) as any);
 }

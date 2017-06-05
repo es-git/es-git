@@ -1,4 +1,7 @@
 
+export interface Dict<T> {
+  [key : string] : T
+}
 
 export interface StringMap {
   [key : string] : string
@@ -56,6 +59,7 @@ export type CommitFrame = {
 export type CommitBody = {
   readonly tree : string
   readonly parents : string[]
+  readonly parent? : string
   readonly author : Person
   readonly committer : Person
   readonly message : string

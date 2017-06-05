@@ -1,60 +1,53 @@
 "use strict";
 
-export default function addCache(repo, cache) {
-  const loadAs = repo.loadAs;
-  if (loadAs) repo.loadAs = loadAsCached;
-  const saveAs = repo.saveAs;
-  if (saveAs) repo.saveAs = saveAsCached;
-  const createTree = repo.createTree;
-  if (createTree) repo.createTree = createTreeCached;
+import {
+  IRepo,
+  Type,
+  Body
+} from '../types'
 
-  function loadAsCached(type, hash, callback) {
-    // Next check in disk cache...
-    cache.loadAs(type, hash, onCacheLoad);
+export interface ICache {
+  loadAs(type : Type, hash : string) : Promise<Body>
+  saveAs(type : Type, body : Body, hash : string) : Promise<void>
+}
 
-    function onCacheLoad(err, value) {
-      if (err) return callback(err);
+export default function mixin(repo : Constructor<IRepo>) : Constructor<IRepo> {
+  return class extends repo implements IRepo {
+    private readonly cache : ICache
+    constructor(...args : any[])
+    constructor(cache : ICache, ...args : any[]){
+      super(...args)
+    }
+
+    async loadAs(type : Type, hash : string) {
+      // Next check in disk cache...
+      let value = await this.cache.loadAs(type, hash);
+
       // ...and return if it's there.
       if (value !== undefined) {
-        return callback(null, value, hash);
+        return value;
       }
 
       // Otherwise load from real data source...
-      loadAs.call(repo, type, hash, onLoad);
-    }
-
-    function onLoad(err, value) {
-      if (value === undefined) return callback(err);
+      value = await super.loadAs(type, hash);
 
       // Store it on disk too...
       // Force the hash to prevent mismatches.
-      cache.saveAs(type, value, onSave, hash);
-
-      function onSave(err) {
-        if (err) return callback(err);
-        // Finally return the value to caller.
-        callback(null, value, hash);
-      }
+      await this.cache.saveAs(type, value, hash);
     }
-  }
 
-  function saveAsCached(type, value, callback) {
-    saveAs.call(repo, type, value, onSave);
+    async saveAs(type : Type, value : Body) {
+      const hash = await super.saveAs(type, value);
 
-    function onSave(err, hash) {
-      if (err) return callback(err);
       // Store in disk, forcing hash to match.
-      cache.saveAs(type, value, callback, hash);
+      this.cache.saveAs(type, value, hash);
+
+      return hash;
+    }
+
+    async createTree(entries : {}[] | {}) {
+      const [hash, tree] = await super.createTree(entries);
+      await this.cache.saveAs("tree", tree, hash);
     }
   }
-
-  function createTreeCached(entries, callback) {
-    createTree.call(repo, entries, onTree);
-
-    function onTree(err, hash, tree) {
-      if (err) return callback(err);
-      cache.saveAs("tree", tree, callback, hash);
-    }
-  }
-
 }

@@ -1,8 +1,8 @@
 "use strict";
 
-export default function wrapHandler(fn, onError) {
+export default function wrapHandler<T>(fn : (value : T) => void, onError : (error : any) => void) {
   if (onError) {
-    return (err, value) => {
+    return (err : any, value : T) => {
       if (err) return onError(err);
       try {
         return fn(value);
@@ -12,7 +12,7 @@ export default function wrapHandler(fn, onError) {
       }
     };
   }
-  return (err, value) => {
+  return (err : any, value : T) => {
     if (err) throw err;
     return fn(value);
   };

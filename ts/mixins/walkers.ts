@@ -1,83 +1,98 @@
 import modes from '../lib/modes.js';
 
 export default function (repo) {
-  repo.logWalk = logWalk;   // (ref) => stream<commit>
-  repo.treeWalk = treeWalk; // (treeHash) => stream<object>
+  repo.logWalk = logWalk;
+  repo.treeWalk = treeWalk;
 };
 
 export {walk};
 
-function logWalk(ref, callback) {
-  if (!callback) return logWalk.bind(this, ref);
-  let last;
-  const seen = {};
-  const repo = this;
-  if (!repo.readRef) return onShallow();
-  return repo.readRef("shallow", onShallow);
+import {
+  IRepo,
+  Type,
+  Body,
+  CommitBody,
+  TreeBody,
+  Dict
+} from '../types'
 
-  function onShallow(err, shallow) {
-    last = shallow;
-    resolveRef(repo, ref, onHash);
-  }
+export default function mixin(repo : Constructor<IRepo>) : Constructor<IRepo> {
+  return class extends repo implements IRepo {
 
-  function onHash(err, hash) {
-    if (err) return callback(err);
-    return repo.loadAs("commit", hash, (err, commit) => {
-      if (commit === undefined) return callback(err);
-      commit.hash = hash;
-      seen[hash] = true;
-      return callback(null, walk(commit, scan, loadKey, compare));
-    });
-  }
+    // (ref) => stream<commit>
+    async logWalk(ref : string) {
+      let last;
+      const seen = {};
+      const repo = this;
+      if (!repo.readRef) {
+        return resolveRef(repo, ref, onHash);
+      }else{
+        const shallow = await repo.readRef("shallow");
+        last = shallow;
+        resolveRef(repo, ref, onHash);
+      }
 
-  function scan(commit) {
-    if (last === commit) return [];
-    return commit.parents.filter(hash => !seen[hash]);
-  }
+      function onHash(err, hash) {
+        if (err) return callback(err);
+        return repo.loadAs("commit", hash, (err, commit) => {
+          if (commit === undefined) return callback(err);
+          commit.hash = hash;
+          seen[hash] = true;
+          return callback(null, walk(commit, scan, loadKey, compare));
+        });
+      }
 
-  function loadKey(hash, callback) {
-    return repo.loadAs("commit", hash, (err, commit) => {
-      if (!commit) return callback(err || new Error("Missing commit " + hash));
-      commit.hash = hash;
-      if (hash === last) commit.last = true;
-      return callback(null, commit);
-    });
+      function scan(commit) {
+        if (last === commit) return [];
+        return commit.parents.filter(hash => !seen[hash]);
+      }
+
+      function loadKey(hash, callback) {
+        return repo.loadAs("commit", hash, (err, commit) => {
+          if (!commit) return callback(err || new Error("Missing commit " + hash));
+          commit.hash = hash;
+          if (hash === last) commit.last = true;
+          return callback(null, commit);
+        });
+      }
+    }
+
+    // (treeHash) => stream<object>
+    function treeWalk(hash, callback) {
+      if (!callback) return treeWalk.bind(this, hash);
+      const repo = this;
+      return repo.loadAs("tree", hash, onTree);
+
+      function onTree(err, body) {
+        if (!body) return callback(err || new Error("Missing tree " + hash));
+        const tree = {
+          mode: modes.tree,
+          hash: hash,
+          body: body,
+          path: "/"
+        };
+        return callback(null, walk(tree, treeScan, treeLoadKey, treeCompare));
+      }
+
+      function treeLoadKey(entry, callback) {
+        if (entry.mode !== modes.tree) return callback(null, entry);
+        const type = modes.toType(entry.mode);
+        return repo.loadAs(type, entry.hash, (err, body) => {
+          if (err) return callback(err);
+          entry.body = body;
+          return callback(null, entry);
+        });
+      }
+
+    }
   }
 }
 
-function compare(commit, other) {
+function compare(commit : CommitBody, other : CommitBody) {
   return commit.author.date < other.author.date;
 }
 
-function treeWalk(hash, callback) {
-  if (!callback) return treeWalk.bind(this, hash);
-  const repo = this;
-  return repo.loadAs("tree", hash, onTree);
-
-  function onTree(err, body) {
-    if (!body) return callback(err || new Error("Missing tree " + hash));
-    const tree = {
-      mode: modes.tree,
-      hash: hash,
-      body: body,
-      path: "/"
-    };
-    return callback(null, walk(tree, treeScan, treeLoadKey, treeCompare));
-  }
-
-  function treeLoadKey(entry, callback) {
-    if (entry.mode !== modes.tree) return callback(null, entry);
-    const type = modes.toType(entry.mode);
-    return repo.loadAs(type, entry.hash, (err, body) => {
-      if (err) return callback(err);
-      entry.body = body;
-      return callback(null, entry);
-    });
-  }
-
-}
-
-function treeScan(object) {
+function treeScan(object : any) {
   if (object.mode !== modes.tree) return [];
   const tree = object.body;
   return Object.keys(tree).map(name => {

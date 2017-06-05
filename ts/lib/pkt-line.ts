@@ -1,16 +1,16 @@
 "use strict";
 
-import bodec from 'bodec';
+import * as bodec from 'bodec';
 const PACK = bodec.fromRaw("PACK");
 
-export function deframer(emit) {
+export function deframer(emit : (value? : any) => boolean) {
   let state = 0;
   let offset = 4;
   let length = 0;
-  let data;
+  let data : Uint8Array;
   let more = true;
 
-  return item => {
+  return (item : Uint8Array) => {
 
     // Forward the EOS marker
     if (item === undefined) return emit();
@@ -91,8 +91,8 @@ export function deframer(emit) {
 
 }
 
-export function framer(emit) {
-  return item => {
+export function framer(emit : (value? : Uint8Array) => void) {
+  return (item : string | Uint8Array | undefined | null) => {
     if (item === undefined) return emit();
     if (item === null) {
       return emit(bodec.fromRaw("0000"));
@@ -104,7 +104,7 @@ export function framer(emit) {
   };
 }
 
-function frameHead(length) {
+function frameHead(length : number) {
   const buffer = bodec.create(4);
   buffer[0] = toHexChar(length >>> 12);
   buffer[1] = toHexChar((length >>> 8) & 0xf);
@@ -113,11 +113,11 @@ function frameHead(length) {
   return buffer;
 }
 
-function fromHexChar(val) {
+function fromHexChar(val : number) {
   return (val >= 0x30 && val <  0x40) ? val - 0x30 :
         ((val >  0x60 && val <= 0x66) ? val - 0x57 : -1);
 }
 
-function toHexChar(val) {
+function toHexChar(val : number) {
   return val < 0x0a ? val + 0x30 : val + 0x57;
 }

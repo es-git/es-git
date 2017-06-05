@@ -1,18 +1,27 @@
 import modes from '../lib/modes';
 
-export default repo => class extends repo {
-  constructor(remote, ...args) {
-    super(...args);
-    this.remote = remote;
-  }
+import {
+  IRepo,
+  Type,
+  Body
+} from '../types'
 
-  async loadAs(type, hash) {
-    const body = await super.loadAs(type, hash);
-    if (body === undefined) return await this.remote.loadAs(type, hash);
-  }
+export default function mixin(repo : Constructor<IRepo>) : Constructor<IRepo> {
+  return class extends repo implements IRepo {
+    private readonly remote : IRepo
+    constructor(remote : IRepo, ...args : any[]) {
+      super(...args);
+      this.remote = remote;
+    }
 
-  async readRef(ref) {
-    const body = await super.readRef(ref);
-    if (body === undefined) return await this.remote.readRef(ref);
+    async loadAs(type : Type, hash : string) {
+      const body = await super.loadAs(type, hash);
+      if (body === undefined) return await this.remote.loadAs(type, hash);
+    }
+
+    async readRef(ref : string) {
+      const body = await super.readRef(ref);
+      if (body === undefined) return await this.remote.readRef(ref);
+    }
   }
-};
+}

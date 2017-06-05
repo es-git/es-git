@@ -16,6 +16,7 @@ declare module "bodec" {
   export function join(chunks : Uint8Array[]) : Uint8Array
   export function slice(buffer : Uint8Array, start? : number, end? : number) : Uint8Array
   export function fromArray(array : number[], binary? : Uint8Array, offset? : number) : Uint8Array
+  export function subarray(binary : Uint8Array, i : number) : Uint8Array
   export {Binary}
 }
 

@@ -1,49 +1,69 @@
 "use strict";
 
-import bodec from 'bodec';
+import * as bodec from 'bodec';
 import {treeMap} from '../lib/object-codec';
 
-export default repo => class extends repo {
-  async loadAs(type, hash) {
-    const realType = type === "text" ? "blob":
-                  type === "array" ? "tree" : type;
-    const body = await super.loadAs(realType, hash);
-    if (type === "text") return bodec.toUnicode(body);
-    if (type === "array") return toArray(body);
-    return body;
-  }
+import {
+  IRepo,
+  Type as LimitedType,
+  Body,
+  TreeBody,
+  CommitBody,
+  TagBody,
+  Person,
+  Dict,
+  ModeHash
+} from '../types'
 
-  async aveAs(type, body) {
-    type = type === "text" ? "blob":
-          type === "array" ? "tree" : type;
-    if (type === "blob") {
-      if (typeof body === "string") {
-        body = bodec.fromUnicode(body);
+export type Type = LimitedType | 'text' | 'array';
+
+export interface IRepoWithFormats extends IRepo {
+  loadAs(type : Type, hash : string) : Promise<Body>
+}
+
+export default function mixin(repo : Constructor<IRepo>) : Constructor<IRepoWithFormats> {
+  return class extends repo implements IRepo {
+    async loadAs(type : Type, hash : string) {
+      const realType = type === "text" ? "blob":
+                    type === "array" ? "tree" : type;
+      const body = await super.loadAs(realType, hash);
+      if (type === "text") return bodec.toUnicode(body as Uint8Array);
+      if (type === "array") return toArray(body as TreeBody);
+      return body;
+    }
+
+    async saveAs(type : Type, body : Body) {
+      type = type === "text" ? "blob":
+            type === "array" ? "tree" : type;
+      if (type === "blob") {
+        if (typeof body === "string") {
+          body = bodec.fromUnicode(body);
+        }
       }
+      else if (type === "tree") {
+        body = normalizeTree(body as TreeBody);
+      }
+      else if (type === "commit") {
+        body = normalizeCommit(body as CommitBody);
+      }
+      else if (type === "tag") {
+        body = normalizeTag(body as TagBody);
+      }
+      return await super.saveAs(type, body);
     }
-    else if (type === "tree") {
-      body = normalizeTree(body);
-    }
-    else if (type === "commit") {
-      body = normalizeCommit(body);
-    }
-    else if (type === "tag") {
-      body = normalizeTag(body);
-    }
-    return await super.saveAs(type, body);
   }
 };
 
-function toArray(tree) {
+function toArray(tree : TreeBody) {
   return Object.keys(tree).map(treeMap, tree);
 }
 
-function normalizeTree(body) {
+function normalizeTree(body : TreeBody) {
   const type = body && typeof body;
   if (type !== "object") {
     throw new TypeError("Tree body must be array or object");
   }
-  const tree = {};
+  const tree : Dict<ModeHash> = {};
   let i;
   let l;
   let entry;
@@ -71,7 +91,7 @@ function normalizeTree(body) {
   return tree;
 }
 
-function normalizeCommit(body) {
+function normalizeCommit(body : CommitBody) {
   if (!body || typeof body !== "object") {
     throw new TypeError("Commit body must be an object");
   }
@@ -93,7 +113,7 @@ function normalizeCommit(body) {
   };
 }
 
-function normalizeTag(body) {
+function normalizeTag(body : TagBody) {
   if (!body || typeof body !== "object") {
     throw new TypeError("Tag body must be an object");
   }
@@ -109,7 +129,7 @@ function normalizeTag(body) {
   };
 }
 
-function normalizePerson(person) {
+function normalizePerson(person : Person) {
   if (!person || typeof person !== "object") {
     throw new TypeError("Person must be an object");
   }
