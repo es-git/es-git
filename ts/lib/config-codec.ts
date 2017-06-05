@@ -1,18 +1,24 @@
 "use strict";
 
+import { StringMap } from '../types';
+
 // This is for working with git config files like .git/config and .gitmodules.
 // I believe this is just INI format.
-export default {
-  encode: encode,
-  decode: decode
-};
 
-function encode(config) {
-  const lines = [];
+export interface Config {
+  [key : string] : StringMap | ObjectMap
+}
+
+export interface ObjectMap {
+  [key : string] : StringMap
+}
+
+export function encode(config : Config) {
+  const lines : string[] = [];
   Object.keys(config).forEach(name => {
     const obj = config[name];
-    const deep = {};
-    const values = {};
+    const deep : ObjectMap = {};
+    const values : StringMap = {};
     let hasValues = false;
     Object.keys(obj).forEach(key => {
       const value = obj[key];
@@ -36,7 +42,7 @@ function encode(config) {
 
   return lines.join("\n") + "\n";
 
-  function encodeBody(header, obj) {
+  function encodeBody(header : string, obj : StringMap) {
     lines.push(header);
     Object.keys(obj).forEach(name => {
       lines.push( "\t" + name + " = " + obj[name]);
@@ -46,9 +52,9 @@ function encode(config) {
 }
 
 
-function decode(text) {
-  const config = {};
-  let section;
+export function decode(text : string) {
+  const config : Config = {};
+  let section : ObjectMap | StringMap;
   text.split(/[\r\n]+/).forEach(line => {
     let match = line.match(/\[([^ \t"\]]+) *(?:"([^"]+)")?\]/);
     if (match) {

@@ -7,13 +7,13 @@ const masks = {
 };
 
 const modes = {
-  isBlob: function (mode) {
+  isBlob: function (mode : number) {
     return (mode & masks.blob) === masks.mask;
   },
-  isFile: function (mode) {
+  isFile: function (mode : number) {
     return (mode & masks.file) === masks.mask;
   },
-  toType: function (mode) {
+  toType: function (mode : number) {
     if (mode === modes.commit) return "commit";
     if (mode === modes.tree) return "tree";
     if ((mode & masks.blob) === masks.mask) return "blob";

@@ -8,13 +8,17 @@
     "noFallthroughCasesInSwitch": true,
     "target": "es2015",
     "module": "es2015",
+    "moduleResolution": "node",
     "sourceMap": true,
     "inlineSourceMap": false,
     "inlineSources": true,
-    "declaration": true
+    "declaration": true,
+    "types": [
+        "node"
+    ]
   },
   "include": [
-    "./ts/*.ts"
+    "./ts/**/*.ts"
   ],
   "compileOnSave": true
 }

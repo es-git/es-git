@@ -20,17 +20,17 @@ export default function inflateStream() {
     flush: Binary === Uint8Array ? flush : flushConvert
   };
 
-  function write(byte) {
+  function write(byte : number) {
     b[0] = byte;
     inf.push(b);
-    return !inf.ended;
+    return !(inf as any).ended;
   }
 
   function recycle() { inf = new Inflate(); }
 
-  function flush() { return inf.result || empty; }
+  function flush() { return inf.result as Uint8Array || empty; }
 
   function flushConvert() {
-    return inf.result ? new Binary(inf.result) : empty;
+    return inf.result ? new Binary((inf as any).result) : empty;
   }
 };

@@ -1,8 +1,22 @@
-import inflateStream from './inflate-stream.js';
-import inflate from './inflate.js';
-import deflate from './deflate.js';
+import inflateStream from './inflate-stream';
+import inflate from './inflate';
+import deflate from './deflate';
 import sha1 from 'git-sha1';
-import bodec from 'bodec';
+import * as bodec from 'bodec';
+
+export type RefDeltaEntry = {
+  readonly type : 'ref-delta'
+  readonly body : Uint8Array
+  readonly ref : string
+}
+
+export type OfsDeltaEntry = {
+  readonly type : 'ofs-delta'
+  readonly body : Uint8Array
+  readonly ref : number
+}
+
+export type Entry = RefDeltaEntry | OfsDeltaEntry
 
 const typeToNum = {
   commit: 1,
@@ -12,12 +26,16 @@ const typeToNum = {
   "ofs-delta": 6,
   "ref-delta": 7
 };
-const numToType = {};
-for (const type in typeToNum) {
-  const num = typeToNum[type];
-  numToType[num] = type;
-}
-export function parseEntry(chunk) {
+const numToType : {[key : number] : string} = {
+  1 : "commit",
+  2 : "tree",
+  3 : "blob",
+  4 : "tag",
+  6 : "ofs-delta",
+  7 : "ref-delta"
+};
+
+export function parseEntry(chunk : Uint8Array) : Entry {
   let offset = 0;
   let byte = chunk[offset++];
   const type = numToType[(byte >> 4) & 0x7];
@@ -46,7 +64,7 @@ export function parseEntry(chunk) {
   if (body.length !== size) {
     throw new Error("Size mismatch");
   }
-  const result = {
+  const result : any = {
     type: type,
     body: body
   };
@@ -56,10 +74,11 @@ export function parseEntry(chunk) {
   return result;
 }
 
+type $State = undefined | ((byte : number, i? : number, chunk? : Uint8Array) => $State);
 
-export function decodePack(emit) {
+export function decodePack(emit : (value? : any) => void) {
 
-  let state = $pack;
+  let state : $State = $pack;
   const sha1sum = sha1();
   const inf = inflateStream();
 
@@ -69,13 +88,13 @@ export function decodePack(emit) {
   let num = 0;
   let type = 0;
   let length = 0;
-  let ref = null;
+  let ref : (number | string) = 0;
   let checksum = "";
   let start = 0;
-  const parts = [];
+  const parts : Uint8Array[] = [];
 
 
-  return chunk => {
+  return (chunk : Uint8Array) => {
     if (chunk === undefined) {
       if (num || checksum.length < 40) throw new Error("Unexpected end of input stream");
       return emit();
@@ -96,7 +115,7 @@ export function decodePack(emit) {
   };
 
   // The first four bytes in a packfile are the bytes 'PACK'
-  function $pack(byte) {
+  function $pack(byte : number) : $State {
     if ((version & 0xff) === byte) {
       version >>>= 8;
       return version ? $pack : $version;
@@ -106,7 +125,7 @@ export function decodePack(emit) {
 
   // The version is stored as an unsigned 32 integer in network byte order.
   // It must be version 2 or 3.
-  function $version(byte) {
+  function $version(byte : number) : $State {
     version = (version << 8) | byte;
     if (++offset < 4) return $version;
     if (version >= 2 && version <= 3) {
@@ -117,7 +136,7 @@ export function decodePack(emit) {
   }
 
   // The number of objects in this packfile is also stored as an unsigned 32 bit int.
-  function $num(byte) {
+  function $num(byte : number) : $State {
     num = (num << 8) | byte;
     if (++offset < 4) return $num;
     offset = 0;
@@ -128,7 +147,7 @@ export function decodePack(emit) {
   // n-byte type and length (3-bit type, (n-1)*7+4-bit length)
   // CTTTSSSS
   // C is continue bit, TTT is type, S+ is length
-  function $header(byte) {
+  function $header(byte : number) : $State {
     if (start === 0) start = position;
     type = byte >> 4 & 0x07;
     length = byte & 0x0f;
@@ -141,7 +160,7 @@ export function decodePack(emit) {
 
   // Second state in the same header parsing.
   // CSSSSSSS*
-  function $header2(byte) {
+  function $header2(byte : number) : $State {
     length |= (byte & 0x7f) << offset;
     if (byte & 0x80) {
       offset += 7;
@@ -151,7 +170,7 @@ export function decodePack(emit) {
   }
 
   // Common helper for finishing tiny and normal headers.
-  function afterHeader() {
+  function afterHeader() : $State {
     offset = 0;
     if (type === 6) {
       ref = 0;
@@ -166,27 +185,27 @@ export function decodePack(emit) {
   }
 
   // Big-endian modified base 128 number encoded ref offset
-  function $ofsDelta(byte) {
+  function $ofsDelta(byte : number) : $State {
     ref = byte & 0x7f;
     if (byte & 0x80) return $ofsDelta2;
     return $body;
   }
 
-  function $ofsDelta2(byte) {
-    ref = ((ref + 1) << 7) | (byte & 0x7f);
+  function $ofsDelta2(byte : number) : $State {
+    ref = (((ref as number) + 1) << 7) | (byte & 0x7f);
     if (byte & 0x80) return $ofsDelta2;
     return $body;
   }
 
   // 20 byte raw sha1 hash for ref
-  function $refDelta(byte) {
+  function $refDelta(byte : number) : $State {
     ref += toHex(byte);
     if (++offset < 20) return $refDelta;
     return $body;
   }
 
   // Common helper for generating 2-character hex numbers
-  function toHex(num) {
+  function toHex(num : number) {
     return num < 0x10 ? "0" + num.toString(16) : num.toString(16);
   }
 
@@ -196,7 +215,7 @@ export function decodePack(emit) {
     if (body.length !== length) {
       throw new Error("Body length mismatch");
     }
-    const item = {
+    const item : any = {
       type: numToType[type],
       size: length,
       body: body,
@@ -208,12 +227,12 @@ export function decodePack(emit) {
     offset = 0;
     type = 0;
     length = 0;
-    ref = null;
+    ref = 0;
     emit(item);
   }
 
   // Feed the deflated code to the inflate engine
-  function $body(byte, i, chunk) {
+  function $body(byte : number, i : number, chunk : Uint8Array) : $State {
     if (inf.write(byte)) return $body;
     const buf = inf.flush();
     if (buf.length !== length) throw new Error("Length mismatch, expected " + length + " got " + buf.length);
@@ -229,7 +248,7 @@ export function decodePack(emit) {
   }
 
   // 20 byte checksum
-  function $checksum(byte) {
+  function $checksum(byte : number) : $State {
     checksum += toHex(byte);
     if (++offset < 20) return $checksum;
     const actual = sha1sum.digest();
@@ -240,10 +259,10 @@ export function decodePack(emit) {
 
 
 export {encodePack};
-function encodePack(emit) {
+function encodePack(emit : (value? : any) => void) {
   const sha1sum = sha1();
-  let left;
-  return item => {
+  let left : any;
+  return (item : any) => {
     if (item === undefined) {
       if (left !== 0) throw new Error("Some items were missing");
       return emit();
@@ -272,13 +291,13 @@ function encodePack(emit) {
       throw new Error("Invalid item");
     }
   };
-  function write(chunk) {
+  function write(chunk : Uint8Array) {
     sha1sum.update(chunk);
     emit(chunk);
   }
 }
 
-function packHeader(length) {
+function packHeader(length : number) {
   return bodec.fromArray([
     0x50, 0x41, 0x43, 0x4b, // PACK
     0, 0, 0, 2,             // version 2
@@ -289,11 +308,11 @@ function packHeader(length) {
   ]);
 }
 
-function packFrame(item) {
+function packFrame(item : any) {
   let length = item.body.length;
 
   // write TYPE_AND_BASE128_SIZE
-  const head = [(typeToNum[item.type] << 4) | (length & 0xf)];
+  const head = [((typeToNum as any)[item.type] << 4) | (length & 0xf)];
   let i = 0;
   length >>= 4;
   while (length) {

@@ -1,5 +1,5 @@
-import bodec from 'bodec';
-export default function applyDelta(delta, base) {
+import * as bodec from 'bodec';
+export default function applyDelta(delta : Uint8Array, base : Uint8Array) {
   let deltaOffset = 0;
 
   if (base.length !== readLength()) {

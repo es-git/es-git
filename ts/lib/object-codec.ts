@@ -1,6 +1,18 @@
 "use strict";
-import bodec from 'bodec';
+import * as bodec from 'bodec';
 import modes from './modes';
+
+import {
+  Frame,
+  BlobFrame,
+  TreeBody,
+  TagBody,
+  CommitBody,
+  ModeHash,
+  ModeHashName,
+  Person,
+  SecondsWithOffset
+} from '../types';
 
 const encoders = {
   blob: encodeBlob,
@@ -33,12 +45,12 @@ export {treeMap};
 
 export {treeSort};
 
-function encodeBlob(body) {
+function encodeBlob(body : Uint8Array) {
   if (!bodec.isBinary(body)) throw new TypeError("Blobs must be binary values");
   return body;
 }
 
-function treeMap(key) {
+function treeMap(this : TreeBody, key : string) {
   /*jshint validthis:true*/
   const entry = this[key];
   return {
@@ -48,13 +60,13 @@ function treeMap(key) {
   };
 }
 
-function treeSort(a, b) {
+function treeSort(a : ModeHashName, b : ModeHashName) {
   const aa = (a.mode === modes.tree) ? a.name + "/" : a.name;
   const bb = (b.mode === modes.tree) ? b.name + "/" : b.name;
   return aa > bb ? 1 : aa < bb ? -1 : 0;
 }
 
-function encodeTree(body) {
+function encodeTree(body : TreeBody) {
   let tree = "";
   if (Array.isArray(body)) throw new TypeError("Tree must be in object form");
   const list = Object.keys(body).map(treeMap, body).sort(treeSort);
@@ -66,7 +78,7 @@ function encodeTree(body) {
   return bodec.fromRaw(tree);
 }
 
-function encodeTag(body) {
+function encodeTag(body : TagBody) {
   const str = "object " + body.object +
     "\ntype " + body.type +
     "\ntag " + body.tag +
@@ -75,7 +87,7 @@ function encodeTag(body) {
   return bodec.fromUnicode(str);
 }
 
-function encodeCommit(body) {
+function encodeCommit(body : CommitBody) {
   let str = "tree " + body.tree;
   for (let i = 0, l = body.parents.length; i < l; ++i) {
     str += "\nparent " + body.parents[i];
@@ -87,23 +99,23 @@ function encodeCommit(body) {
 }
 
 
-function formatPerson(person) {
+function formatPerson(person : Person) {
   return safe(person.name) +
     " <" + safe(person.email) + "> " +
     formatDate(person.date);
 }
 
-function safe(string) {
+function safe(string : string) {
   return string.replace(/(?:^[\.,:;<>"']+|[\0\n<>]+|[\.,:;<>"']+$)/gm, "");
 }
 
-function two(num) {
+function two(num : number) {
   return (num < 10 ? "0" : "") + num;
 }
 
-function formatDate(date) {
+function formatDate(date : Date | SecondsWithOffset) {
   let seconds, offset;
-  if (date.seconds) {
+  if (isSecondsWithOffset(date)) {
     seconds = date.seconds;
     offset = date.offset;
   }
@@ -119,27 +131,31 @@ function formatDate(date) {
   return seconds + " " + offset;
 }
 
-function frame(obj) {
+function isSecondsWithOffset(value : Date | SecondsWithOffset) : value is SecondsWithOffset {
+  return (value as any).seconds;
+}
+
+function frame(obj : Frame) {
   const type = obj.type;
-  const body = bodec.isBinary(obj.body) ? obj.body : encoders[type](obj.body);
+  const body = bodec.isBinary(obj.body) ? obj.body : (encoders as any)[type](obj.body) as Uint8Array;
   return bodec.join([
     bodec.fromRaw(type + " " + body.length + "\0"),
     body
   ]);
 }
 
-function decodeBlob(body) {
+function decodeBlob(body : Uint8Array) {
   return body;
 }
 
-function decodeTree(body) {
+function decodeTree(body : Uint8Array) {
   let i = 0;
   const length = body.length;
   let start;
   let mode;
   let name;
   let hash;
-  const tree = {};
+  const tree : TreeBody = {};
   while (i < length) {
     start = i;
     i = indexOf(body, 0x20, start);
@@ -157,23 +173,23 @@ function decodeTree(body) {
   return tree;
 }
 
-function decodeCommit(body) {
+function decodeCommit(body : Uint8Array) {
   let i = 0;
   let start;
-  let key;
-  const parents = [];
-  const commit = {
+  let key : keyof CommitBody | 'parent';
+  const parents : string[] = [];
+  const commit : any = {
     tree: "",
     parents: parents,
-    author: "",
-    committer: "",
+    author: undefined,
+    committer: undefined,
     message: ""
   };
   while (body[i] !== 0x0a) {
     start = i;
     i = indexOf(body, 0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    key = bodec.toRaw(body, start, i++);
+    key = bodec.toRaw(body, start, i++) as any;
     start = i;
     i = indexOf(body, 0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
@@ -183,21 +199,21 @@ function decodeCommit(body) {
     }
     else {
       if (key === "author" || key === "committer") {
-        value = decodePerson(value);
+        commit[key] = decodePerson(value);
       }
       commit[key] = value;
     }
   }
   i++;
   commit.message = bodec.toUnicode(body, i, body.length);
-  return commit;
+  return commit as CommitBody;
 }
 
-function decodeTag(body) {
+function decodeTag(body : Uint8Array) {
   let i = 0;
   let start;
   let key;
-  const tag = {};
+  const tag : any = {};
   while (body[i] !== 0x0a) {
     start = i;
     i = indexOf(body, 0x20, start);
@@ -206,16 +222,16 @@ function decodeTag(body) {
     start = i;
     i = indexOf(body, 0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
-    let value = bodec.toUnicode(body, start, i++);
+    let value : any = bodec.toUnicode(body, start, i++);
     if (key === "tagger") value = decodePerson(value);
     tag[key] = value;
   }
   i++;
   tag.message = bodec.toUnicode(body, i, body.length);
-  return tag;
+  return tag as TagBody;
 }
 
-function decodePerson(string) {
+function decodePerson(string : string) {
   const match = string.match(/^([^<]*) <([^>]*)> ([^ ]*) (.*)$/);
   if (!match) throw new Error("Improperly formatted person string");
   return {
@@ -225,10 +241,10 @@ function decodePerson(string) {
       seconds: parseInt(match[3], 10),
       offset: parseInt(match[4], 10) / 100 * -60
     }
-  };
+  } as Person;
 }
 
-function deframe(buffer, decode) {
+function deframe(buffer : Uint8Array, decode? : boolean) : Frame {
   const space = indexOf(buffer, 0x20);
   if (space < 0) throw new Error("Invalid git object buffer");
   const nil = indexOf(buffer, 0x00, space);
@@ -239,11 +255,11 @@ function deframe(buffer, decode) {
   const type = bodec.toRaw(buffer, 0, space);
   return {
     type: type,
-    body: decode ? decoders[type](body) : body
-  };
+    body: decode ? (decoders as any)[type](body) : body
+  } as any;
 }
 
-function indexOf(buffer, byte, i) {
+function indexOf(buffer : Uint8Array, byte : number, i = 0) {
   i |= 0;
   const length = buffer.length;
   for (;;i++) {
@@ -252,7 +268,7 @@ function indexOf(buffer, byte, i) {
   }
 }
 
-function parseOct(buffer, start, end) {
+function parseOct(buffer : Uint8Array, start : number, end : number) {
   let val = 0;
   while (start < end) {
     val = (val << 3) + buffer[start++] - 0x30;
@@ -260,7 +276,7 @@ function parseOct(buffer, start, end) {
   return val;
 }
 
-function parseDec(buffer, start, end) {
+function parseDec(buffer : Uint8Array, start : number, end : number) {
   let val = 0;
   while (start < end) {
     val = val * 10 + buffer[start++] - 0x30;
