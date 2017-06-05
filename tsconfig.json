@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "outDir": "./es",
+    "allowJs": false,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noFallthroughCasesInSwitch": true,
+    "target": "es2015",
+    "module": "es2015",
+    "sourceMap": true,
+    "inlineSourceMap": false,
+    "inlineSources": true,
+    "declaration": true
+  },
+  "include": [
+    "./ts/*.ts"
+  ],
+  "compileOnSave": true
+}

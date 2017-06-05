@@ -15,13 +15,25 @@
   "bugs": {
     "url": "https://github.com/creationix/js-git/issues"
   },
+  "main": "js/main.js",
+  "types": "es/main.d.ts",
+  "module": "es/main.js",
   "scripts": {
-    "test": "ls test/test-* | xargs -n1 node"
+    "clean": "rm -rf ./js ./es",
+    "test": "ls test/test-* | xargs -n1 node",
+    "tsc": "tsc",
+    "compile": "npm run tsc && npm run babel",
+    "babel": "babel --source-maps -d js es",
+    "watch": "tsc -w & ava -w",
+    "prepublish": "npm run clean && npm run compile && npm test"
   },
   "dependencies": {
     "bodec": "^0.1.0",
     "culvert": "^0.1.2",
     "git-sha1": "^0.1.2",
     "pako": "^0.2.5"
+  },
+  "devDependencies": {
+    "typescript": "^2.3.4"
   }
 }
