@@ -35,6 +35,9 @@
   },
   "devDependencies": {
     "@types/pako": "^1.0.0",
-    "typescript": "^2.3.4"
+    "ava": "^0.20.0",
+    "babel-cli": "^6.24.1",
+    "babel-preset-es2015": "^6.24.1",
+    "typescript": "^2.4.1"
   }
 }

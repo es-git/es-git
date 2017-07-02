@@ -1,0 +1,32 @@
+{
+  "name": "@es-git/core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "js/index.js",
+  "scripts": {
+    "clean": "rm -rf ./es ./js",
+    "test": "ava",
+    "tsc": "tsc",
+    "compile": "npm run tsc && npm run babel",
+    "babel": "babel --source-maps -d js es",
+    "watch": "tsc -w & ava -w",
+    "prepublish": "npm run clean && npm run compile && npm test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "ava": {
+    "files": [
+      "test/*.js"
+    ],
+    "source": [
+      "es/*.js"
+    ],
+    "require": [
+      "babel-register"
+    ]
+  },
+  "peerDependencies": {
+    "babel-runtime": "^6.22.0"
+  }
+}
