@@ -1,24 +1,9 @@
 {
   "compilerOptions": {
-    "outDir": "./es",
-    "allowJs": false,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "noFallthroughCasesInSwitch": true,
-    "target": "es2015",
-    "module": "es2015",
-    "moduleResolution": "node",
-    "sourceMap": true,
-    "inlineSourceMap": false,
-    "inlineSources": true,
-    "declaration": true,
-    "types": [
-        "node"
-    ]
+    "outDir": "./es"
   },
   "include": [
     "./ts/**/*.ts"
   ],
-  "compileOnSave": true
+  "extends": "../../tsconfig.json"
 }
