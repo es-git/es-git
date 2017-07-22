@@ -1,6 +1,6 @@
 import idb, { DB } from 'idb';
 
-import { IRawRepo, Types, Body, RawObject } from '@es-git/core';
+import { IRawRepo, Type, Hash } from '@es-git/core';
 
 export { DB };
 
@@ -20,38 +20,38 @@ export async function init(name : string) {
   return database;
 }
 
-
 export default class IdbRepo implements IRawRepo {
   private readonly db : DB
   constructor(db : DB) {
     this.db = db;
   }
 
-  async saveRaw(raw : RawObject) : Promise<void> {
+  async saveRaw(hash : Hash, raw : Uint8Array) : Promise<void> {
     const trans = this.db.transaction(["objects"], "readwrite");
     const store = trans.objectStore("objects");
-    await store.put(raw);
+    await store.put({hash, raw});
   }
 
-  async loadRaw(hash : string) : Promise<RawObject | undefined> {
+  async loadRaw(hash : Hash) : Promise<Uint8Array | undefined> {
     const trans = this.db.transaction(["objects"], "readwrite");
     const store = trans.objectStore("objects");
-    return await store.get(hash);
+    const result = await store.get(hash);
+    return result ? result.raw as Uint8Array : undefined;
   }
 
-  async hasHash(hash : string) : Promise<boolean> {
+  async hasHash(hash : Hash) : Promise<boolean> {
     const body = await this.loadRaw(hash);
     return !!body;
   }
 
-  async readRef(ref : string) : Promise<string | undefined> {
+  async readRef(ref : string) : Promise<Hash | undefined> {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
     const result = await store.get(ref);
-    return result ? result.hash as string : undefined;
+    return result ? result.hash as Hash : undefined;
   }
 
-  async updateRef(ref : string, hash : string) : Promise<void> {
+  async updateRef(ref : string, hash : Hash) : Promise<void> {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
     const entry = { path: ref, hash: hash };
