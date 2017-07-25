@@ -52,6 +52,11 @@ export type BlobObject = {
   readonly body : Uint8Array
 }
 
+export type TextObject = {
+  readonly type : 'text'
+  readonly body : string
+}
+
 export type TreeObject = {
   readonly type : Type.tree
   readonly body : TreeBody
@@ -88,4 +93,4 @@ export type TagBody = {
 }
 
 export type Body = Uint8Array | TreeBody | CommitBody | TagBody;
-export type GitObject = BlobObject | TreeObject | CommitObject | TagObject;
+export type GitObject = TextObject | BlobObject | TreeObject | CommitObject | TagObject;
