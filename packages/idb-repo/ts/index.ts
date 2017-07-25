@@ -39,22 +39,29 @@ export default class IdbRepo implements IRawRepo {
     return result ? result.raw as Uint8Array : undefined;
   }
 
-  async hasHash(hash : Hash) : Promise<boolean> {
-    const body = await this.loadRaw(hash);
-    return !!body;
+  async listRefs() : Promise<Hash[]> {
+    const trans = this.db.transaction(["refs"], "readwrite");
+    const store = trans.objectStore("refs");
+    return await store.getAllKeys() as Hash[];
   }
 
-  async readRef(ref : string) : Promise<Hash | undefined> {
+  async getRef(ref : string) : Promise<Hash | undefined> {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
     const result = await store.get(ref);
     return result ? result.hash as Hash : undefined;
   }
 
-  async updateRef(ref : string, hash : Hash) : Promise<void> {
+  async setRef(ref : string, hash : Hash) : Promise<void> {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
     const entry = { path: ref, hash: hash };
     await store.put(entry);
+  }
+
+  async deleteRef(ref : string) : Promise<void> {
+    const trans = this.db.transaction(["refs"], "readwrite");
+    const store = trans.objectStore("refs");
+    await store.delete(ref);
   }
 }

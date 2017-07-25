@@ -28,10 +28,15 @@ const CompressedRepo = zlibMixin(class {
   async loadRaw(hash : string){
     return this.map.get(hash);
   }
-  async readRef(ref : string){
+  async listRefs(){
+    return [];
+  }
+  async getRef(ref : string){
     return undefined;
   }
-  async updateRef(ref : string, hash : string){
+  async setRef(ref : string, hash : string){
     return undefined;
+  }
+  async deleteRef(ref : string){
   }
 });

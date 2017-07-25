@@ -13,18 +13,22 @@ export default class MemoryRepo implements IRawRepo {
   }
 
   async loadRaw(hash : string) : Promise<Uint8Array | undefined> {
-    return await this.objects.get(hash);
+    return this.objects.get(hash);
   }
 
-  async hasHash(hash : string) : Promise<boolean> {
-    return await this.objects.has(hash);
+  async listRefs() : Promise<Hash[]> {
+    return Array.from(this.refs.keys());
   }
 
-  async readRef(ref : string) : Promise<string | undefined> {
-    return await this.refs.get(ref);
+  async getRef(ref : string) : Promise<string | undefined> {
+    return this.refs.get(ref);
   }
 
-  async updateRef(ref : string, hash : string) : Promise<void> {
+  async setRef(ref : string, hash : string) : Promise<void> {
     this.refs.set(ref, hash);
+  }
+
+  async deleteRef(ref : string) : Promise<void> {
+    this.refs.delete(ref);
   }
 }
