@@ -3,13 +3,13 @@ import * as sinon from 'sinon';
 import 'sinon-stub-promise';
 const sinonStubPromise = require('sinon-stub-promise');
 import { Type, Mode, Hash } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitBody } from '@es-git/object-mixin';
+import { IObjectRepo, GitObject, CommitBody, TreeBody } from '@es-git/object-mixin';
 
 import walkersMixin from './index';
 
 sinonStubPromise(sinon);
 
-test('walk', async t => {
+test('walk commits', async t => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   load.withArgs('commit5').resolves({type: Type.commit, body: makeCommit('commit5', 'commit4')});
@@ -28,7 +28,7 @@ test('walk', async t => {
   t.is(load.callCount, 6);
 });
 
-test('walk merge', async t => {
+test('walk merge commit', async t => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   load.withArgs('commit5').resolves({type: Type.commit, body: makeCommit('commit5', 'commit4')});
@@ -42,6 +42,47 @@ test('walk merge', async t => {
     t.is(result.hash, result.commit.body.message);
   }
   t.is(load.callCount, 6);
+});
+
+test('walk tree', async t => {
+  const load = sinon.stub();
+  const repo = new WalkersRepo({load});
+  const folder = makeFolder(
+    'rootHash',
+    '/file.txt',
+    '/node_modules/folder/package.json',
+    '/src/index.js',
+    '/src/index.test.js'
+  );
+  load.callsFake(hash => ({type: Type.tree, body: folder[hash]}));
+  const results = [];
+  for await(const result of repo.walkTree('rootHash')){
+    if(!result) return t.fail();
+    results.push(result);
+  }
+  t.is(load.callCount, 4);
+  t.deepEqual(results, [
+    {
+      hash: '/file.txt',
+      mode: 33188,
+      path: ['file.txt'],
+    },
+    {
+      hash: '/node_modules/folder/package.json',
+      mode: 33188,
+      path: ['node_modules', 'folder', 'package.json'],
+    },
+    {
+      hash: '/src/index.js',
+      mode: 33188,
+      path: ['src', 'index.js'],
+    },
+    {
+      hash: '/src/index.test.js',
+      mode: 33188,
+      path: ['src', 'index.test.js'],
+    },
+  ]);
 });
 
 const WalkersRepo = walkersMixin(class TestRepo {
@@ -73,4 +114,26 @@ function makeCommit(message : string, ...parents : Hash[]) : CommitBody{
     message,
     parents
   };
+}
+
+function makeFolder(hash : Hash, ...paths : string[]) : {[hash : string] : TreeBody} {
+  const bodies : {[hash : string] : TreeBody} = {
+    [hash]: {}
+  };
+  for(const path of paths){
+    let subpath = '';
+    let parent = bodies[hash];
+    for(const segment of path.split('/').filter(x => x.length)){
+      subpath += `/${segment}`;
+      parent[segment] = {
+        hash: subpath,
+        mode: subpath === path ? Mode.file : Mode.tree
+      };
+      if(subpath !== path && subpath in bodies === false){
+        bodies[subpath] = {};
+      }
+      parent = bodies[subpath];
+    }
+  }
+  return bodies;
 }
