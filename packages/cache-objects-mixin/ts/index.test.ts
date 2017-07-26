@@ -1,4 +1,5 @@
 import test from 'ava';
+import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
 import { IObjectRepo, GitObject } from '@es-git/object-mixin';
 
@@ -27,17 +28,19 @@ test('second save returns value from cache', async t => {
 });
 
 test('load without save goes to source', async t => {
-  const objectRepo = new CacheObjectsRepo({}, {load: () => t.pass()});
+  const load = sinon.spy();
+  const objectRepo = new CacheObjectsRepo({}, {load});
   const result = await objectRepo.loadObject('object');
+  t.true(load.calledOnce);
 });
 
 const CacheObjectsRepo = cacheObjectsMixin(class TestRepo {
-  private readonly save : callback;
-  private readonly load : callback;
+  private readonly save : sinon.SinonSpy;
+  private readonly load : sinon.SinonSpy;
   private readonly map : Map<string, GitObject>;
-  constructor({save, load} : {save? : callback, load? : callback} = {}){
-    this.save = save || ((...args : any[]) => {});
-    this.load = load || ((...args : any[]) => {});
+  constructor({save, load} : {save? : sinon.SinonSpy, load? : sinon.SinonSpy} = {}){
+    this.save = save || sinon.spy();
+    this.load = load || sinon.spy();
     this.map = new Map<string, GitObject>();
   }
   async saveObject(object : GitObject){
@@ -51,5 +54,3 @@ const CacheObjectsRepo = cacheObjectsMixin(class TestRepo {
     return this.map.get(hash);
   }
 });
-
-type callback = (...args : any[]) => void;

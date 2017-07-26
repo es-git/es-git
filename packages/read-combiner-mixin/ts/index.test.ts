@@ -1,41 +1,46 @@
 import test from 'ava';
+import * as sinon from 'sinon';
+import 'sinon-stub-promise';
+const sinonStubPromise = require('sinon-stub-promise');
 import { Type } from '@es-git/core';
 import { IObjectRepo, GitObject } from '@es-git/object-mixin';
 
 import readCombinerMixin from './index';
 
+sinonStubPromise(sinon);
+
 test('load', async t => {
-  let resolveLoadObject : (value? : GitObject) => void = () => false as never;
-  const loadResult = new Promise(res => resolveLoadObject = res);
-  const objectRepo = new ReadCombinerRepo({load: () => loadResult});
+  const load = sinon.stub();
+  const loadPromise = load.returnsPromise();
+  const objectRepo = new ReadCombinerRepo({load});
   const result1 = objectRepo.loadObject('object');
   const result2 = objectRepo.loadObject('object');
   const race = Promise.race([
     result1.then(x => false),
     result2.then(x => false),
-    loadResult.then(x => true)
+    Promise.resolve(true)
   ]);
-  resolveLoadObject({type: Type.blob, body: new Uint8Array(0)});
+  loadPromise.resolves({type: Type.blob, body: new Uint8Array(0)});
   t.true(await race);
 });
 
 test('loadObject of super called only once', async t => {
-  let resolveLoadObject : (value? : GitObject) => void = () => false as never;
-  const loadResult = new Promise(res => resolveLoadObject = res);
-  let loadCalls = 0;
-  const objectRepo = new ReadCombinerRepo({load: () => {loadCalls++; return loadResult}});
+  const load = sinon.stub();
+  const loadPromise = load.returnsPromise();
+  const objectRepo = new ReadCombinerRepo({load});
   const result1 = objectRepo.loadObject('object');
   const result2 = objectRepo.loadObject('object');
   const result3 = objectRepo.loadObject('object');
   const result4 = objectRepo.loadObject('object');
-  resolveLoadObject({type: Type.blob, body: new Uint8Array(0)});
-  t.is(loadCalls, 1);
+  load.returns
+  loadPromise.resolves({type: Type.blob, body: new Uint8Array(0)});
+  t.true(load.calledOnce);
 });
 
 const ReadCombinerRepo = readCombinerMixin(class TestRepo {
-  private readonly load : callback;
+  private readonly load : sinon.SinonStub;
   private readonly map : Map<string, GitObject>;
-  constructor({load} : {load? : callback} = {}){
+  constructor({load} : {load? : sinon.SinonStub} = {}){
     this.load = load || ((...args : any[]) => {});
     this.map = new Map<string, GitObject>();
   }
@@ -48,5 +53,3 @@ const ReadCombinerRepo = readCombinerMixin(class TestRepo {
     return this.load(hash);
   }
 });
-
-type callback = (...args : any[]) => any;
