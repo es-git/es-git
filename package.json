@@ -1,49 +1,8 @@
 {
-  "name": "js-git",
-  "version": "0.7.8",
-  "description": "Git Implemented in JavaScript",
-  "keywords": [
-    "git",
-    "js-git"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/creationix/js-git.git"
-  },
-  "author": "Tim Caswell <tim@creationix.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/creationix/js-git/issues"
-  },
-  "main": "js/main.js",
-  "types": "es/main.d.ts",
-  "module": "es/main.js",
   "scripts": {
-    "clean": "rm -rf ./js ./es",
-    "test": "ls test/test-* | xargs -n1 node",
-    "tsc": "tsc",
-    "compile": "npm run tsc && npm run babel",
-    "babel": "babel --source-maps -d js es",
-    "watch": "tsc -w & ava -w",
-    "prepublish": "npm run clean && npm run compile && npm test"
-  },
-  "dependencies": {
-    "bodec": "^0.1.0",
-    "culvert": "^0.1.2",
-    "git-sha1": "^0.1.2",
-    "pako": "^0.2.5"
+    "lerna": "lerna"
   },
   "devDependencies": {
-    "@types/node": "^8.0.7",
-    "@types/pako": "^1.0.0",
-    "@types/sinon": "^2.3.3",
-    "@types/sinon-stub-promise": "^1.1.0",
-    "ava": "^0.20.0",
-    "babel-cli": "^6.24.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-es2015": "^6.24.1",
-    "sinon": "^2.4.1",
-    "sinon-stub-promise": "^4.0.0",
-    "typescript": "^2.4.1"
+    "lerna": "^2.0.0"
   }
 }

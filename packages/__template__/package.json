@@ -1,5 +1,6 @@
 {
   "name": "@es-git/__template__",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "main": "js/index.js",
