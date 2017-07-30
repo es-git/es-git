@@ -88,7 +88,7 @@ test('walk tree', async t => {
 const WalkersRepo = walkersMixin(class TestRepo {
   private readonly load : sinon.SinonStub;
   constructor({load} : {load? : sinon.SinonStub} = {}){
-    this.load = load || ((...args : any[]) => {});
+    this.load = load || sinon.stub();
   }
   async saveObject(object : GitObject){
     return 'dummy';

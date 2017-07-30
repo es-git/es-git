@@ -69,7 +69,7 @@ const PathToObjectRepo = pathToObjectMixin(class TestRepo {
   private readonly load : sinon.SinonStub;
   private readonly map : Map<string, GitObject>;
   constructor({load} : {load? : sinon.SinonStub} = {}){
-    this.load = load || ((...args : any[]) => {});
+    this.load = load || sinon.stub();
     this.map = new Map<string, GitObject>();
   }
   async saveObject(object : GitObject){

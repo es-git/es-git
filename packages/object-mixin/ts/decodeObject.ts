@@ -19,6 +19,8 @@ import {
   SecondsWithOffset
 } from './index';
 
+const decoder = new TextDecoder();
+
 export default function decodeObject(buffer : Uint8Array) : GitObject {
   const space = buffer.indexOf(0x20);
   if (space < 0) throw new Error("Invalid git object buffer");
@@ -27,7 +29,7 @@ export default function decodeObject(buffer : Uint8Array) : GitObject {
   const body = buffer.subarray(nil + 1);
   const size = parseDec(buffer, space + 1, nil);
   if (size !== body.length) throw new Error("Invalid body length.");
-  const type = toRaw(buffer, 0, space);
+  const type = decodeSubarray(buffer, 0, space);
   switch(type){
     case Type.blob:
       return decodeBlob(body);
@@ -64,7 +66,7 @@ function decodeTree(body : Uint8Array) : TreeObject {
     mode = parseOct(body, start, i++);
     start = i;
     i = body.indexOf(0x00, start);
-    name = toRaw(body, start, i++);
+    name = decodeSubarray(body, start, i++);
     hash = toHex(body, i, i += 20);
     tree[name] = {
       mode: mode,
@@ -94,11 +96,11 @@ function decodeCommit(body : Uint8Array) : CommitObject {
     start = i;
     i = body.indexOf(0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    key = toRaw(body, start, i++) as any;
+    key = decodeSubarray(body, start, i++) as any;
     start = i;
     i = body.indexOf(0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
-    let value = toRaw(body, start, i++);
+    let value = decodeSubarray(body, start, i++);
     if (key === "parent") {
       parents.push(value);
     } else if (key === "author" || key === "committer") {
@@ -108,7 +110,7 @@ function decodeCommit(body : Uint8Array) : CommitObject {
     }
   }
   i++;
-  commit.message = toRaw(body, i, body.length);
+  commit.message = decodeSubarray(body, i, body.length);
   return {
     type: Type.commit,
     body: commit
@@ -124,16 +126,16 @@ function decodeTag(body : Uint8Array) : TagObject {
     start = i;
     i = body.indexOf(0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    key = toRaw(body, start, i++);
+    key = decodeSubarray(body, start, i++);
     start = i;
     i = body.indexOf(0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
-    let value : any = toRaw(body, start, i++);
+    let value : any = decodeSubarray(body, start, i++);
     if (key === "tagger") value = decodePerson(value);
     tag[key] = value;
   }
   i++;
-  tag.message = toRaw(body, i, body.length);
+  tag.message = decodeSubarray(body, i, body.length);
   return {
     type: Type.tag,
     body: tag
@@ -169,12 +171,8 @@ function parseDec(buffer : Uint8Array, start : number, end : number) {
   return val;
 }
 
-function toRaw(binary : Uint8Array, start = 0, end = binary.length) {
-  var raw = "";
-  for (var i = start; i < end; i++) {
-    raw += String.fromCharCode(binary[i]);
-  }
-  return raw;
+function decodeSubarray(binary : Uint8Array, start = 0, end = binary.length) {
+  return decoder.decode(binary.subarray(start, end));
 }
 
 function toHex(binary : Uint8Array, start = 0, end = binary.length) {

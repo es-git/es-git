@@ -18,7 +18,7 @@ export interface IWalkersRepo {
 }
 
 export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IWalkersRepo> & T {
-  return class WalkersRepo extends repo implements WalkersRepo {
+  return class WalkersRepo extends repo implements IWalkersRepo {
     constructor(...args : any[]){
       super(...args);
     }
