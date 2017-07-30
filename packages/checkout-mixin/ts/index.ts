@@ -19,18 +19,19 @@ export type File = {
 }
 
 export interface ICheckoutRepo {
-  checkout(hash : Hash) : Promise<Folder>
+  checkoutCommit(hash : Hash) : Promise<Folder>
+  checkout(ref : string) : Promise<Folder>
 }
 
 const decoder = new TextDecoder();
 
-export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObjectRepo>>(repo : T) : Constructor<ICheckoutRepo> & T {
+export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObjectRepo & IRawRepo>>(repo : T) : Constructor<ICheckoutRepo> & T {
   return class CheckoutRepo extends repo implements ICheckoutRepo {
     constructor(...args : any[]){
       super(...args);
     }
 
-    async checkout(hash : Hash) : Promise<Folder> {
+    async checkoutCommit(hash : Hash) : Promise<Folder> {
       const result = {contents: {}, isFile: false as false};
       const commit = await super.loadObject(hash);
       if(!commit) throw new Error(`Cannot find object ${hash}`);
@@ -42,6 +43,12 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
         recursivelyMake(result, path, mode, file.body);
       }
       return result;
+    }
+
+    async checkout(ref : string) : Promise<Folder> {
+      const hash = await super.getRef(ref);
+      if(!hash) throw new Error(`Unknown ref ${ref}`);
+      return this.checkoutCommit(hash);
     }
   }
 }

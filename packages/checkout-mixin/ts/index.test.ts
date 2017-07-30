@@ -2,7 +2,7 @@ import test from 'ava';
 import * as sinon from 'sinon';
 import 'sinon-stub-promise';
 const sinonStubPromise = require('sinon-stub-promise');
-import { Type, Mode, Hash } from '@es-git/core';
+import { IRawRepo, Type, Mode, Hash } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitBody, TreeObject, TreeBody } from '@es-git/object-mixin';
 import { IWalkersRepo, HashModePath, HashAndCommitObject } from '@es-git/walkers-mixin';
 
@@ -12,11 +12,11 @@ import checkoutMixin from './index';
 
 sinonStubPromise(sinon);
 
-test('checkout', async t => {
+test('checkout commit', async t => {
   const load = sinon.stub();
   const walkTreeStub = sinon.stub();
   const repo = new CheckoutRepo({load, walkTreeStub});
-  load.withArgs('commit').resolves({type: Type.commit, body: makeCommit('commit')});
+  load.withArgs('commitHash').resolves({type: Type.commit, body: makeCommit('commit')});
   walkTreeStub.withArgs('treeHash').returns(async function *() : AsyncIterableIterator<HashModePath>{
     yield {
       hash: 'file1Hash',
@@ -26,7 +26,7 @@ test('checkout', async t => {
   }());
   load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
 
-  const result = await repo.checkout('commit');
+  const result = await repo.checkoutCommit('commitHash');
   if(!result) return t.fail();
   if(result.isFile) return t.fail();
   const file1 = result.contents['file.txt'];
@@ -35,12 +35,39 @@ test('checkout', async t => {
   t.is(file1.text, 'test');
 });
 
-const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObjectRepo {
-  private readonly load : sinon.SinonStub;
+test('checkout branch', async t => {
+  const load = sinon.stub();
+  const walkTreeStub = sinon.stub();
+  const getRefStub = sinon.stub();
+  const repo = new CheckoutRepo({load, walkTreeStub, getRefStub});
+  getRefStub.withArgs('branch').resolves('commitHash');
+  load.withArgs('commitHash').resolves({type: Type.commit, body: makeCommit('commit')});
+  walkTreeStub.withArgs('treeHash').returns(async function *() : AsyncIterableIterator<HashModePath>{
+    yield {
+      hash: 'file1Hash',
+      mode: Mode.file,
+      path: ['file.txt']
+    };
+  }());
+  load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
+
+  const result = await repo.checkout('branch');
+  if(!result) return t.fail();
+  if(result.isFile) return t.fail();
+  const file1 = result.contents['file.txt'];
+  if(!file1) return t.fail();
+  if(file1.isFile === false) return t.fail();
+  t.is(file1.text, 'test');
+});
+
+const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObjectRepo, IRawRepo {
+  private readonly load: sinon.SinonStub;
   private readonly walkTreeStub : sinon.SinonStub;
-  constructor({load, walkTreeStub} : {load? : sinon.SinonStub, walkTreeStub? : sinon.SinonStub} = {}){
+  private readonly getRefStub : sinon.SinonStub;
+  constructor({load, walkTreeStub, getRefStub} : {load? : sinon.SinonStub, walkTreeStub? : sinon.SinonStub, getRefStub? : sinon.SinonStub} = {}){
     this.load = load || sinon.stub();
     this.walkTreeStub = walkTreeStub || sinon.stub();
+    this.getRefStub = getRefStub || sinon.stub();
   }
 
   async saveObject(object : GitObject){
@@ -56,6 +83,25 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
 
   async *walkTree(hash : Hash) : AsyncIterableIterator<HashModePath> {
     yield* this.walkTreeStub(hash);
+  }
+
+  listRefs(): Promise<string[]> {
+    throw new Error("Method not implemented.");
+  }
+  getRef(ref: string): Promise<string | undefined> {
+    return this.getRefStub(ref);
+  }
+  setRef(ref: string, hash: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  deleteRef(ref: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  saveRaw(hash: string, object: Uint8Array): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  loadRaw(hash: string): Promise<Uint8Array | undefined> {
+    throw new Error("Method not implemented.");
   }
 });
 
