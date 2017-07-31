@@ -5,14 +5,17 @@ import { IWalkersRepo, HashModePath } from '@es-git/walkers-mixin';
 import { TextDecoder } from 'text-encoding';
 
 export type Folder = {
-  readonly isFile : false
-  readonly contents : {
-    readonly [key : string] : Folder | File;
+  readonly hash : Hash
+  readonly files : {
+    readonly [key : string] : File;
+  }
+  readonly folders : {
+    readonly [key : string] : Folder;
   }
 }
 
 export type File = {
-  readonly isFile : true
+  readonly hash : Hash
   readonly mode : number,
   readonly body : Uint8Array,
   readonly text : string
@@ -32,15 +35,19 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
     }
 
     async checkoutCommit(hash : Hash) : Promise<Folder> {
-      const result = {contents: {}, isFile: false as false};
+      const result = {files: {}, folders: {}, hash};
       const commit = await super.loadObject(hash);
       if(!commit) throw new Error(`Cannot find object ${hash}`);
       if(commit.type !== Type.commit) throw new Error(`${hash} is not a commit`);
-      for await(const {path, mode, hash} of super.walkTree(commit.body.tree)){
-        const file = await super.loadObject(hash);
-        if(!file) throw new Error(`Cannot find object ${hash} for file ${path.join('/')}`);
-        if(file.type !== Type.blob) throw new Error(`${hash} is not a blob for file ${path.join('/')}`);
-        recursivelyMake(result, path, mode, file.body);
+      for await(const {path, mode, hash} of super.walkTree(commit.body.tree, true)){
+        if(isFile(mode)){
+          const file = await super.loadObject(hash);
+          if(!file) throw new Error(`Cannot find object ${hash} for file ${path.join('/')}`);
+          if(file.type !== Type.blob) throw new Error(`${hash} is not a blob for file ${path.join('/')}`);
+          recursivelyMakeFile(result, path, mode, hash, file.body);
+        }else{
+          recursivelyMakeFolder(result, path, mode, hash);
+        }
       }
       return result;
     }
@@ -53,18 +60,29 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
   }
 }
 
-function recursivelyMake(folder : any, path : string[], mode : Mode, body : Uint8Array){
+function recursivelyMakeFile(parent : any, path : string[], mode : Mode, hash : Hash, body : Uint8Array){
   const [name, ...subPath] = path;
   if(subPath.length === 0){
-    folder.contents[name] = {
+    parent.files[name] = {
+      hash,
       mode,
       body,
       get text(){return decoder.decode(body)}
     }
   }else{
-    if(name in folder === false){
-      folder.contents[name] = {contents: {}};
-    }
-    recursivelyMake(folder.contents[name], subPath, mode, body);
+    recursivelyMakeFile(parent.folders[name], subPath, mode, hash, body);
+  }
+}
+
+function recursivelyMakeFolder(parent : any, path : string[], mode : Mode, hash : Hash){
+  const [name, ...subPath] = path;
+  if(subPath.length === 0){
+    parent.folders[name] = {
+      hash,
+      files: {},
+      folders: {}
+    };
+  }else{
+    recursivelyMakeFolder(parent.folders[name], subPath, mode, hash);
   }
 }

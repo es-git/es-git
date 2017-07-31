@@ -28,10 +28,37 @@ test('checkout commit', async t => {
 
   const result = await repo.checkoutCommit('commitHash');
   if(!result) return t.fail();
-  if(result.isFile) return t.fail();
-  const file1 = result.contents['file.txt'];
+  const file1 = result.files['file.txt'];
   if(!file1) return t.fail();
-  if(file1.isFile === false) return t.fail();
+  t.is(file1.hash, 'file1Hash');
+  t.is(file1.text, 'test');
+});
+
+test('checkout subtree', async t => {
+  const load = sinon.stub();
+  const walkTreeStub = sinon.stub();
+  const repo = new CheckoutRepo({load, walkTreeStub});
+  load.withArgs('commitHash').resolves({type: Type.commit, body: makeCommit('commit')});
+  walkTreeStub.withArgs('treeHash').returns(async function *() : AsyncIterableIterator<HashModePath>{
+    yield {
+      hash: 'folder1hash',
+      mode: Mode.tree,
+      path: ['folder']
+    };
+    yield {
+      hash: 'file1Hash',
+      mode: Mode.file,
+      path: ['folder', 'file.txt']
+    };
+  }());
+  load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
+
+  const result = await repo.checkoutCommit('commitHash');
+  if(!result) return t.fail();
+  t.is(result.folders['folder'].hash, 'folder1hash');
+  const file1 = result.folders['folder'].files['file.txt'];
+  if(!file1) return t.fail();
+  t.is(file1.hash, 'file1Hash');
   t.is(file1.text, 'test');
 });
 
@@ -53,10 +80,8 @@ test('checkout branch', async t => {
 
   const result = await repo.checkout('branch');
   if(!result) return t.fail();
-  if(result.isFile) return t.fail();
-  const file1 = result.contents['file.txt'];
+  const file1 = result.files['file.txt'];
   if(!file1) return t.fail();
-  if(file1.isFile === false) return t.fail();
   t.is(file1.text, 'test');
 });
 
