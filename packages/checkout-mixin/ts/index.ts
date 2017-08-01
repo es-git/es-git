@@ -35,10 +35,10 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
     }
 
     async checkoutCommit(hash : Hash) : Promise<Folder> {
-      const result = {files: {}, folders: {}, hash};
       const commit = await super.loadObject(hash);
       if(!commit) throw new Error(`Cannot find object ${hash}`);
       if(commit.type !== Type.commit) throw new Error(`${hash} is not a commit`);
+      const result = {files: {}, folders: {}, hash: commit.body.tree};
       for await(const {path, mode, hash} of super.walkTree(commit.body.tree, true)){
         if(isFile(mode)){
           const file = await super.loadObject(hash);
