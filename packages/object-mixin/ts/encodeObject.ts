@@ -20,9 +20,7 @@ const encoder = new TextEncoder();
 
 export default function encodeObject(object : GitObject) : Uint8Array {
   const bytes = getBytes(object);
-  return concatenate(
-    joinWithNewline(`${object.type} ${bytes.length}\0`),
-    bytes);
+  return concatenate(encoder.encode(`${object.type} ${bytes.length}\0`), bytes);
 }
 
 export function getBytes(object : GitObject) : Uint8Array {
@@ -53,13 +51,13 @@ export function treeSort(a : {name : string, mode : Mode}, b : {name : string, m
 }
 
 export function encodeTree(body : TreeBody) {
-  return joinWithNewline(...Object.keys(body)
+  return concatenate(...flatten(Object.keys(body)
     .map(key => ({
       name: key,
       ...body[key]
     }))
     .sort(treeSort)
-    .map(entry => concatenate(encoder.encode(`${entry.mode.toString(8)} ${entry.name}\0`), encodeHex(entry.hash))));
+    .map(entry => [encoder.encode(`${entry.mode.toString(8)} ${entry.name}\0`), encodeHex(entry.hash)])));
 
 }
 
@@ -161,4 +159,8 @@ function encodeHex(hex : string) {
 function codeToNibble(code : number) {
   code |= 0;
   return (code - ((code & 0x40) ? 0x57 : 0x30))|0;
+}
+
+function flatten<T>(items : T[][]){
+  return items.reduce((result, list) => result.concat(list), []);
 }
