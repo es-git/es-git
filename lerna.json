@@ -5,6 +5,9 @@
   ],
   "version": "independent",
   "commands": {
+    "watch+test": {
+      "parallel": true
+    },
     "watch": {
       "parallel": true
     }

@@ -8,11 +8,12 @@
   "module": "es/index.js",
   "scripts": {
     "clean": "rm -rf ./es ./js",
-    "test": "../../node_modules/.bin/ava",
     "tsc": "../../node_modules/.bin/tsc",
-    "compile": "npm run tsc && npm run babel",
     "babel": "../../node_modules/.bin/babel --source-maps -d js es",
-    "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
+    "compile": "npm run tsc && npm run babel",
+    "test": "../../node_modules/.bin/ava",
+    "watch+test": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
+    "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
     "prepublish": "npm run clean && npm run compile && npm test"
   },
   "keywords": [],
