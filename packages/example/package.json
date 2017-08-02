@@ -11,8 +11,6 @@
     "tsc": "../../node_modules/.bin/tsc",
     "babel": "../../node_modules/.bin/babel --source-maps -d js es",
     "compile": "npm run tsc && npm run babel",
-    "test": "../../node_modules/.bin/ava",
-    "watch+test": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
     "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
     "prepublish": "npm run clean && npm run compile && npm test"
   },
@@ -42,6 +40,7 @@
     "@es-git/core": "^1.0.0",
     "@es-git/node-fs-repo": "^1.0.0",
     "@es-git/object-mixin": "^1.0.0",
+    "@es-git/path-to-object-mixin": "^1.0.0",
     "@es-git/walkers-mixin": "^1.0.0",
     "@es-git/zlib-mixin": "^1.0.0"
   }

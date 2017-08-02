@@ -6,8 +6,15 @@ import object from '@es-git/object-mixin';
 import walkers from '@es-git/walkers-mixin';
 import checkout from '@es-git/checkout-mixin';
 import commit from '@es-git/commit-mixin';
+import pathToObject from '@es-git/path-to-object-mixin';
 
-class Repo extends mix(NodeFsRepo).with(zlib).with(object).with(walkers).with(checkout).with(commit) {
+class Repo extends mix(NodeFsRepo)
+                  .with(zlib)
+                  .with(object)
+                  .with(pathToObject)
+                  .with(walkers)
+                  .with(checkout)
+                  .with(commit) {
   async init() {
     await super.init();
     const treeHash = await this.saveTree({});
@@ -57,6 +64,9 @@ class Repo extends mix(NodeFsRepo).with(zlib).with(object).with(walkers).with(ch
         date: new Date()
       });
     console.log(newHash);
+    const commit = await this.loadObject(newHash);
+    if(!commit || commit.type != Type.commit) throw new Error("shouldn't happen");
+    await this.loadObjectByPath(commit.body.tree, ['src', 'index.js']);
   }
 }
 
