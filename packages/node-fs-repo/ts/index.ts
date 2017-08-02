@@ -20,6 +20,8 @@ export default class NodeFsRepo implements IRawRepo {
   }
 
   async init(){
+    await mkdirp(join(this.path, 'branches'));
+    await mkdirp(join(this.path, 'info'));
     await mkdirp(join(this.path, 'objects'));
     await mkdirp(join(this.path, 'refs'));
   }
