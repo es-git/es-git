@@ -1,6 +1,6 @@
 {
   "name": "@es-git/commit-mixin",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -40,8 +40,8 @@
   },
   "dependencies": {
     "@es-git/core": "^0.0.1",
-    "@es-git/object-mixin": "^0.0.1",
-    "@es-git/walkers-mixin": "^0.0.1",
+    "@es-git/object-mixin": "^0.0.5",
+    "@es-git/walkers-mixin": "^0.0.5",
     "text-encoding": "~0.6.4"
   }
 }
