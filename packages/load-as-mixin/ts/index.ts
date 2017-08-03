@@ -6,7 +6,7 @@ export interface ILoadAsRepo {
 }
 
 export default function loadAsMixin<T extends Constructor<IObjectRepo>>(repo : T)
-: Constructor<IObjectRepo> & Constructor<ILoadAsRepo> {
+: T & Constructor<ILoadAsRepo> {
   return class LoadAsRepo extends repo implements ILoadAsRepo {
 
     async loadAs(hash : Hash, type : Type) {

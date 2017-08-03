@@ -7,7 +7,7 @@ export type CachedObjectRepoConstructor<T> =
   new(options : Options, ...args : any[]) => T;
 
 export default function cacheObjectsMixin<T extends Constructor<IObjectRepo>>(repo : T)
-: Constructor<IObjectRepo> & CachedObjectRepoConstructor<IObjectRepo> {
+: T & CachedObjectRepoConstructor<IObjectRepo> {
   return class CachedObjectRepo extends repo {
     private readonly hashToObjectCache : LRU<Hash, GitObject>
     private readonly objectToHashCache : LRU<GitObject, Hash>
