@@ -1,6 +1,6 @@
 {
   "name": "@es-git/cache-objects-mixin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
