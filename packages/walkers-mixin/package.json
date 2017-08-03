@@ -1,6 +1,6 @@
 {
   "name": "@es-git/walkers-mixin",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -39,8 +39,7 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/core": "^1.0.0",
-    "@es-git/object-mixin": "^1.0.0"
-  },
-  "devDependencies": {}
+    "@es-git/core": "^0.0.1",
+    "@es-git/object-mixin": "^0.0.1"
+  }
 }
