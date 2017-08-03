@@ -26,11 +26,11 @@ test('load expected type', async t => {
   const load = sinon.stub();
   load.resolves({
     type: Type.blob,
-    body: new Uint8Array(0)
+    body: textToBlob('text')
   });
   const objectRepo = new LoadAsRepo({load});
   const result = await objectRepo.loadBlob('blabla');
-  t.is(result.type, Type.blob);
+  t.deepEqual(result, textToBlob('text'));
 });
 
 test('load text', async t => {
@@ -41,8 +41,7 @@ test('load text', async t => {
   });
   const objectRepo = new LoadAsRepo({load});
   const result = await objectRepo.loadText('blabla');
-  t.is(result.type, 'text');
-  t.is(result.body, 'this is text');
+  t.is(result, 'this is text');
 });
 
 const LoadAsRepo = loadAsMixin(class TestRepo implements IObjectRepo {
