@@ -40,6 +40,10 @@ export function getBytes(object : GitObject) : Uint8Array {
   }
 }
 
+export function textToBlob(text : string) {
+  return encoder.encode(text);
+}
+
 export function encodeBlob(body : Uint8Array) {
   return body;
 }

@@ -44,6 +44,10 @@ export default function decodeObject(buffer : Uint8Array) : GitObject {
   }
 }
 
+export function blobToText(blob : Uint8Array) {
+  return decoder.decode(blob);
+}
+
 function decodeBlob(body : Uint8Array) : BlobObject {
   return {
     type: Type.blob,

@@ -1,8 +1,8 @@
 import { Type, Mode, Constructor, IRawRepo } from '@es-git/core';
 import sha1 from 'git-sha1';
 
-import encodeObject from './encodeObject';
-import decodeObject from './decodeObject';
+import encodeObject, { textToBlob } from './encodeObject';
+import decodeObject, { blobToText } from './decodeObject';
 
 export default function mixin<T extends Constructor<IRawRepo>>(repo : T) : Constructor<IObjectRepo> & T {
   return class ObjectRepo extends repo implements IObjectRepo {
@@ -23,6 +23,8 @@ export default function mixin<T extends Constructor<IRawRepo>>(repo : T) : Const
     }
   }
 }
+
+export { blobToText, textToBlob };
 
 export interface IObjectRepo {
   saveObject(object : GitObject) : Promise<Hash>
