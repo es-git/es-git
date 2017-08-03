@@ -14,7 +14,7 @@
     "test": "../../node_modules/.bin/ava",
     "watch+test": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
     "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
-    "prepublish": "npm run clean && npm run compile && npm test"
+    "prepublishOnly": "npm run clean && npm run compile && npm test"
   },
   "keywords": [],
   "author": "",
