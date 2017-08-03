@@ -33,8 +33,6 @@ export function getBytes(object : GitObject) : Uint8Array {
       return encodeCommit(object.body);
     case Type.tag:
       return encodeTag(object.body);
-    case 'text':
-      return encodeBlob(encoder.encode(object.body));
     default:
       throw new Error(`Unknown object type`);
   }
