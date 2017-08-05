@@ -1,3 +1,5 @@
+// https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt
+
 export function *unpktLines(content : string) {
   while(true){
     const [line, tail] = unpktLine(content);

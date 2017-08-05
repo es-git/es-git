@@ -1,3 +1,5 @@
+// https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt
+
 export const NEWLINE = '\n'.charCodeAt(0);
 
 export default function pktLine(line : Uint8Array){
@@ -8,6 +10,21 @@ export default function pktLine(line : Uint8Array){
   buffer[3] = toHexChar(buffer.length & 0xf);
   buffer.set(line, 4);
   buffer[4 + line.length] = NEWLINE;
+  return buffer;
+}
+
+export function pktLines(lines : (string|null)[]){
+  let buffer = '';
+  for(const line of lines){
+    if(line === null){
+      buffer += '0000';
+    }else{
+      const length = 4 + line.length + 1;
+      buffer += length.toString(16).padStart(4, '0');
+      buffer += line;
+      buffer += '\n';
+    }
+  }
   return buffer;
 }
 
