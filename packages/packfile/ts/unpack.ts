@@ -26,7 +26,6 @@ interface VersionState extends PackState {
 
 interface EntriesState extends VersionState {
   readonly entryCount : number
-  readonly entries : Entry[]
 }
 
 interface HeaderState extends EntriesState {
@@ -52,6 +51,10 @@ interface ChecksumState extends EntriesState {
   readonly checksum : string
 }
 
+interface EntryState extends EntriesState {
+  readonly entry : Entry
+}
+
 type State =
   $State<'start', StartState> |
   $State<'pack', PackState> |
@@ -62,10 +65,11 @@ type State =
   $State<'ref-header', DeltaHeaderState> |
   $State<'ofs-delta', OfsDeltaState> |
   $State<'ref-delta', RefDeltaState> |
+  $State<'entry', EntryState> |
   $State<'done', ChecksumState>;
 
 
-export default function unpack(chunk : Uint8Array) {
+export default function* unpack(chunk : Uint8Array) : IterableIterator<Entry> {
   let state : State = {
     state: 'start',
     buffer: new Buffer(chunk)
@@ -73,9 +77,10 @@ export default function unpack(chunk : Uint8Array) {
 
   do {
     state = $step(state);
+    if(state.state === 'entry'){
+      yield state.entry;
+    }
   } while(state.state !== 'done');
-
-  return state.entries;
 }
 
 function $step(state : State){
@@ -87,11 +92,7 @@ function $step(state : State){
     case 'version':
       return $entries(state);
     case 'entries':
-      if(state.entries.length < state.entryCount){
-        return $header(state);
-      }else{
-        return $checksum(state);
-      }
+      return $header(state);
     case 'ofs-header':
       return $ofsDelta(state);
     case 'ref-header':
@@ -100,6 +101,12 @@ function $step(state : State){
     case 'ofs-delta':
     case 'ref-delta':
       return $body(state);
+    case 'entry':
+      if(state.entryCount > 0){
+        return $header(state);
+      }else{
+        return $checksum(state);
+      }
     default:
       throw new Error(`Unknown state ${state}`);
   }
@@ -136,8 +143,7 @@ function $entries(state : VersionState) : State {
   return {
     ...state,
     state: 'entries',
-    entryCount,
-    entries: []
+    entryCount
   };
 }
 
@@ -208,15 +214,12 @@ function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
   const data = inf.result as Uint8Array;
   if (data.length !== state.size)
     throw new Error(`Length mismatch, expected ${state.size} got ${data.length}`);
-  const entries = [
-    ...state.entries,
-    entry(state, data)
-  ];
 
   return {
     ...state,
-    state: 'entries',
-    entries
+    state: 'entry',
+    entry: entry(state, data),
+    entryCount: state.entryCount-1
   }
 }
 
