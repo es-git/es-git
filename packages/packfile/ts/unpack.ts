@@ -1,13 +1,12 @@
 import * as pako from 'pako';
 import sha1 from 'git-sha1';
+import { Buffer } from '@es-git/core';
 import { TextEncoder, TextDecoder } from 'text-encoding';
 
 import {
   Type,
   Entry
 } from './types';
-
-import Buffer from './buffer';
 
 type $State<S extends string, T> = T & {
   readonly state : S

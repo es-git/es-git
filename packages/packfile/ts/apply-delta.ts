@@ -1,4 +1,4 @@
-import Buffer from './buffer';
+import { Buffer } from '@es-git/core';
 
 export default function applyDelta(delta : Uint8Array, base : Uint8Array) {
   const input = new Buffer(delta);

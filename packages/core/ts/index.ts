@@ -61,3 +61,5 @@ export function mix<T>(base : Constructor<T>){
   baseWith.with = <TWith>(mixin : Mixin<T, TWith>) => mix<T & TWith>(mixin(base));
   return baseWith;
 }
+
+export { default as Buffer } from './Buffer';
