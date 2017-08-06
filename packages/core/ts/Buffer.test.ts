@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import Buffer from './buffer';
+import Buffer from './Buffer';
 
 test('next()', t => {
   const buffer = new Buffer(new Uint8Array([0, 1, 2, 3, 4]));
@@ -38,4 +38,24 @@ test('soFar', t => {
   buffer.next(2);
   buffer.next(1);
   t.is(buffer.soFar().join(','), '0,1,2');
+});
+
+test('write(1)', t => {
+  const buffer = new Buffer(new Uint8Array(4));
+  buffer.write(0);
+  buffer.write(1);
+  buffer.write(2);
+  t.is(buffer.soFar().join(','), '0,1,2');
+});
+
+test('write([0,1,2])', t => {
+  const buffer = new Buffer(new Uint8Array(4));
+  buffer.write(new Uint8Array([0, 1, 2]));
+  t.is(buffer.soFar().join(','), '0,1,2');
+});
+
+test('write([0,1,2,3,4], 1, 3)', t => {
+  const buffer = new Buffer(new Uint8Array(4));
+  buffer.write(new Uint8Array([0, 1, 2, 3, 4]), 1, 3);
+  t.is(buffer.soFar().join(','), '1,2,3');
 });

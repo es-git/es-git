@@ -14,7 +14,8 @@ export default class Buffer {
   next(length : number) : Uint8Array
   next(length? : number) {
     if(length !== undefined){
-      const result = this.data.slice(this.pointer, this.pointer+length);
+      length = Math.min(length, this.data.length - this.pointer);
+      const result = new Uint8Array(this.data.buffer, this.pointer, length);
       this.pointer += length;
       return result;
     }else{
@@ -32,12 +33,18 @@ export default class Buffer {
 
   write(byte : number) : void
   write(bytes : Uint8Array) : void
-  write(value : number | Uint8Array) {
+  write(bytes : Uint8Array, offset : number, size : number) : void
+  write(value : number | Uint8Array, offset? : number, size? : number) {
     if(typeof value === 'number'){
       this.data[this.pointer++] = value;
     }else{
-      this.data.set(value, this.pointer);
-      this.pointer+=value.length;
+      if(offset !== undefined){
+        this.data.set(new Uint8Array(value.buffer, offset, size), this.pointer);
+        this.pointer += size === undefined ? value.length - offset : size;
+      }else{
+        this.data.set(value, this.pointer);
+        this.pointer += value.length;
+      }
     }
   }
 
@@ -46,7 +53,7 @@ export default class Buffer {
   }
 
   soFar(){
-    return this.data.slice(0, this.pointer);
+    return new Uint8Array(this.data.buffer, 0, this.pointer);
   }
 
   get isDone(){
