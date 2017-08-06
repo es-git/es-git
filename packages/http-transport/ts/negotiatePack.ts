@@ -10,14 +10,27 @@ export default function *negotiatePack(wanted : Hash[], localRefs : Hash[], remo
   const want = new Set<Hash>(wanted);
   const pending = new Queue<Hash>(localRefs);
 
+  let haveCount = 0;
   while(want.size > 0){
-    const response = yield {
+    if(haveCount > 256){
+      // we have nothing in common
+      // I give up...
+      return;
+    }
+
+    const haves = pending.pop(32);
+    haveCount += haves.length;
+    const response : string[] = yield {
       wants: Array.from(want),
       shallows: [],
       deepens: [],
-      haves: pending.pop(32),
+      haves,
       done: pending.isEmpty
     };
+
+    for(const acked of response){
+      common.add(acked);
+    }
 
     want.clear();
   }

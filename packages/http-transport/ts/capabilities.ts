@@ -5,13 +5,13 @@ import { ServerCaps, ClientCaps, EditableClientCaps } from './types';
 export default function capabilities(server : ServerCaps) : ClientCaps {
   const client : Partial<EditableClientCaps> = {};
 
-  set('multi_ack_detailed') || set('multi_ack');
+  //set('multi_ack_detailed') || set('multi_ack');
 
-  set('no-done');
+  //set('no-done');
 
   //set('thin-pack');
 
-  set('side-band-64k') || set('side-band');
+  //set('side-band-64k') || set('side-band');
 
   //set('ofs-delta');
 

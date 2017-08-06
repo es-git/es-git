@@ -1,12 +1,14 @@
 import { pktLines } from './pkt-line';
-import { Hash, UploadRequest } from './types';
+import { Hash, UploadRequest, ClientCaps } from './types';
 
-export default function composeWantRequest(request : UploadRequest, capabilities : {[k : string] : string | boolean}) : string {
+export default function composeWantRequest(request : UploadRequest, capabilities : ClientCaps) : string {
   const lines = [
     ...request.wants.map((hash, index) => want(hash, index === 0 ? composeCaps(capabilities) : undefined)),
-    ...(request.done ? [null] : []),
+    //shallows
+    //deepens
+    null,
     ...request.haves.map(hash => have(hash)),
-    'done'
+    ...(request.done ? ['done'] : [])
   ];
 
   return pktLines(lines);

@@ -39,7 +39,8 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "text-encoding": "^0.6.4"
+    "text-encoding": "^0.6.4",
+    "@es-git/packfile": "^0.0.1"
   },
   "devDependencies": {
     "@types/node-fetch": "^1.6.7",
