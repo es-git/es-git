@@ -20,6 +20,13 @@ test('next(1)', t => {
   t.is(buffer.next(1)[0], 4);
 });
 
+test('copy buffer', t => {
+  const buffer = new Buffer(new Uint8Array([0, 1, 2, 3, 4]));
+  buffer.next(2);
+  const buffer2 = new Buffer(buffer.rest());
+  t.is(buffer2.next(1)[0], 2);
+});
+
 test('next(2)', t => {
   const buffer = new Buffer(new Uint8Array([0, 1, 2, 3, 4]));
   t.is(buffer.next(2).join(','), '0,1');

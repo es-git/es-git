@@ -25,7 +25,7 @@ export default function applyDelta(delta : Uint8Array, base : Uint8Array) {
       if (byte & 0x40) length |= input.next() << 16;
       if (length === 0) length = 0x10000;
       // copy the data
-      output.write(base, offset, offset + length);
+      output.write(base, offset, length);
     }
     // Insert command, opcode byte is length itself
     else if (byte) {
