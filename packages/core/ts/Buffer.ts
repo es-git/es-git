@@ -31,6 +31,26 @@ export default class Buffer {
     return result;
   }
 
+  peek() : number
+  peek(length : number) : Uint8Array
+  peek(length? : number) {
+    if(length !== undefined){
+      length = Math.min(length, this.data.length - this.pointer);
+      const result = new Uint8Array(this.data.buffer, this.pointer, length);
+      return result;
+    }else{
+      return this.data[this.pointer];
+    }
+  }
+
+  peekInt32() : number {
+    let result = 0;
+    for(let i=0; i<4; i++){
+      result = (result << 8) | this.data[this.pointer+i];
+    }
+    return result;
+  }
+
   write(byte : number) : void
   write(bytes : Uint8Array) : void
   write(bytes : Uint8Array, offset : number, size : number) : void

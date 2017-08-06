@@ -59,3 +59,26 @@ test('write([0,1,2,3,4], 1, 3)', t => {
   buffer.write(new Uint8Array([0, 1, 2, 3, 4]), 1, 3);
   t.is(buffer.soFar().join(','), '1,2,3');
 });
+
+test('peek()', t => {
+  const buffer = new Buffer(new Uint8Array([0, 1, 2, 3, 4]));
+  t.is(buffer.peek(), 0);
+  t.is(buffer.peek(), 0);
+  t.is(buffer.peek(), 0);
+  t.is(buffer.peek(), 0);
+  t.is(buffer.peek(), 0);
+});
+
+test('peek(1)', t => {
+  const buffer = new Buffer(new Uint8Array([0, 1, 2, 3, 4]));
+  t.is(buffer.peek(1)[0], 0);
+  t.is(buffer.peek(1)[0], 0);
+  t.is(buffer.peek(1)[0], 0);
+  t.is(buffer.peek(1)[0], 0);
+  t.is(buffer.peek(1)[0], 0);
+});
+
+test('peekInt32()', t => {
+  const buffer = new Buffer(new Uint8Array([0x50, 0x41, 0x43, 0x4b]));
+  t.is(buffer.peekInt32(), 0x5041434b);
+});
