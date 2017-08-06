@@ -1,9 +1,13 @@
 
 export default class Buffer {
-  private readonly data : Uint8Array;
+  readonly data : Uint8Array;
   private pointer = 0;
   constructor(data : Uint8Array){
     this.data = data;
+  }
+
+  get pos(){
+    return this.pointer;
   }
 
   next() : number
@@ -24,6 +28,17 @@ export default class Buffer {
       result = (result << 8) | this.next();
     }
     return result;
+  }
+
+  write(byte : number) : void
+  write(bytes : Uint8Array) : void
+  write(value : number | Uint8Array) {
+    if(typeof value === 'number'){
+      this.data[this.pointer++] = value;
+    }else{
+      this.data.set(value, this.pointer);
+      this.pointer+=value.length;
+    }
   }
 
   rest(){

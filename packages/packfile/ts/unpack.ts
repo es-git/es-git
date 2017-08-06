@@ -30,10 +30,12 @@ interface EntriesState extends VersionState {
 
 interface HeaderState extends EntriesState {
   readonly type : Type.blob | Type.commit | Type.tag | Type.tree
+  readonly offset : number
   readonly size : number
 }
 
 interface DeltaHeaderState extends EntriesState {
+  readonly offset : number
   readonly size : number
 }
 
@@ -153,6 +155,7 @@ function $entries(state : VersionState) : State {
 // Second state in the same header parsing.
 // CSSSSSSS*
 function $header(state : EntriesState) : State {
+  const offset = state.buffer.pos;
   let byte = state.buffer.next();
   const type = (byte >> 4) & 0x7;
   let size = byte & 0xf;
@@ -166,12 +169,14 @@ function $header(state : EntriesState) : State {
     return {
       ...state,
       state: 'ofs-header',
+      offset,
       size
     }
   }else if(type === 7){
     return {
       ...state,
       state: 'ref-header',
+      offset,
       size
     }
   }else{
@@ -179,6 +184,7 @@ function $header(state : EntriesState) : State {
       ...state,
       state: 'header',
       type,
+      offset,
       size
     }
   };
@@ -240,18 +246,22 @@ function entry(state : HeaderState | RefDeltaState | OfsDeltaState, body : Uint8
     return {
       type: Type.ofsDelta,
       ref: state.ref,
-      body
+      body,
+      offset: state.offset
     };
   }else if(state.type == Type.refDelta){
     return {
       type: Type.refDelta,
       ref: state.ref,
-      body
+      body,
+      offset: state.offset
     };
   }else{
     return {
       type: state.type,
-      body
+      body,
+      hash: sha1(body),
+      offset: state.offset
     };
   }
 }
