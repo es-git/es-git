@@ -1,6 +1,5 @@
-export default function index(){
-  //something here
-}
+export {
+  RawObject
+} from './types';
 
 export { default as unpack }  from './unpack';
-export { default as  normalizeEntries } from './normalize-entries';

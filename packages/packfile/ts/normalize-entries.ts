@@ -9,16 +9,11 @@ import {
   Entry,
   NormalEntry,
   OfsDeltaEntry,
-  RefDeltaEntry
+  RefDeltaEntry,
+  RawObject
 } from './types';
 import applyDelta from './apply-delta';
 import sha1 from 'git-sha1';
-
-export interface RawObject {
-  readonly type : string,
-  readonly hash : Hash,
-  readonly body : Uint8Array
-}
 
 export default function *normalizeEntries(entries : IterableIterator<Entry>) : IterableIterator<RawObject> {
   const references = new Map<string, NormalEntry>();

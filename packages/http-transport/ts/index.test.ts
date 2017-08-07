@@ -15,7 +15,7 @@ import composeWantRequest from "./composeWantRequest";
 import parseWantResponse from './parseWantResponse';
 import capabilities from "./capabilities";
 
-import { unpack, normalizeEntries } from '@es-git/packfile';
+import { unpack } from '@es-git/packfile';
 
 test('fetch refs', async t => {
   //const url = 'https://github.com/es-git/test-pull.git';
@@ -44,8 +44,8 @@ async function bleh(url : string, negotiate : Iterator<UploadRequest>, capabilit
     let parsedResponse = parseWantResponse(response);
     if(parsedResponse.type === 'pack'){
 
-      for(const entry of normalizeEntries(unpack(parsedResponse.pack))){
-        console.log(decode(entry.body));
+      for(const entry of unpack(parsedResponse.pack)){
+        console.log(entry.type, entry.hash);
       }
       return
     }else{
