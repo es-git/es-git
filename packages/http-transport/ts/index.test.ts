@@ -18,8 +18,8 @@ import capabilities from "./capabilities";
 import { unpack, normalizeEntries } from '@es-git/packfile';
 
 test('fetch refs', async t => {
-  const url = 'https://github.com/es-git/test-pull.git';
-  //const url = 'https://github.com/creationix/js-git.git';
+  //const url = 'https://github.com/es-git/test-pull.git';
+  const url = 'https://github.com/creationix/js-git.git';
   const serverCaps = new Map<string, string | boolean>();
   const remoteRefs = [...(await lsRemote(url, serverCaps))].map(x => x.hash);
   console.log(remoteRefs.join('\n'));
@@ -30,7 +30,7 @@ test('fetch refs', async t => {
   ];
   //const localRefs : string[] = ['931935b3d196d0334bc144b2c79b0a9f2d978049'];
   const wantedRefs : string[] = ['082a1e604e568f2a853bfbb4725ef71c0dc9425a'];
-  const negotiate = negotiatePack(wantedRefs, localRefs, remoteRefs)
+  const negotiate = negotiatePack(remoteRefs, localRefs, remoteRefs)
   await bleh(url, negotiate, capabilities(serverCaps));
   t.pass();
 });
@@ -46,7 +46,6 @@ async function bleh(url : string, negotiate : Iterator<UploadRequest>, capabilit
 
       for(const entry of normalizeEntries(unpack(parsedResponse.pack))){
         console.log(decode(entry.body));
-        break;
       }
       return
     }else{

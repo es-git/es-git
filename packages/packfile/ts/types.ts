@@ -15,7 +15,6 @@ export interface AbstractEntry {
 export interface NormalEntry extends AbstractEntry {
   readonly type : Type.blob | Type.commit | Type.tag | Type.tree
   readonly body : Uint8Array
-  readonly hash : string
 }
 export interface RefDeltaEntry extends AbstractEntry {
   readonly type : Type.refDelta

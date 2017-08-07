@@ -258,7 +258,6 @@ function entry(state : HeaderState | RefDeltaState | OfsDeltaState, body : Uint8
     return {
       type: state.type,
       body,
-      hash: sha1(body),
       offset: state.offset
     };
   }
