@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@es-git/core": "^0.0.1",
-    "git-sha1": "^0.1.2",
-    "text-encoding": "^0.6.4"
+    "git-sha1": "^0.1.2"
   }
 }

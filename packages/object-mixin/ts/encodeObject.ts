@@ -1,9 +1,12 @@
 import {
   Type,
-  Mode
+  Mode,
+  NEWLINE,
+  encode,
+  concat,
+  flatten,
+  packHash
 } from '@es-git/core';
-
-import { TextEncoder } from 'text-encoding';
 
 import {
   GitObject,
@@ -15,12 +18,9 @@ import {
   SecondsWithOffset
 } from './index';
 
-const NEWLINE = '\n'.charCodeAt(0);
-const encoder = new TextEncoder();
-
 export default function encodeObject(object : GitObject) : Uint8Array {
   const bytes = getBytes(object);
-  return concatenate(encoder.encode(`${object.type} ${bytes.length}\0`), bytes);
+  return concat(encode(`${object.type} ${bytes.length}\0`), bytes);
 }
 
 export function getBytes(object : GitObject) : Uint8Array {
@@ -39,7 +39,7 @@ export function getBytes(object : GitObject) : Uint8Array {
 }
 
 export function textToBlob(text : string) {
-  return encoder.encode(text);
+  return encode(text);
 }
 
 export function encodeBlob(body : Uint8Array) {
@@ -53,13 +53,13 @@ export function treeSort(a : {name : string, mode : Mode}, b : {name : string, m
 }
 
 export function encodeTree(body : TreeBody) {
-  return concatenate(...flatten(Object.keys(body)
+  return concat(...flatten(Object.keys(body)
     .map(key => ({
       name: key,
       ...body[key]
     }))
     .sort(treeSort)
-    .map(entry => [encoder.encode(`${entry.mode.toString(8)} ${entry.name}\0`), encodeHex(entry.hash)])));
+    .map(entry => [encode(`${entry.mode.toString(8)} ${entry.name}\0`), packHash(entry.hash)])));
 
 }
 
@@ -119,17 +119,6 @@ function isSecondsWithOffset(value : Date | SecondsWithOffset) : value is Second
   return (value as any).seconds;
 }
 
-function concatenate(...arrays : Uint8Array[]) {
-  const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const arr of arrays) {
-      result.set(arr, offset);
-      offset += arr.length;
-  }
-  return result;
-}
-
 function joinWithNewline(...values : (string | Uint8Array)[]){
   const sum = values.reduce((sum, x) => sum + x.length, 0);
   const result = new Uint8Array(values.length-1 + sum);
@@ -139,30 +128,11 @@ function joinWithNewline(...values : (string | Uint8Array)[]){
       result.set([NEWLINE], offset++);
     }
     if(typeof(arr) === 'string'){
-      result.set(encoder.encode(arr), offset);
+      result.set(encode(arr), offset);
     }else{
       result.set(arr, offset);
     }
     offset += arr.length;
   }
   return result;
-}
-
-function encodeHex(hex : string) {
-  var raw = new Uint8Array(hex.length/2);
-  for (let i=0; i < hex.length;) {
-    raw[i/2] =
-       (codeToNibble(hex.charCodeAt(i++)) << 4)
-      | codeToNibble(hex.charCodeAt(i++));
-  }
-  return raw;
-}
-
-function codeToNibble(code : number) {
-  code |= 0;
-  return (code - ((code & 0x40) ? 0x57 : 0x30))|0;
-}
-
-function flatten<T>(items : T[][]){
-  return items.reduce((result, list) => result.concat(list), []);
 }

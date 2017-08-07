@@ -15,7 +15,7 @@ export default class Buffer {
   next(length? : number) {
     if(length !== undefined){
       length = Math.min(length, this.data.length - this.pointer);
-      const result = new Uint8Array(this.data.buffer, this.pointer + this.data.byteOffset, length);
+      const result = this.data.subarray(this.pointer, this.pointer + length);
       this.pointer += length;
       return result;
     }else{
@@ -36,7 +36,7 @@ export default class Buffer {
   peek(length? : number) {
     if(length !== undefined){
       length = Math.min(length, this.data.length - this.pointer);
-      const result = new Uint8Array(this.data.buffer, this.pointer + this.data.byteOffset, length);
+      const result = this.data.subarray(this.pointer, this.pointer + length);
       return result;
     }else{
       return this.data[this.pointer];
@@ -54,13 +54,14 @@ export default class Buffer {
   write(byte : number) : void
   write(bytes : Uint8Array) : void
   write(bytes : Uint8Array, offset : number, length : number) : void
-  write(value : number | Uint8Array, offset? : number, size? : number) {
+  write(value : number | Uint8Array, offset? : number, length? : number) {
     if(typeof value === 'number'){
       this.data[this.pointer++] = value;
     }else{
       if(offset !== undefined){
-        this.data.set(new Uint8Array(value.buffer, offset + value.byteOffset, size), this.pointer);
-        this.pointer += size === undefined ? value.length - offset : size;
+        length = length === undefined ? value.length - offset : length
+        this.data.set(value.subarray(offset, offset + length), this.pointer);
+        this.pointer += length;
       }else{
         this.data.set(value, this.pointer);
         this.pointer += value.length;
@@ -73,7 +74,7 @@ export default class Buffer {
   }
 
   soFar(){
-    return new Uint8Array(this.data.buffer, this.data.byteOffset, this.pointer + this.data.byteOffset);
+    return this.data.subarray(0, this.pointer);
   }
 
   get isDone(){

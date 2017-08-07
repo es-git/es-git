@@ -1,8 +1,6 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
+import { Type, Mode, Constructor, IRawRepo, Hash, isFile, decode } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
 import { IWalkersRepo, HashModePath } from '@es-git/walkers-mixin';
-
-import { TextDecoder } from 'text-encoding';
 
 export type Folder = {
   readonly hash : Hash
@@ -25,8 +23,6 @@ export interface ICheckoutRepo {
   checkoutCommit(hash : Hash) : Promise<Folder>
   checkout(ref : string) : Promise<Folder>
 }
-
-const decoder = new TextDecoder();
 
 export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObjectRepo & IRawRepo>>(repo : T) : Constructor<ICheckoutRepo> & T {
   return class CheckoutRepo extends repo implements ICheckoutRepo {
@@ -67,7 +63,7 @@ function recursivelyMakeFile(parent : any, path : string[], mode : Mode, hash : 
       hash,
       mode,
       body,
-      get text(){return decoder.decode(body)}
+      get text(){return decode(body)}
     }
   }else{
     recursivelyMakeFile(parent.folders[name], subPath, mode, hash, body);

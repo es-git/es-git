@@ -1,7 +1,5 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
+import { Type, Mode, Constructor, IRawRepo, Hash, isFile, encode } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject, BlobObject, Person, ModeHash } from '@es-git/object-mixin';
-
-import { TextEncoder } from 'text-encoding';
 
 export type Folder = {
   readonly files? : {
@@ -33,8 +31,6 @@ export interface ICommitRepo {
   commit(ref : string, tree : Folder, message : string, author : Person, committer? : Person) : Promise<Hash>
   saveTree(folder : Folder | Hash) : Promise<Hash>
 }
-
-const encoder = new TextEncoder();
 
 export default function commitMixin<T extends Constructor<IObjectRepo & IRawRepo>>(repo : T) : Constructor<ICommitRepo> & T {
   return class CommitRepo extends repo implements ICommitRepo {
@@ -92,7 +88,7 @@ export default function commitMixin<T extends Constructor<IObjectRepo & IRawRepo
       if(isHash(file)) return file.hash;
 
       if(isText(file))
-        return await super.saveObject({type: Type.blob, body: encoder.encode(file.text)});
+        return await super.saveObject({type: Type.blob, body: encode(file.text)});
       else
         return await super.saveObject({type: Type.blob, body: file.body});
     }

@@ -1,7 +1,6 @@
 import * as pako from 'pako';
 import sha1 from 'git-sha1';
-import { Buffer } from '@es-git/core';
-import { TextEncoder, TextDecoder } from 'text-encoding';
+import { Buffer, unpackHash } from '@es-git/core';
 
 import {
   Type,
@@ -205,7 +204,7 @@ function $refDelta(state : DeltaHeaderState) : State {
     ...state,
     state: 'ref-delta',
     type: Type.refDelta,
-    ref: toHex(state.buffer.next(20))
+    ref: unpackHash(state.buffer.next(20))
   };
 }
 
@@ -231,7 +230,7 @@ function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
 // 20 byte checksum
 function $checksum(state : EntriesState) : State {
   const actual = sha1(state.buffer.soFar());
-  const checksum = toHex(state.buffer.next(20));
+  const checksum = unpackHash(state.buffer.next(20));
   if (checksum !== actual) throw new Error(`Checksum mismatch: ${actual} != ${checksum}`);
   return {
     ...state,
@@ -273,30 +272,4 @@ function varLen(buffer : Buffer){
     ref = ((ref + 1) << 7) | (byte & 0x7f);
   }
   return ref;
-}
-
-function concatenate(...arrays : Uint8Array[]) {
-  const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const arr of arrays) {
-      result.set(arr, offset);
-      offset += arr.length;
-  }
-  return result;
-}
-
-function toHex(binary : Uint8Array, start = 0, end = binary.length) {
-  var hex = "";
-  for (var i = start; i < end; i++) {
-    var byte = binary[i];
-    hex += String.fromCharCode(nibbleToCode(byte >> 4)) +
-           String.fromCharCode(nibbleToCode(byte & 0xf));
-  }
-  return hex;
-}
-
-function nibbleToCode(nibble : number) {
-  nibble |= 0;
-  return (nibble + (nibble < 10 ? 0x30 : 0x57))|0;
 }

@@ -1,9 +1,11 @@
 import {
   Type,
-  Mode
+  Mode,
+  decode,
+  unpackHash,
+  fromDec,
+  fromOct
 } from '@es-git/core';
-
-import { TextDecoder } from 'text-encoding';
 
 import {
   GitObject,
@@ -19,17 +21,15 @@ import {
   SecondsWithOffset
 } from './index';
 
-const decoder = new TextDecoder();
-
 export default function decodeObject(buffer : Uint8Array) : GitObject {
   const space = buffer.indexOf(0x20);
   if (space < 0) throw new Error("Invalid git object buffer");
   const nil = buffer.indexOf(0x00, space);
   if (nil < 0) throw new Error("Invalid git object buffer");
   const body = buffer.subarray(nil + 1);
-  const size = parseDec(buffer, space + 1, nil);
+  const size = fromDec(buffer, space + 1, nil);
   if (size !== body.length) throw new Error("Invalid body length.");
-  const type = decodeSubarray(buffer, 0, space);
+  const type = decode(buffer, 0, space);
   switch(type){
     case Type.blob:
       return decodeBlob(body);
@@ -45,7 +45,7 @@ export default function decodeObject(buffer : Uint8Array) : GitObject {
 }
 
 export function blobToText(blob : Uint8Array) {
-  return decoder.decode(blob);
+  return decode(blob);
 }
 
 function decodeBlob(body : Uint8Array) : BlobObject {
@@ -67,11 +67,11 @@ function decodeTree(body : Uint8Array) : TreeObject {
     start = i;
     i = body.indexOf(0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    mode = parseOct(body, start, i++);
+    mode = fromOct(body, start, i++);
     start = i;
     i = body.indexOf(0x00, start);
-    name = decodeSubarray(body, start, i++);
-    hash = toHex(body, i, i += 20);
+    name = decode(body, start, i++);
+    hash = unpackHash(body, i, i += 20);
     tree[name] = {
       mode: mode,
       hash: hash
@@ -100,11 +100,11 @@ function decodeCommit(body : Uint8Array) : CommitObject {
     start = i;
     i = body.indexOf(0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    key = decodeSubarray(body, start, i++) as any;
+    key = decode(body, start, i++) as any;
     start = i;
     i = body.indexOf(0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
-    let value = decodeSubarray(body, start, i++);
+    let value = decode(body, start, i++);
     if (key === "parent") {
       parents.push(value);
     } else if (key === "author" || key === "committer") {
@@ -114,7 +114,7 @@ function decodeCommit(body : Uint8Array) : CommitObject {
     }
   }
   i++;
-  commit.message = decodeSubarray(body, i, body.length);
+  commit.message = decode(body, i, body.length);
   return {
     type: Type.commit,
     body: commit
@@ -130,16 +130,16 @@ function decodeTag(body : Uint8Array) : TagObject {
     start = i;
     i = body.indexOf(0x20, start);
     if (i < 0) throw new SyntaxError("Missing space");
-    key = decodeSubarray(body, start, i++);
+    key = decode(body, start, i++);
     start = i;
     i = body.indexOf(0x0a, start);
     if (i < 0) throw new SyntaxError("Missing linefeed");
-    let value : any = decodeSubarray(body, start, i++);
+    let value : any = decode(body, start, i++);
     if (key === "tagger") value = decodePerson(value);
     tag[key] = value;
   }
   i++;
-  tag.message = decodeSubarray(body, i, body.length);
+  tag.message = decode(body, i, body.length);
   return {
     type: Type.tag,
     body: tag
@@ -157,39 +157,4 @@ function decodePerson(string : string) {
       offset: parseInt(match[4], 10) / 100 * -60
     }
   } as Person;
-}
-
-function parseOct(buffer : Uint8Array, start : number, end : number) {
-  let val = 0;
-  while (start < end) {
-    val = (val << 3) + buffer[start++] - 0x30;
-  }
-  return val;
-}
-
-function parseDec(buffer : Uint8Array, start : number, end : number) {
-  let val = 0;
-  while (start < end) {
-    val = val * 10 + buffer[start++] - 0x30;
-  }
-  return val;
-}
-
-function decodeSubarray(binary : Uint8Array, start = 0, end = binary.length) {
-  return decoder.decode(binary.subarray(start, end));
-}
-
-function toHex(binary : Uint8Array, start = 0, end = binary.length) {
-  var hex = "";
-  for (var i = start; i < end; i++) {
-    var byte = binary[i];
-    hex += String.fromCharCode(nibbleToCode(byte >> 4)) +
-           String.fromCharCode(nibbleToCode(byte & 0xf));
-  }
-  return hex;
-}
-
-function nibbleToCode(nibble : number) {
-  nibble |= 0;
-  return (nibble + (nibble < 10 ? 0x30 : 0x57))|0;
 }

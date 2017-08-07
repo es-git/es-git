@@ -2,6 +2,10 @@ import test from 'ava';
 import fetch from 'node-fetch';
 
 import {
+  decode
+} from '@es-git/core';
+
+import {
   UploadRequest,
   ClientCaps
 } from './types';
@@ -11,11 +15,7 @@ import composeWantRequest from "./composeWantRequest";
 import parseWantResponse from './parseWantResponse';
 import capabilities from "./capabilities";
 
-import { TextDecoder } from 'text-encoding';
-
 import { unpack, normalizeEntries } from '@es-git/packfile';
-
-const decoder = new TextDecoder();
 
 test('fetch refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
@@ -43,8 +43,10 @@ async function bleh(url : string, negotiate : Iterator<UploadRequest>, capabilit
     const response = await downloadPackfile(url, body);
     let parsedResponse = parseWantResponse(response);
     if(parsedResponse.type === 'pack'){
+
       for(const entry of normalizeEntries(unpack(parsedResponse.pack))){
-        //console.log(decoder.decode(entry.body));
+        console.log(decode(entry.body));
+        break;
       }
       return
     }else{

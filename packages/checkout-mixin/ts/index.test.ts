@@ -2,11 +2,9 @@ import test from 'ava';
 import * as sinon from 'sinon';
 import 'sinon-stub-promise';
 const sinonStubPromise = require('sinon-stub-promise');
-import { IRawRepo, Type, Mode, Hash } from '@es-git/core';
+import { IRawRepo, Type, Mode, Hash, encode } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitBody, TreeObject, TreeBody } from '@es-git/object-mixin';
 import { IWalkersRepo, HashModePath, HashAndCommitObject } from '@es-git/walkers-mixin';
-
-import { TextEncoder } from 'text-encoding';
 
 import checkoutMixin from './index';
 
@@ -24,7 +22,7 @@ test('checkout commit', async t => {
       path: ['file.txt']
     };
   }());
-  load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
+  load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkoutCommit('commitHash');
   if(!result) return t.fail();
@@ -51,7 +49,7 @@ test('checkout subtree', async t => {
       path: ['folder', 'file.txt']
     };
   }());
-  load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
+  load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkoutCommit('commitHash');
   if(!result) return t.fail();
@@ -76,7 +74,7 @@ test('checkout branch', async t => {
       path: ['file.txt']
     };
   }());
-  load.withArgs('file1Hash').resolves({type: Type.blob, body: new TextEncoder().encode('test')});
+  load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkout('branch');
   if(!result) return t.fail();

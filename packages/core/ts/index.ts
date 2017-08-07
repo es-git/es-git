@@ -1,3 +1,19 @@
+export {
+  decode,
+  encode,
+  concat,
+  flatten,
+  fromDec,
+  fromHex,
+  fromOct,
+  fromDecChar,
+  fromHexChar,
+  packHash,
+  unpackHash,
+  toHexChar,
+  NEWLINE
+} from './utils'
+
 export enum Mask {
   mask = 0o100000,
   blob = 0o140000,

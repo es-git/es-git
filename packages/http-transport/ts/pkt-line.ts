@@ -1,6 +1,5 @@
 // https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt
-
-export const NEWLINE = '\n'.charCodeAt(0);
+import { NEWLINE, toHexChar } from '@es-git/core';
 
 export default function pktLine(line : Uint8Array){
   const buffer = new Uint8Array(4 + line.length + 1);
@@ -26,8 +25,4 @@ export function pktLines(lines : (string|null)[]){
     }
   }
   return buffer;
-}
-
-export function toHexChar(val : number) {
-  return val < 0x0a ? val + 0x30 : val + 0x57;
 }
