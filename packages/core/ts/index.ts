@@ -68,3 +68,4 @@ export type Hash = string;
 export { default as mix, Constructor, ConstructorWith, Mixin, MixinWithParam } from '@es-git/mix';
 
 export { default as Buffer } from './Buffer';
+export { default as AsyncBuffer } from './AsyncBuffer';
