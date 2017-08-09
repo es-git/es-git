@@ -50,6 +50,7 @@ async function bleh(url : string, negotiate : Iterator<UploadRequest>, capabilit
       return
     }else{
       acks = parsedResponse.acks;
+      return
     }
   }
 }
@@ -79,7 +80,27 @@ async function downloadPackfile(url : string, body : string){
   //const data = await res.text();
   //console.log(data);
   //return data;
-  const data = await res.buffer();
+  for await(const chunk of fromStream(res.body)){
+    console.log(chunk.length);
+  }
+  //const data = await res.buffer();
   //console.log(decoder.decode(data));
-  return (data) as Uint8Array;
+  //return (data) as Uint8Array;
+  return new Uint8Array(0);
+}
+
+
+async function* fromStream(stream : NodeJS.ReadableStream) : AsyncIterableIterator<Buffer> {
+  const ended = new Promise(res => stream.on('end', _ => res(false)));
+  const error = new Promise((_, rej) => stream.on('error', rej));
+
+  while (true) {
+    const chunk = await Promise.race([
+      ended,
+      error,
+      new Promise(res => stream.once('data', res))
+    ]);
+    if(!chunk) break;
+    yield chunk as Buffer;
+  }
 }

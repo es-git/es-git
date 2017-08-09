@@ -1,6 +1,6 @@
 import * as pako from 'pako';
-import sha1 from 'git-sha1';
-import { Buffer, unpackHash } from '@es-git/core';
+import sha1, { Sha1 } from 'git-sha1';
+import { AsyncBuffer, unpackHash } from '@es-git/core';
 
 import {
   Type,
@@ -12,7 +12,7 @@ type $State<S extends string, T> = T & {
 }
 
 interface StartState {
-  readonly buffer : Buffer
+  readonly buffer : HashWrapper
 }
 
 interface PackState extends StartState {
@@ -68,30 +68,74 @@ type State =
   $State<'entry', EntryState> |
   $State<'done', ChecksumState>;
 
+class HashWrapper extends AsyncBuffer{
+  private sha : Sha1
+  constructor(chunks : AsyncIterableIterator<Uint8Array>){
+    super(chunks);
+    this.sha = sha1();
+  }
 
-export default function* parsePackfile(chunk : Uint8Array) : IterableIterator<Entry> {
+  get pos(){
+    return super.pos;
+  }
+
+  next() : Promise<number>
+  next(length : number) : Promise<Uint8Array>
+  async next(length? : number) {
+    if(length === undefined){
+      const result = await super.next();
+      this.sha.update(String.fromCharCode(result));
+      return result;
+    }else{
+      const result = await super.next(length);
+      this.sha.update(result);
+      return result;
+    }
+  }
+
+  async nextInt32() : Promise<number> {
+    const buffer = await super.next(4);
+    this.sha.update(buffer);
+    let result = 0;
+    for(let i=0; i<4; i++){
+      result = (result << 8) | buffer[i];
+    }
+    return result;
+  }
+
+  digest(){
+    const result = this.sha.digest();
+    this.sha = sha1();
+    return result;
+  }
+}
+
+export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Entry> {
   let state : State = {
     state: 'start',
-    buffer: new Buffer(chunk)
+    buffer: new HashWrapper(chunks)
   };
 
   do {
-    state = $step(state);
+    state = await $step(state);
     if(state.state === 'entry'){
       yield state.entry;
     }
   } while(state.state !== 'done');
 }
 
-function $step(state : State){
+async function $step(state : State){
   switch(state.state){
     case 'start':
       return $pack(state);
     case 'pack':
+      console.log('pack', state.buffer.pos);
       return $version(state);
     case 'version':
+      console.log('version', state.buffer.pos);
       return $entries(state);
     case 'entries':
+      console.log('entries', state.buffer.pos);
       return $header(state);
     case 'ofs-header':
       return $ofsDelta(state);
@@ -105,6 +149,7 @@ function $step(state : State){
       if(state.entryCount > 0){
         return $header(state);
       }else{
+        console.log('cheksum');
         return $checksum(state);
       }
     default:
@@ -113,8 +158,8 @@ function $step(state : State){
 }
 
 // The first four bytes in a packfile are the bytes 'PACK'
-function $pack(state : State) : State {
-  if(state.buffer.nextInt32() === 0x5041434b)
+async function $pack(state : State) : Promise<State> {
+  if(await state.buffer.nextInt32() === 0x5041434b)
     return {
       ...state,
       state: 'pack'
@@ -125,8 +170,8 @@ function $pack(state : State) : State {
 
 // The version is stored as an unsigned 32 integer in network byte order.
 // It must be version 2 or 3.
-function $version(state : State) : State {
-  const version = state.buffer.nextInt32();
+async function $version(state : State) : Promise<State> {
+  const version = await state.buffer.nextInt32();
   if (version === 2 || version === 3)
     return {
       ...state,
@@ -138,8 +183,9 @@ function $version(state : State) : State {
 }
 
 // The number of objects in this packfile is also stored as an unsigned 32 bit int.
-function $entries(state : VersionState) : State {
-  const entryCount = state.buffer.nextInt32();
+async function $entries(state : VersionState) : Promise<State> {
+  const entryCount = await state.buffer.nextInt32();
+  console.log(entryCount);
   return {
     ...state,
     state: 'entries',
@@ -152,14 +198,14 @@ function $entries(state : VersionState) : State {
 // C is continue bit, TTT is type, S+ is length
 // Second state in the same header parsing.
 // CSSSSSSS*
-function $header(state : EntriesState) : State {
+async function $header(state : EntriesState) : Promise<State> {
   const offset = state.buffer.pos;
-  let byte = state.buffer.next();
+  let byte = await state.buffer.next();
   const type = (byte >> 4) & 0x7;
   let size = byte & 0xf;
   let left = 4;
   while (byte & 0x80) {
-    byte = state.buffer.next();
+    byte = await state.buffer.next();
     size |= (byte & 0x7f) << left;
     left += 7;
   }
@@ -189,30 +235,30 @@ function $header(state : EntriesState) : State {
 }
 
 // Big-endian modified base 128 number encoded ref offset
-function $ofsDelta(state : DeltaHeaderState) : State {
+async function $ofsDelta(state : DeltaHeaderState) : Promise<State> {
   return {
     ...state,
     state: 'ofs-delta',
     type: Type.ofsDelta,
-    ref: varLen(state.buffer)
+    ref: await varLen(state.buffer)
   };
 }
 
 // 20 byte raw sha1 hash for ref
-function $refDelta(state : DeltaHeaderState) : State {
+async function $refDelta(state : DeltaHeaderState) : Promise<State> {
   return {
     ...state,
     state: 'ref-delta',
     type: Type.refDelta,
-    ref: unpackHash(state.buffer.next(20))
+    ref: unpackHash(await state.buffer.next(20))
   };
 }
 
 // Feed the deflated code to the inflate engine
-function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
+async function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : Promise<State> {
   const inf = new pako.Inflate();
   do {
-    inf.push(state.buffer.next(1));
+    inf.push(await state.buffer.next(1));
   } while(inf.err === 0 && inf.result === undefined);
   if(inf.err != 0) throw new Error(`Inflate error ${inf.err} ${inf.msg}`);
   const data = inf.result as Uint8Array;
@@ -228,9 +274,10 @@ function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
 }
 
 // 20 byte checksum
-function $checksum(state : EntriesState) : State {
-  const actual = sha1(state.buffer.soFar());
-  const checksum = unpackHash(state.buffer.next(20));
+async function $checksum(state : EntriesState) : Promise<State> {
+  const actual = state.buffer.digest();
+  console.log('actual', actual);
+  const checksum = unpackHash(await state.buffer.next(20));
   if (checksum !== actual) throw new Error(`Checksum mismatch: ${actual} != ${checksum}`);
   return {
     ...state,
@@ -263,11 +310,11 @@ function entry(state : HeaderState | RefDeltaState | OfsDeltaState, body : Uint8
   }
 }
 
-function varLen(buffer : Buffer){
-  let byte = buffer.next();
+async function varLen(buffer : AsyncBuffer){
+  let byte = await buffer.next();
   let ref = byte & 0x7f;
   while (byte & 0x80) {
-    byte = buffer.next();
+    byte = await buffer.next();
     ref = ((ref + 1) << 7) | (byte & 0x7f);
   }
   return ref;

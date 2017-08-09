@@ -15,7 +15,7 @@ export type WantResponse =
   AckResponse |
   PackResponse;
 
-export default function parseWantResponse(response : Uint8Array) : WantResponse {
+export default async function *parseWantResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<WantResponse> {
   const buffer = new Buffer(response);
   const result : AckResponse = {
     type: 'ack',

@@ -79,3 +79,4 @@ export function mix<T>(base : Constructor<T>){
 }
 
 export { default as Buffer } from './Buffer';
+export { default as AsyncBuffer } from './AsyncBuffer';
