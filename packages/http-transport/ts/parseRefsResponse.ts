@@ -1,11 +1,7 @@
 import unpktLine, { unpktLines } from './unpkt-line';
+import { Ref } from './types';
 
-export interface HashRef {
-  readonly hash : string
-  readonly name : string
-}
-
-export default function *parseRefsResponse(response : string, service : string, capabilities? : Map<string, string | boolean>) : IterableIterator<HashRef> {
+export default function *parseRefsResponse(response : string, service : string, capabilities? : Map<string, string | boolean>) : IterableIterator<Ref> {
   const [line, tail] = unpktLine(response);
   if(line !== `# service=${service}`) throw new Error('unknown response');
   for(const line of unpktLines(tail)){
@@ -32,7 +28,7 @@ export function parseCaps(caps : string, capabilities? : Map<string, string | bo
   }
 }
 
-export function parseIdObj(idObj : string) : HashRef {
+export function parseIdObj(idObj : string) : Ref {
   const match = idObj.match(/(^[0-9a-f]{40}) (.*)$/);
   if(!match) throw new Error(`Could not parse ${idObj}`);
   return {

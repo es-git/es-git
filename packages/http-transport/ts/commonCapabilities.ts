@@ -2,7 +2,7 @@
 
 import { ServerCaps, ClientCaps, EditableClientCaps } from './types';
 
-export default function capabilities(server : ServerCaps) : ClientCaps {
+export default function commonCapabilities(server : ServerCaps) : ClientCaps {
   const client : Partial<EditableClientCaps> = {};
 
   //set('multi_ack_detailed') || set('multi_ack');

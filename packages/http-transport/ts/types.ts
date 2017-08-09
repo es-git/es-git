@@ -1,17 +1,16 @@
-
 export type Hash = string;
+
+export interface Ref {
+  readonly hash : Hash
+  readonly name : string
+}
 
 export interface UploadRequest {
   readonly done : boolean
   readonly wants : Hash[]
   readonly shallows : Hash[]
-  readonly deepens : Deepen[]
+  readonly deepen? : Hash | number
   readonly haves : Hash[]
-}
-
-export interface Deepen {
-  readonly hash : Hash
-  readonly depth : number
 }
 
 export type ServerCaps = Map<string, string | boolean>;
@@ -30,3 +29,5 @@ export interface EditableClientCaps {
 }
 
 export type ClientCaps = Readonly<EditableClientCaps>;
+
+export type HasObject = (hash : string) => Promise<boolean>;

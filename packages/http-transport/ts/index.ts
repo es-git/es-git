@@ -1,0 +1,1 @@
+export { default as fetch, Fetch, RawObject } from './fetch';
