@@ -75,4 +75,4 @@ class Repo extends mix(NodeFsRepo)
 
 
 const repo = new Repo(fetch, path.join(__dirname, 'test-git/.git'));
-repo.fetch('https://github.com/es-git/test-pull.git', 'origin').then(_ => console.log('success'));
+repo.fetch('https://github.com/es-git/test-pull.git').then(_ => console.log('success'), e => console.error(e));
