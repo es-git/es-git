@@ -37,7 +37,7 @@ export default class NodeFsRepo implements IRawRepo {
   }
 
   async loadRaw(hash : string) : Promise<Uint8Array | undefined> {
-    return await fs.readFile(join(this.path, ...objectsPath(hash)));
+    return await fs.readFile(join(this.path, ...objectsPath(hash))).catch(safely);
   }
 
   async listRefs() : Promise<Hash[]> {

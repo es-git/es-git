@@ -7,6 +7,8 @@ import walkers from '@es-git/walkers-mixin';
 import checkout from '@es-git/checkout-mixin';
 import commit from '@es-git/commit-mixin';
 import pathToObject from '@es-git/path-to-object-mixin';
+import fetchMixin from '@es-git/fetch-mixin';
+import fetch from 'node-fetch';
 
 class Repo extends mix(NodeFsRepo)
                   .with(zlib)
@@ -14,7 +16,8 @@ class Repo extends mix(NodeFsRepo)
                   .with(pathToObject)
                   .with(walkers)
                   .with(checkout)
-                  .with(commit) {
+                  .with(commit)
+                  .with(fetchMixin) {
   async init() {
     await super.init();
     const treeHash = await this.saveTree({});
@@ -71,5 +74,5 @@ class Repo extends mix(NodeFsRepo)
 }
 
 
-const repo = new Repo(path.join(__dirname, 'test-git/.git'));
-repo.init().then(() => repo.test());
+const repo = new Repo(fetch, path.join(__dirname, 'test-git/.git'));
+repo.fetch('https://github.com/es-git/test-pull.git', 'origin').then(_ => console.log('success'));

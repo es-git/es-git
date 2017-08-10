@@ -1,7 +1,6 @@
 {
-  "name": "@es-git/example",
-  "private": true,
-  "version": "0.0.5",
+  "name": "@es-git/fetch-mixin",
+  "version": "0.0.1",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -11,6 +10,8 @@
     "tsc": "../../node_modules/.bin/tsc",
     "babel": "../../node_modules/.bin/babel --source-maps -d js es",
     "compile": "npm run tsc && npm run babel",
+    "test": "../../node_modules/.bin/ava",
+    "watch+test": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
     "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
   },
@@ -38,18 +39,7 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/checkout-mixin": "^0.0.5",
-    "@es-git/commit-mixin": "^0.0.5",
     "@es-git/core": "^0.0.1",
-    "@es-git/fetch-mixin": "^0.0.1",
-    "@es-git/node-fs-repo": "^0.0.1",
-    "@es-git/object-mixin": "^0.0.5",
-    "@es-git/path-to-object-mixin": "^0.0.5",
-    "@es-git/walkers-mixin": "^0.0.5",
-    "@es-git/zlib-mixin": "^0.0.1",
-    "node-fetch": "^1.7.2"
-  },
-  "devDependencies": {
-    "@types/node-fetch": "^1.6.7"
+    "@es-git/http-transport": "^0.0.1"
   }
 }
