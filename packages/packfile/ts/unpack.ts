@@ -5,6 +5,6 @@ import normalizeEntries from './normalize-entries';
 
 export { RawObject };
 
-export default function unpack(chunk : Uint8Array) {
+export default function unpack(chunk : Uint8Array) : IterableIterator<RawObject> {
   return normalizeEntries(parsePackfile(chunk));
 }

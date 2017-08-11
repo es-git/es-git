@@ -21,13 +21,13 @@ export function decode(binary : Uint8Array, start = 0, end = binary.length) {
   }
 }
 
-export function concat(...arrays : Uint8Array[]) {
+export function concat(...arrays : (Uint8Array | number[])[]) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
   const result = new Uint8Array(totalLength);
   let offset = 0;
   for (const arr of arrays) {
-      result.set(arr, offset);
-      offset += arr.length;
+    result.set(arr, offset);
+    offset += arr.length;
   }
   return result;
 }
