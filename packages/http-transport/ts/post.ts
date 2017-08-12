@@ -31,7 +31,7 @@ export default async function post(url : string, service : string, body : Uint8A
 function authorization(auth? : Auth) : {} {
   if(auth){
     return {
-      'Authorization': `Basic ${atob(`${auth.username}:${auth.password}`)}`
+      'Authorization': `Basic ${btoa(`${auth.username}:${auth.password}`)}`
     }
   } else {
     return {};

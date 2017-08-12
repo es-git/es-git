@@ -22,7 +22,7 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const hash = await super.getRef(ref);
       if(!hash) throw new Error(`Unknown ref ${ref}`);
 
-      const {remoteRefs, capabilities} = await lsRemote(url, 'git-receive-pack', this._fetch);
+      const {remoteRefs, capabilities} = await lsRemote(url, this._fetch);
       const remoteRef = remoteRefs.filter(r => r.name === ref)[0] || {hash:'00', name: ref};
       if(remoteRef.hash === hash) return '';
       const commands : Command[] = [
@@ -42,7 +42,7 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       for(const [hash, commit] of localCommits.entries()){
         await this.addToMap(hash, localObjects);
         if(await this.addToMap(commit.body.tree, localObjects)) continue;
-        for await(const {hash} of super.walkTree(commit.body.tree)){
+        for await(const {hash} of super.walkTree(commit.body.tree, true)){
           if(await this.addToMap(hash, localObjects)) break;
         }
       }

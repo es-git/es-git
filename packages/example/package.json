@@ -45,6 +45,7 @@
     "@es-git/node-fs-repo": "^0.0.1",
     "@es-git/object-mixin": "^0.0.5",
     "@es-git/path-to-object-mixin": "^0.0.5",
+    "@es-git/push-mixin": "^0.0.1",
     "@es-git/walkers-mixin": "^0.0.5",
     "@es-git/zlib-mixin": "^0.0.1",
     "node-fetch": "^1.7.2"
