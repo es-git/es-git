@@ -1,22 +1,43 @@
 import test from 'ava';
-import fetch from 'node-fetch';
+import nodeFetch, { Request, RequestInit, Response } from 'node-fetch';
 
 import {
   decode
 } from '@es-git/core';
 
-import { fetch as gitFetch } from './index';
+import { fetch } from './index';
 
 test('fetch refs', async t => {
-  const url = 'https://github.com/creationix/js-git.git';
+  const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
-    '03ea444e55f468d7270e77196701da5350a67c50',
+    '04859931d7cbee5dff2f0b5b95b9e2693a5241d1',
   ];
   const wantedRefs : string[] = [
-    '40b3732b3b1fc87e625b107cd55c68cd1ba4470f',
-    '0e76e6214dbba347a4f24497261a1bd71aac8347'
+    '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
   ];
-  const result = await gitFetch(url, fetch, localRefs, ['refs/heads/*:refs/remotes/origin/*'], () => Promise.resolve(false));
-  console.log(result.refs);
-  t.pass();
+  const result = await fetch(url, fetchify(nodeFetch), localRefs, ['refs/heads/*:refs/remotes/origin/*'], () => Promise.resolve(false));
+  t.deepEqual(result.refs, [
+    {
+      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
+      name: 'refs/remotes/origin/master'
+    }
+  ]);
 });
+
+function fetchify(fetch : (url: string | Request, init?: RequestInit) => Promise<Response>){
+  return async (url: string | Request, init?: RequestInit) => {
+    if(init && init.body){
+      init.body = Buffer.from(init.body as any)
+    }
+    const response = await fetch(url, init);
+    return {
+      arrayBuffer: async () => {
+        const buf = await response.buffer();
+        return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+      },
+      text: () => response.text(),
+      status: response.status,
+      statusText: response.statusText
+    };
+  };
+}

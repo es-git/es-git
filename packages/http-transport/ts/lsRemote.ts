@@ -14,8 +14,7 @@ export interface FetchResponse {
   readonly statusText : string
 }
 
-export default async function lsRemote(url : string, fetch : Fetch) : Promise<Result> {
-  const service = 'git-upload-pack';
+export default async function lsRemote(url : string, fetch : Fetch, service : string = 'git-upload-pack') : Promise<Result> {
   const res = await fetch(`${url}/info/refs?service=${service}`);
   if(res.status !== 200) throw new Error(`ls-remote failed with ${res.status} ${res.statusText}`);
   const refs = await res.text();

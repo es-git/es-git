@@ -1,29 +1,26 @@
-import { pktLines } from './pkt-line';
-import { Hash, UploadRequest, ClientCaps } from './types';
+import pktLine from './pkt-line';
+import { UploadRequest, ClientCaps } from './types';
 
-export default function composeWantRequest(request : UploadRequest, capabilities : ClientCaps) : string {
-  const lines = [
-    ...request.wants.map((hash, index) => want(hash, index === 0 ? composeCaps(capabilities) : undefined)),
-    //shallows
-    //deepens
-    null,
-    ...request.haves.map(hash => have(hash)),
-    ...(request.done ? ['done'] : [])
-  ];
+export default function *composeWantRequest(request : UploadRequest, capabilities : ClientCaps) {
+  const[hash, ...wants] = request.wants;
+  yield pktLine(`want ${hash} ${composeCaps(capabilities)}`);
 
-  return pktLines(lines);
-}
-
-function want(hash : string, caps? : string){
-  if(caps){
-    return `want ${hash} ${caps}`;
-  }else{
-    return `want ${hash}`;
+  for(const hash of request.wants){
+    yield pktLine(`want ${hash}`);
   }
-}
 
-function have(hash : string){
-  return `have ${hash}`;
+  //yield shallows
+  //yield deepens
+
+  yield pktLine(null);
+
+  for(const hash of request.haves){
+    yield pktLine(`have ${hash}`);
+  }
+
+  if(request.done){
+    yield pktLine('done');
+  }
 }
 
 function composeCaps(caps : {[k : string] : string | boolean}){
