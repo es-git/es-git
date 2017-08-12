@@ -13,7 +13,7 @@ export type HashModePath = {
 }
 
 export interface IWalkersRepo {
-  walkCommits(hash : Hash) : AsyncIterableIterator<HashAndCommitObject>
+  walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject>
   walkTree(hash : Hash, iterateFolders? : boolean) : AsyncIterableIterator<HashModePath>
 }
 
@@ -23,8 +23,8 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
       super(...args);
     }
 
-    async *walkCommits(hash : Hash) : AsyncIterableIterator<HashAndCommitObject> {
-      const queue = [hash];
+    async *walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject> {
+      const queue = hash;
       const visited = new Set<Hash>(queue);
       while(queue.length > 0){
         const hash = queue.shift();
