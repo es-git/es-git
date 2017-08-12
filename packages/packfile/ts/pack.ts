@@ -11,21 +11,20 @@ import {
   RawObject
 } from './types';
 
-export interface HashBlob {
-  readonly hash : string
-  readonly body : Uint8Array
-}
+export type HashBlob = [string, Uint8Array];
 
-export default function(objects : IterableIterator<HashBlob>){
+export default function(objects : Iterable<HashBlob>){
   return concat(...composePackfile([...toEntry(toRawObject(objects))]));
 }
 
-function *toRawObject(objects : IterableIterator<HashBlob>) : IterableIterator<RawObject> {
-  for(const object of objects){
+function *toRawObject(objects : Iterable<HashBlob>) : IterableIterator<RawObject> {
+  for(const [hash, body] of objects){
+    const space = body.indexOf(0x20)
+    const nil = body.indexOf(0x00, space);
     yield {
-      body: object.body,
-      type: decode(object.body, 0, object.body.indexOf(0x20)),
-      hash: object.hash
+      body: body.subarray(nil+1),
+      type: decode(body, 0, space),
+      hash: hash
     }
   }
 }
