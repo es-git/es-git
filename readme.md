@@ -96,8 +96,8 @@ These mixins add features to the repo. Some of them depend on other mixins, so t
 * **[save-as-mixin](https://www.npmjs.com/package/@es-git/save-as-mixin)** (depends on `object-mixin`)
 * **[walkers-mixin](https://www.npmjs.com/package/@es-git/walkers-mixin)** (depends on `object-mixin`)
 * **[commit-mixin](https://www.npmjs.com/package/@es-git/commit-mixin)** (depends on `object-mixin`)
-* **[push-mixin](https://www.npmjs.com/package/@es-git/push-mixin)** (depends on `object-mixin` and `walkers-repo`)
-* **[checkout-mixin](https://www.npmjs.com/package/@es-git/checkout-mixin)** (depends on `object-mixin` and `walkers-repo`)
+* **[push-mixin](https://www.npmjs.com/package/@es-git/push-mixin)** (depends on `object-mixin` and `walkers-mixin`)
+* **[checkout-mixin](https://www.npmjs.com/package/@es-git/checkout-mixin)** (depends on `object-mixin` and `walkers-mixin`)
 
 ## Other packages
 
