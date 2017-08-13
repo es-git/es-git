@@ -29,15 +29,15 @@ export default class NodeFsRepo implements IRawRepo {
   async saveRaw(hash : Hash, raw : Uint8Array) : Promise<void> {
     const path = join(this.path, ...objectsPath(hash));
     try{
-      await fs.writeFile(path, raw);
+      await fs.writeFile(path, raw).catch(noAccess);
     }catch(e){
-      await fs.mkdir(dirname(path));
-      await fs.writeFile(path, raw);
+      await mkdirp(dirname(path));
+      await fs.writeFile(path, raw).catch(noAccess);
     }
   }
 
   async loadRaw(hash : string) : Promise<Uint8Array | undefined> {
-    return await fs.readFile(join(this.path, ...objectsPath(hash))).catch(safely);
+    return await fs.readFile(join(this.path, ...objectsPath(hash))).catch(notExists);
   }
 
   async listRefs() : Promise<Hash[]> {
@@ -57,7 +57,7 @@ export default class NodeFsRepo implements IRawRepo {
   }
 
   async getRef(ref : string) : Promise<string | undefined> {
-    const result : string | undefined = await fs.readFile(join(this.path, ref), 'utf8').catch(safely);
+    const result : string | undefined = await fs.readFile(join(this.path, ref), 'utf8').catch(notExists);
     if(result) return result.trim();
   }
 
@@ -72,7 +72,7 @@ export default class NodeFsRepo implements IRawRepo {
   }
 
   async deleteRef(ref : string) : Promise<void> {
-    await fs.unlink(join(this.path, ref)).catch(safely);
+    await fs.unlink(join(this.path, ref)).catch(notExists);
   }
 
   async hasObject(hash: string): Promise<boolean> {
@@ -91,7 +91,7 @@ export default class NodeFsRepo implements IRawRepo {
   }
 
   async loadMetadata(name: string): Promise<Uint8Array | undefined> {
-    return await fs.readFile(join(this.path, name)).catch(safely);
+    return await fs.readFile(join(this.path, name)).catch(notExists);
   }
 }
 
@@ -103,9 +103,17 @@ function objectsPath(hash : Hash){
   ];
 }
 
-function safely(e : any){
+function notExists(e : any){
   if(e.code === 'ENOENT'){
     return undefined;
+  }else{
+    throw e;
+  }
+}
+
+function noAccess(e : any){
+  if(e.code === 'EACCES'){
+    return;
   }else{
     throw e;
   }
