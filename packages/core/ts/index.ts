@@ -66,19 +66,6 @@ export interface IRawRepo {
 
 export type Hash = string;
 
-export type Constructor<T> = new(...args: any[]) => T;
-
-export interface ConstructorWith<T> {
-  new(...args: any[]) : T;
-  with<T2>(mixin : Mixin<T, T2>) : ConstructorWith<T & T2>
-};
-
-export type Mixin<T1, T2> = (base : Constructor<T1>) => Constructor<T2> & Constructor<T1>;
-
-export function mix<T>(base : Constructor<T>){
-  const baseWith = base as ConstructorWith<T>;
-  baseWith.with = <TWith>(mixin : Mixin<T, TWith>) => mix<T & TWith>(mixin(base));
-  return baseWith;
-}
+export { default as mix, Constructor, ConstructorWith, Mixin, MixinWithParam } from '@es-git/mix';
 
 export { default as Buffer } from './Buffer';

@@ -23,6 +23,8 @@ if (typeof atob === 'undefined') {
   };
 }
 
+const fetch = fetchify(nodeFetch);
+
 class Repo extends mix(NodeFsRepo)
                   .with(zlib)
                   .with(object)
@@ -30,8 +32,8 @@ class Repo extends mix(NodeFsRepo)
                   .with(walkers)
                   .with(checkout)
                   .with(commit)
-                  .with(fetchMixin)
-                  .with(pushMixin) {
+                  .with(fetchMixin, fetch)
+                  .with(pushMixin, fetch) {
   async init() {
     await super.init();
     const treeHash = await this.saveTree({});
@@ -90,10 +92,9 @@ class Repo extends mix(NodeFsRepo)
   }
 }
 
-const fetch = fetchify(nodeFetch);
-
 (async function(){
-  const repo = new Repo(fetch, fetch, path.join(__dirname, 'test-git/.git'));
+  const repo = new Repo(path.join(__dirname, 'test-pull/.git'));
+  console.log(repo.path);
   await repo.test();
   console.log(await repo.getRef('refs/heads/master'));
   const result = await repo.push('http://localhost:8000/es-git/test-pull.git', 'refs/heads/master', {

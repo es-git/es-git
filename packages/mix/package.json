@@ -1,5 +1,5 @@
 {
-  "name": "@es-git/core",
+  "name": "@es-git/mix",
   "version": "0.1.0",
   "description": "",
   "main": "js/index.js",
@@ -37,9 +37,5 @@
   },
   "peerDependencies": {
     "babel-runtime": "^6.22.0"
-  },
-  "dependencies": {
-    "@es-git/mix": "^0.1.0",
-    "text-encoding": "^0.6.4"
   }
 }

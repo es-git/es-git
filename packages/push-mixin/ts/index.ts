@@ -9,20 +9,13 @@ export interface IPushRepo {
   push(url : string, ref : string, auth? : Auth) : Promise<string>
 }
 
-export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRepo & IRawRepo>>(repo : T) : Constructor<IPushRepo> & T {
+export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRepo & IRawRepo>>(repo : T, fetch : Fetch) : Constructor<IPushRepo> & T {
   return class PushRepo extends repo implements IPushRepo {
-    private readonly _fetch : Fetch
-    constructor(...args : any[])
-    constructor(fetch : Fetch, ...args : any[]){
-      super(...args);
-      this._fetch = fetch
-    }
-
     async push(url : string, ref : string, auth? : Auth) : Promise<string> {
       const hash = await super.getRef(ref);
       if(!hash) throw new Error(`Unknown ref ${ref}`);
 
-      const {remoteRefs, capabilities} = await lsRemote(url, this._fetch);
+      const {remoteRefs, capabilities} = await lsRemote(url, fetch);
       const remoteRef = remoteRefs.filter(r => r.name === ref)[0] || {hash:'00', name: ref};
       if(remoteRef.hash === hash) return '';
       const commands : Command[] = [
@@ -47,7 +40,7 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
         }
       }
 
-      return await push(url, this._fetch, commands, localObjects, auth);
+      return await push(url, fetch, commands, localObjects, auth);
     }
 
     private async addToMap(hash : string, map : Map<Hash, Uint8Array>) {
