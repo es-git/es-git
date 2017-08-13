@@ -42,10 +42,13 @@
     "@es-git/commit-mixin": "^0.1.0",
     "@es-git/core": "^0.1.0",
     "@es-git/fetch-mixin": "^0.1.0",
+    "@es-git/load-as-mixin": "^0.1.0",
+    "@es-git/memory-repo": "^0.1.0",
     "@es-git/node-fs-repo": "^0.1.0",
     "@es-git/object-mixin": "^0.1.0",
     "@es-git/path-to-object-mixin": "^0.1.0",
     "@es-git/push-mixin": "^0.1.0",
+    "@es-git/save-as-mixin": "^0.1.0",
     "@es-git/walkers-mixin": "^0.1.0",
     "@es-git/zlib-mixin": "^0.1.0",
     "node-fetch": "^1.7.2"
