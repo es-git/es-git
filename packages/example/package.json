@@ -1,7 +1,7 @@
 {
   "name": "@es-git/example",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -38,16 +38,16 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/checkout-mixin": "^0.0.5",
-    "@es-git/commit-mixin": "^0.0.5",
-    "@es-git/core": "^0.0.1",
-    "@es-git/fetch-mixin": "^0.0.1",
-    "@es-git/node-fs-repo": "^0.0.1",
-    "@es-git/object-mixin": "^0.0.5",
-    "@es-git/path-to-object-mixin": "^0.0.5",
-    "@es-git/push-mixin": "^0.0.1",
-    "@es-git/walkers-mixin": "^0.0.5",
-    "@es-git/zlib-mixin": "^0.0.1",
+    "@es-git/checkout-mixin": "^0.1.0",
+    "@es-git/commit-mixin": "^0.1.0",
+    "@es-git/core": "^0.1.0",
+    "@es-git/fetch-mixin": "^0.1.0",
+    "@es-git/node-fs-repo": "^0.1.0",
+    "@es-git/object-mixin": "^0.1.0",
+    "@es-git/path-to-object-mixin": "^0.1.0",
+    "@es-git/push-mixin": "^0.1.0",
+    "@es-git/walkers-mixin": "^0.1.0",
+    "@es-git/zlib-mixin": "^0.1.0",
     "node-fetch": "^1.7.2"
   },
   "devDependencies": {
