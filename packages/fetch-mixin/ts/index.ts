@@ -26,7 +26,8 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T) : 
         this._fetch,
         localRefs,
         options.refspec || 'refs/heads/*:refs/remotes/origin/*',
-        async hash => !!(await super.loadRaw(hash)));
+        hash => super.hasObject(hash));
+
       for(const {hash, body} of objects){
         await super.saveRaw(hash, body);
       }

@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Type, Mode, Constructor } from '@es-git/core';
+import { IRawRepo, Type, Mode, Constructor } from '@es-git/core';
 
 import objectMixin, {
   GitObject
@@ -122,8 +122,8 @@ test('save and load tag', async t => {
   t.deepEqual(result, object);
 });
 
-const ObjectRepo = objectMixin(class {
-  private readonly map : Map<string, Uint8Array>;
+const ObjectRepo = objectMixin(class Repo implements IRawRepo {
+  private readonly map: Map<string, Uint8Array>;
   constructor(){
     this.map = new Map<string, Uint8Array>();
   }
@@ -133,15 +133,25 @@ const ObjectRepo = objectMixin(class {
   async loadRaw(hash : string){
     return this.map.get(hash);
   }
-  async listRefs(){
-    return [];
+  listRefs(): Promise<string[]> {
+    throw new Error("Method not implemented.");
   }
-  async getRef(ref : string){
-    return undefined;
+  getRef(ref: string): Promise<string | undefined> {
+    throw new Error("Method not implemented.");
   }
-  async setRef(ref : string, hash : string){
-    return undefined;
+  setRef(ref: string, hash: string): Promise<void> {
+    throw new Error("Method not implemented.");
   }
-  async deleteRef(ref : string){
+  deleteRef(ref: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  hasObject(hash: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  saveMetadata(name: string, value: Uint8Array): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  loadMetadata(name: string): Promise<Uint8Array | undefined> {
+    throw new Error("Method not implemented.");
   }
 });

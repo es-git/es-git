@@ -59,6 +59,9 @@ export interface IRawRepo {
   deleteRef(ref : string) : Promise<void>
   saveRaw(hash : Hash, object : Uint8Array) : Promise<void>
   loadRaw(hash : Hash) : Promise<Uint8Array | undefined>
+  hasObject(hash : Hash) : Promise<boolean>
+  saveMetadata(name : string, value : Uint8Array) : Promise<void>
+  loadMetadata(name : string) : Promise<Uint8Array | undefined>
 }
 
 export type Hash = string;

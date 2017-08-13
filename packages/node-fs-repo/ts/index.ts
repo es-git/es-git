@@ -14,7 +14,7 @@ const fs = {
 }
 
 export default class NodeFsRepo implements IRawRepo {
-  readonly path : string
+  readonly path: string
   constructor(path : string) {
     this.path = path;
   }
@@ -73,6 +73,25 @@ export default class NodeFsRepo implements IRawRepo {
 
   async deleteRef(ref : string) : Promise<void> {
     await fs.unlink(join(this.path, ref)).catch(safely);
+  }
+
+  async hasObject(hash: string): Promise<boolean> {
+    const stat = await fs.stat(join(this.path, ...objectsPath(hash)));
+    return stat.isFile();
+  }
+
+  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
+    const path = join(this.path, name);
+    try{
+      await fs.writeFile(path, value);
+    }catch(e){
+      await mkdirp(dirname(path));
+      await fs.writeFile(path, value);
+    }
+  }
+
+  async loadMetadata(name: string): Promise<Uint8Array | undefined> {
+    return await fs.readFile(join(this.path, name)).catch(safely);
   }
 }
 

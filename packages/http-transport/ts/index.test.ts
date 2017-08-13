@@ -15,11 +15,11 @@ test('fetch refs', async t => {
   const wantedRefs : string[] = [
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
   ];
-  const result = await fetch(url, fetchify(nodeFetch), localRefs, ['refs/heads/*:refs/remotes/origin/*'], () => Promise.resolve(false));
+  const result = await fetch(url, fetchify(nodeFetch), localRefs, ['refs/heads/fetch-test:refs/remotes/origin/fetch-test'], () => Promise.resolve(false));
   t.deepEqual(result.refs, [
     {
       hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
-      name: 'refs/remotes/origin/master'
+      name: 'refs/remotes/origin/fetch-test'
     }
   ]);
 });

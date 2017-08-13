@@ -126,6 +126,15 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
   loadRaw(hash: string): Promise<Uint8Array | undefined> {
     throw new Error("Method not implemented.");
   }
+  hasObject(hash: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  saveMetadata(name: string, value: Uint8Array): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  loadMetadata(name: string): Promise<Uint8Array | undefined> {
+    throw new Error("Method not implemented.");
+  }
 });
 
 function makeCommit(message : string, ...parents : Hash[]) : CommitBody{

@@ -1,11 +1,13 @@
 import { IRawRepo, Type, Hash } from '@es-git/core';
 
 export default class MemoryRepo implements IRawRepo {
-  private readonly objects : Map<string, Uint8Array>
+  private readonly objects: Map<string, Uint8Array>
   private readonly refs : Map<string, string>
+  private readonly metadata: Map<string, Uint8Array>
   constructor() {
     this.objects = new Map();
     this.refs = new Map();
+    this.metadata = new Map();
   }
 
   async saveRaw(hash : Hash, raw : Uint8Array) : Promise<void> {
@@ -30,5 +32,17 @@ export default class MemoryRepo implements IRawRepo {
 
   async deleteRef(ref : string) : Promise<void> {
     this.refs.delete(ref);
+  }
+
+  async hasObject(hash: string): Promise<boolean> {
+    return this.objects.has(hash);
+  }
+
+  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
+    this.metadata.set(name, value);
+  }
+
+  async loadMetadata(name: string): Promise<Uint8Array | undefined> {
+    return this.metadata.get(name);
   }
 }

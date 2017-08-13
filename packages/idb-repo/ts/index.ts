@@ -6,22 +6,16 @@ export { DB };
 
 export async function init(name : string) {
   const database = await idb.open(name, 1, db => {
-    if(db.objectStoreNames.contains("objects")) {
-      db.deleteObjectStore("objects");
-    }
-    if(db.objectStoreNames.contains("refs")) {
-      db.deleteObjectStore("refs");
-    }
-
     db.createObjectStore("objects", {keyPath: "hash"});
     db.createObjectStore("refs", {keyPath: "path"});
+    db.createObjectStore("metadata", {keyPath: "name"});
   });
 
   return database;
 }
 
 export default class IdbRepo implements IRawRepo {
-  private readonly db : DB
+  private readonly db: DB
   constructor(db : DB) {
     this.db = db;
   }
@@ -33,22 +27,22 @@ export default class IdbRepo implements IRawRepo {
   }
 
   async loadRaw(hash : Hash) : Promise<Uint8Array | undefined> {
-    const trans = this.db.transaction(["objects"], "readwrite");
+    const trans = this.db.transaction(["objects"], "readonly");
     const store = trans.objectStore("objects");
-    const result = await store.get(hash);
+    const result = await store.get(hash).catch(N => undefined);
     return result ? result.raw as Uint8Array : undefined;
   }
 
   async listRefs() : Promise<Hash[]> {
-    const trans = this.db.transaction(["refs"], "readwrite");
+    const trans = this.db.transaction(["refs"], "readonly");
     const store = trans.objectStore("refs");
     return await store.getAllKeys() as Hash[];
   }
 
   async getRef(ref : string) : Promise<Hash | undefined> {
-    const trans = this.db.transaction(["refs"], "readwrite");
+    const trans = this.db.transaction(["refs"], "readonly");
     const store = trans.objectStore("refs");
-    const result = await store.get(ref);
+    const result = await store.get(ref).catch(N => undefined);
     return result ? result.hash as Hash : undefined;
   }
 
@@ -63,5 +57,24 @@ export default class IdbRepo implements IRawRepo {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
     await store.delete(ref);
+  }
+
+  async hasObject(hash: string): Promise<boolean> {
+    const trans = this.db.transaction(["objects"], "readonly");
+    const store = trans.objectStore("objects");
+    return await store.getKey(hash).then(Y => true, N => false);
+  }
+
+  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
+    const trans = this.db.transaction(["metadata"], "readwrite");
+    const store = trans.objectStore("metadata");
+    await store.put({name, value});
+  }
+
+  async loadMetadata(name: string): Promise<Uint8Array | undefined> {
+    const trans = this.db.transaction(["metadata"], "readonly");
+    const store = trans.objectStore("metadata");
+    const result = await store.get(name).catch(N => undefined);
+    return result ? result.value as Uint8Array : undefined;
   }
 }
