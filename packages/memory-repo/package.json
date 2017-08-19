@@ -1,5 +1,5 @@
 {
-  "name": "@es-git/__template__",
+  "name": "@es-git/memory-repo",
   "version": "0.1.1",
   "description": "",
   "main": "js/index.js",
