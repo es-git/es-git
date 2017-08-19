@@ -26,6 +26,8 @@ const Repo = mix(MemoryRepo)
 const repo = new Repo();
 const object = await repo.loadObjectByPath(hash, 'folder/directory/file.txt');
 const object = await repo.loadObjectByPath(hash, ['folder', 'directory', 'file.txt']);
+
+const content = await repo.loadTextByPath(hash, ['folder', 'directory', 'file.txt']);
 ```
 
 ## Interfaces
@@ -35,10 +37,13 @@ const object = await repo.loadObjectByPath(hash, ['folder', 'directory', 'file.t
 ```js
 interface IPathToObjectRepo {
   loadObjectByPath(rootTree : Hash, path : string | string[]) : Promise<TreeObject | BlobObject | undefined>
+  loadBlobByPath(rootTree : Hash, path : string | string[]) : Promise<Uint8Array | undefined>
+  loadTextByPath(rootTree : Hash, path : string | string[]) : Promise<string | undefined>
 }
 ```
 
 ### GitObject
+
 ```js
 type Hash = string;
 

@@ -1,8 +1,10 @@
-import { Type, Mode, Constructor, IRawRepo, Hash } from '@es-git/core';
+import { Type, Mode, Constructor, IRawRepo, Hash, decode } from '@es-git/core';
 import { IObjectRepo, TreeObject, BlobObject, ModeHash } from '@es-git/object-mixin';
 
 export interface IPathToObjectRepo {
   loadObjectByPath(rootTree : Hash, path : string | string[]) : Promise<TreeObject | BlobObject | undefined>
+  loadBlobByPath(rootTree : Hash, path : string | string[]) : Promise<Uint8Array | undefined>
+  loadTextByPath(rootTree : Hash, path : string | string[]) : Promise<string | undefined>
 }
 
 export default function mixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IPathToObjectRepo> & T {
@@ -32,6 +34,21 @@ export default function mixin<T extends Constructor<IObjectRepo>>(repo : T) : Co
           throw new Error(`Wrong object: ${hash}. Expected tree or blob, got ${result.type}`);
       }
       return result;
+    }
+
+    async loadBlobByPath(rootTree : Hash, path : string | string[]) : Promise<Uint8Array | undefined> {
+      const object = await this.loadObjectByPath(rootTree, path);
+      if(!object) return undefined;
+      if(object.type !== Type.blob){
+        throw new Error(`Wrong object: ${path}. Expected tree or blob, got ${object.type}`);
+      }
+      return object.body;
+    }
+
+    async loadTextByPath(rootTree : Hash, path : string | string[]) : Promise<string | undefined> {
+      const blob = await this.loadBlobByPath(rootTree, path);
+      if(!blob) return undefined;
+      return decode(blob);
     }
   }
 }
