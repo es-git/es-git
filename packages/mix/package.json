@@ -1,6 +1,6 @@
 {
   "name": "@es-git/mix",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
