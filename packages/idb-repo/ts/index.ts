@@ -4,7 +4,7 @@ import { IRawRepo, Type, Hash } from '@es-git/core';
 
 export { DB };
 
-export async function init(name : string) {
+export async function init(name='.git') : Promise<DB> {
   const database = await idb.open(name, 1, db => {
     db.createObjectStore("objects", {keyPath: "hash"});
     db.createObjectStore("refs", {keyPath: "path"});
@@ -46,17 +46,15 @@ export default class IdbRepo implements IRawRepo {
     return result ? result.hash as Hash : undefined;
   }
 
-  async setRef(ref : string, hash : Hash) : Promise<void> {
+  async setRef(ref : string, hash : Hash | undefined) : Promise<void> {
     const trans = this.db.transaction(["refs"], "readwrite");
     const store = trans.objectStore("refs");
-    const entry = { path: ref, hash: hash };
-    await store.put(entry);
-  }
-
-  async deleteRef(ref : string) : Promise<void> {
-    const trans = this.db.transaction(["refs"], "readwrite");
-    const store = trans.objectStore("refs");
-    await store.delete(ref);
+    if(hash === undefined){
+      await store.delete(ref);
+    }else{
+      const entry = { path: ref, hash: hash };
+      await store.put(entry);
+    }
   }
 
   async hasObject(hash: string): Promise<boolean> {

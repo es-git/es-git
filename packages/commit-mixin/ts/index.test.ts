@@ -83,11 +83,8 @@ const CommitRepo = commitMixin(class TestRepo implements IObjectRepo, IRawRepo {
   getRef(ref: string): Promise<string | undefined> {
     return this.getRefStub(ref);
   }
-  async setRef(ref: string, hash: string): Promise<void> {
+  async setRef(ref: string, hash: string | undefined): Promise<void> {
     this.setRefStub(ref, hash);
-  }
-  deleteRef(ref: string): Promise<void> {
-    throw new Error("Method not implemented.");
   }
   saveRaw(hash: string, object: Uint8Array): Promise<void> {
     throw new Error("Method not implemented.");

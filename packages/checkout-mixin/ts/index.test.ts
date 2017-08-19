@@ -114,10 +114,7 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
   getRef(ref: string): Promise<string | undefined> {
     return this.getRefStub(ref);
   }
-  setRef(ref: string, hash: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  deleteRef(ref: string): Promise<void> {
+  setRef(ref: string, hash: string | undefined): Promise<void> {
     throw new Error("Method not implemented.");
   }
   saveRaw(hash: string, object: Uint8Array): Promise<void> {

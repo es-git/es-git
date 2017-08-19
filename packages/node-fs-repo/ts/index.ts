@@ -61,18 +61,18 @@ export default class NodeFsRepo implements IRawRepo {
     if(result) return result.trim();
   }
 
-  async setRef(ref : string, hash : string) : Promise<void> {
+  async setRef(ref : string, hash : string | undefined) : Promise<void> {
     const path = join(this.path, ref);
-    try{
-      await fs.writeFile(path, `${hash}\n`);
-    }catch(e){
-      await mkdirp(dirname(path));
-      await fs.writeFile(path, `${hash}\n`);
+    if(hash === undefined){
+      await fs.unlink(join(this.path, ref)).catch(notExists);
+    }else{
+      try{
+        await fs.writeFile(path, `${hash}\n`);
+      }catch(e){
+        await mkdirp(dirname(path));
+        await fs.writeFile(path, `${hash}\n`);
+      }
     }
-  }
-
-  async deleteRef(ref : string) : Promise<void> {
-    await fs.unlink(join(this.path, ref)).catch(notExists);
   }
 
   async hasObject(hash: string): Promise<boolean> {

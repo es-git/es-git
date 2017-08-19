@@ -8,4 +8,4 @@ This is part of the [ES-Git](https://github.com/es-git/es-git) project.
 npm install --save @es-git/__template__
 ```
 
-# Usage
+## Usage

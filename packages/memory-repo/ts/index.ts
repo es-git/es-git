@@ -26,12 +26,12 @@ export default class MemoryRepo implements IRawRepo {
     return this.refs.get(ref);
   }
 
-  async setRef(ref : string, hash : string) : Promise<void> {
-    this.refs.set(ref, hash);
-  }
-
-  async deleteRef(ref : string) : Promise<void> {
-    this.refs.delete(ref);
+  async setRef(ref : string, hash : string | undefined) : Promise<void> {
+    if(hash === undefined){
+      this.refs.delete(ref);
+    }else{
+      this.refs.set(ref, hash);
+    }
   }
 
   async hasObject(hash: string): Promise<boolean> {

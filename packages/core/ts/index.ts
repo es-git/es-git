@@ -53,10 +53,9 @@ export function toType(mode : number) {
 }
 
 export interface IRawRepo {
-  listRefs() : Promise<Hash[]>
+  listRefs() : Promise<string[]>
   getRef(ref : string) : Promise<Hash | undefined>
-  setRef(ref : string, hash : Hash) : Promise<void>
-  deleteRef(ref : string) : Promise<void>
+  setRef(ref : string, hash : Hash | undefined) : Promise<void>
   saveRaw(hash : Hash, object : Uint8Array) : Promise<void>
   loadRaw(hash : Hash) : Promise<Uint8Array | undefined>
   hasObject(hash : Hash) : Promise<boolean>

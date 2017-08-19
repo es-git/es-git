@@ -139,10 +139,7 @@ const ObjectRepo = objectMixin(class Repo implements IRawRepo {
   getRef(ref: string): Promise<string | undefined> {
     throw new Error("Method not implemented.");
   }
-  setRef(ref: string, hash: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  deleteRef(ref: string): Promise<void> {
+  setRef(ref: string, hash: string | undefined): Promise<void> {
     throw new Error("Method not implemented.");
   }
   hasObject(hash: string): Promise<boolean> {
