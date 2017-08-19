@@ -80,13 +80,17 @@ export default class NodeFsRepo implements IRawRepo {
     return stat.isFile();
   }
 
-  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
+  async saveMetadata(name: string, value: Uint8Array | undefined): Promise<void> {
     const path = join(this.path, name);
-    try{
-      await fs.writeFile(path, value);
-    }catch(e){
-      await mkdirp(dirname(path));
-      await fs.writeFile(path, value);
+    if(value){
+      try{
+        await fs.writeFile(path, value);
+      }catch(e){
+        await mkdirp(dirname(path));
+        await fs.writeFile(path, value);
+      }
+    }else{
+      await fs.unlink(path).catch(notExists);
     }
   }
 

@@ -65,10 +65,14 @@ export default class IdbRepo implements IRawRepo {
     return await store.getKey(hash).then(Y => true, N => false);
   }
 
-  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
+  async saveMetadata(name: string, value: Uint8Array | undefined): Promise<void> {
     const trans = this.db.transaction(["metadata"], "readwrite");
     const store = trans.objectStore("metadata");
-    await store.put({name, value});
+    if(value){
+      await store.put({name, value});
+    }else{
+      await store.delete(name);
+    }
   }
 
   async loadMetadata(name: string): Promise<Uint8Array | undefined> {

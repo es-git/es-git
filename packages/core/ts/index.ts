@@ -60,7 +60,7 @@ export interface IRawRepo {
   saveRaw(hash : Hash, object : Uint8Array) : Promise<void>
   loadRaw(hash : Hash) : Promise<Uint8Array | undefined>
   hasObject(hash : Hash) : Promise<boolean>
-  saveMetadata(name : string, value : Uint8Array) : Promise<void>
+  saveMetadata(name : string, value : Uint8Array | undefined) : Promise<void>
   loadMetadata(name : string) : Promise<Uint8Array | undefined>
 }
 

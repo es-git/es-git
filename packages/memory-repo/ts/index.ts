@@ -38,8 +38,12 @@ export default class MemoryRepo implements IRawRepo {
     return this.objects.has(hash);
   }
 
-  async saveMetadata(name: string, value: Uint8Array): Promise<void> {
-    this.metadata.set(name, value);
+  async saveMetadata(name: string, value: Uint8Array | undefined): Promise<void> {
+    if(value){
+      this.metadata.set(name, value);
+    }else{
+      this.metadata.delete(name);
+    }
   }
 
   async loadMetadata(name: string): Promise<Uint8Array | undefined> {
