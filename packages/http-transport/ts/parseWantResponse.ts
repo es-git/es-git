@@ -1,12 +1,17 @@
 import { ClientCaps } from './types';
 import { Buffer, decode, NEWLINE, fromHex } from '@es-git/core';
 
-export interface AckResponse {
-  readonly type : 'ack'
+export interface Response {
   readonly acks : string[]
+  readonly shallow : string[]
+  readonly unshallow : string[]
 }
 
-export interface PackResponse {
+export interface AckResponse extends Response {
+  readonly type : 'ack'
+}
+
+export interface PackResponse extends Response {
   readonly type : 'pack'
   readonly pack : Uint8Array
 }
@@ -15,32 +20,42 @@ export type WantResponse =
   AckResponse |
   PackResponse;
 
+const parseLine = switchParse<WantResponse>({
+  'ACK ': (buffer, state) => ({
+    ...state,
+    acks: [...state.acks, decode(buffer.next(40))]
+  }),
+  'NAK ': (buffer, state) => state,
+  'shallow ': (buffer, state) => ({
+    ...state,
+    shallow: [...state.shallow, decode(buffer.next(40))]
+  }),
+  'unshallow ': (buffer, state) => ({
+    ...state,
+    unshallow: [...state.unshallow, decode(buffer.next(40))]
+  })
+});
+
 export default function parseWantResponse(response : Uint8Array) : WantResponse {
   const buffer = new Buffer(response);
-  const result : AckResponse = {
+  let result : WantResponse = {
     type: 'ack',
-    acks: []
+    acks: [],
+    shallow: [],
+    unshallow: []
   };
+
   while(!buffer.isDone){
     if(isPACK(buffer)){
-      console.log('It is the PACK \\o/');
-      return {
+      result = {
+        ...result,
         type: 'pack',
         pack: buffer.rest()
-      }
+      };
     }else{
-      console.log('It is not the PACK (yet) :(');
       const line = unpktLine(buffer);
-      if(!line) throw new Error('unexpected');
-      console.log(decode(line));
-      const lineBuffer = new Buffer(line);
-      if(isACK(lineBuffer)){
-        lineBuffer.next(4);
-        const hash = decode(lineBuffer.next(40));
-        console.log(hash);
-        result.acks.push(hash);
-      }else if(isNAK(lineBuffer)){
-        lineBuffer.next(4);
+      if(line){
+        result = parseLine(new Buffer(line), result);
       }
     }
   }
@@ -54,7 +69,7 @@ function unpktLine(line : Buffer) : Uint8Array | undefined {
     return undefined;
   }
   const result = line.next(size - 4);
-  if(line.data[line.pos] === NEWLINE) line.next();
+  if(line.peek() === NEWLINE) line.next();
   return result;
 }
 
@@ -62,10 +77,27 @@ function isPACK(buffer : Buffer){
   return buffer.peekInt32() === 0x5041434b;
 }
 
-function isACK(buffer : Buffer){
-  return buffer.peekInt32() === 0x41434b20;
+function switchParse<T>(cases : {[key : string] : (buffer : Buffer, state : T) => T}){
+  const tree = Object.keys(cases)
+    .map(key => ({key: key.split('').map(c => c.charCodeAt(0)), value: cases[key]}))
+    .reduce((out, {key: [k, ...rest], value}) => {
+      out[k] = unwrap(rest.length, value)
+      return out;
+    }, [] as ((buffer : Buffer, state : T) => T)[]);
+
+  return (line : Buffer, state : T) => {
+    const action = tree[line.next()];
+    if(!action){
+      throw new Error(`unknown key ${decode(line.soFar())}`);
+    }
+
+    return action(line, state);
+  };
 }
 
-function isNAK(buffer : Buffer){
-  return buffer.peekInt32() === 0x4e414b20;
+function unwrap<T>(length : number, action : (buffer : Buffer, state : T) => T){
+  return (buffer : Buffer, state : T) => {
+    buffer.next(length);
+    return action(buffer, state);
+  }
 }

@@ -9,7 +9,7 @@ export interface UploadRequest {
   readonly done : boolean
   readonly wants : Hash[]
   readonly shallows : Hash[]
-  readonly deepen? : Hash | number
+  readonly depth? : number
   readonly haves : Hash[]
 }
 

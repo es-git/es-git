@@ -13,9 +13,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   //set('side-band-64k') || set('side-band');
 
-  //set('ofs-delta');
-
-  set('agent', 'es-git');
+  set('ofs-delta');
 
   //const dSince = set('deepen-since');
   //const dNot = set('deepen-not');
@@ -42,6 +40,8 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
   //set('allow-reachable-sha1-in-want');
 
   //set('push-cert', 'nonce');
+
+  set('agent', 'es-git');
 
   return client as ClientCaps;
 

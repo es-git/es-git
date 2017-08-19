@@ -1,6 +1,6 @@
 import { Ref, HasObject, Hash } from './types';
 
-export default async function differingRefs(localRefs : Hash[], remoteRefs : Ref[], refspecs : string[], hasObject : HasObject){
+export default async function differingRefs(localRefs : Hash[], remoteRefs : Ref[], refspecs : string[], hasObject : HasObject, shallows=[] as Hash[], unshallow=false){
   const localRefsMap = new Set(localRefs);
 
   const specs = refspecs.map(spec => spec.split(':')[0]).map(local => ({
@@ -13,5 +13,9 @@ export default async function differingRefs(localRefs : Hash[], remoteRefs : Ref
     .filter(ref => specs.some(spec => spec.star ? ref.name.startsWith(spec.test) : ref.name === spec.test))
     .map(async ref => ({ref, has: await hasObject(ref.hash)})));
 
-  return different.filter(r => !r.has).map(r => r.ref.hash);
+  return different
+    .filter(r => !r.has)
+    .map(r => r.ref.hash)
+    .filter((h, i, c) => c.indexOf(h) === i)
+    .concat(unshallow ? shallows : []);
 }

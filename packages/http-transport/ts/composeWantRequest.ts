@@ -5,12 +5,17 @@ export default function *composeWantRequest(request : UploadRequest, capabilitie
   const[hash, ...wants] = request.wants;
   yield pktLine(`want ${hash} ${composeCaps(capabilities)}`);
 
-  for(const hash of request.wants){
+  for(const hash of wants){
     yield pktLine(`want ${hash}`);
   }
 
-  //yield shallows
-  //yield deepens
+  for(const shallow of request.shallows){
+    yield pktLine(`shallow ${shallow}`);
+  }
+
+  if(request.depth){
+    yield pktLine(`deepen ${request.depth}`, false);
+  }
 
   yield pktLine(null);
 

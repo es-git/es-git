@@ -13,25 +13,44 @@ import remoteToLocal from './remoteToLocal';
 export type Fetch = LsRemoteFetch & FetchPackFetch;
 export { RawObject };
 
-export interface FetchResult {
-  objects: IterableIterator<RawObject>,
-  refs: Ref[]
+export interface FetchRequest {
+  readonly url : string
+  readonly fetch : Fetch
+  readonly localRefs: Hash[]
+  readonly refspec : string | string[]
+  hasObject(hash : string) : Promise<boolean>
+  readonly depth? : number
+  readonly shallows? : Hash[]
+  readonly unshallow? : boolean
 }
 
-export default async function fetch(url : string, fetch : Fetch, localRefs : Hash[], refspecs : string | string[], hasObject : HasObject) : Promise<FetchResult> {
-  refspecs = Array.isArray(refspecs) ? refspecs : [refspecs];
+export interface FetchResult {
+  objects : IterableIterator<RawObject>
+  refs : Ref[]
+  shallow : Hash[]
+  unshallow : Hash[]
+}
+
+export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest) : Promise<FetchResult> {
   const {capabilities, remoteRefs} = await lsRemote(url, fetch, 'git-upload-pack');
 
-  const wanted = await differingRefs(localRefs, remoteRefs, refspecs, hasObject);
+  if((depth || unshallow) && !capabilities.has('shallow')){
+    throw new Error('remote does not support shallow fetch');
+  }
+
+  refspec = Array.isArray(refspec) ? refspec : [refspec];
+  const wanted = await differingRefs(localRefs, remoteRefs, refspec, hasObject, shallows, unshallow);
 
   if(wanted.length == 0){
     return {
       objects: function*() : IterableIterator<RawObject> {}(),
-      refs: [] as Ref[]
+      refs: [] as Ref[],
+      shallow: [] as Hash[],
+      unshallow: [] as Hash[]
     }
   }
 
-  const negotiate = negotiatePack(wanted, localRefs)
+  const negotiate = negotiatePack(wanted, localRefs, shallows, unshallow ? 0x7fffffff : depth);
   const body = concat(...composeWantRequest(negotiate, commonCapabilities(capabilities)));
   const response = await post(url, 'git-upload-pack', body, fetch);
   const parsedResponse = parseWantResponse(response);
@@ -39,7 +58,9 @@ export default async function fetch(url : string, fetch : Fetch, localRefs : Has
 
   return {
     objects: unpack(parsedResponse.pack),
-    refs: remoteRefs.map(remoteToLocal(refspecs)).filter(x => x) as Ref[]
+    refs: remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[],
+    shallow: parsedResponse.shallow,
+    unshallow: parsedResponse.unshallow
   };
 }
 

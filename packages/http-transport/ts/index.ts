@@ -1,4 +1,4 @@
-export { default as fetch, Fetch, RawObject } from './fetch';
+export { default as fetch, Fetch, RawObject, FetchRequest, FetchResult } from './fetch';
 
 export { default as lsRemote, Result } from './lsRemote';
 

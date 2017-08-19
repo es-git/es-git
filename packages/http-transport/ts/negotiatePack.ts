@@ -3,10 +3,11 @@
 
 import { Hash, UploadRequest } from './types';
 
-export default function negotiatePack(wants : Hash[], haves : Hash[]) : UploadRequest {
+export default function negotiatePack(wants : Hash[], haves : Hash[], shallows=[] as Hash[], depth=0) : UploadRequest {
   return {
     wants,
-    shallows: [],
+    shallows,
+    depth,
     haves,
     done: true
   };
