@@ -1,15 +1,13 @@
 {
   "name": "@es-git/example",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
-  "main": "js/index.js",
-  "types": "es/index.d.ts",
-  "module": "es/index.js",
+  "main": "server.js",
   "scripts": {
     "clean": "rm -rf ./es ./js",
     "compile": "NODE_ENV=production webpack --progress --colors",
-    "prepublishOnly": "npm run clean && npm run compile && npm test"
+    "watch": "webpack --watch"
   },
   "publishConfig": {
     "access": "public"
@@ -43,13 +41,15 @@
     "@es-git/memory-repo": "^0.2.0",
     "@es-git/mix": "^0.1.2",
     "@es-git/node-fs-repo": "^0.2.0",
-    "@es-git/node-git-proxy": "^0.2.0",
+    "@es-git/node-git-proxy": "^0.3.0",
     "@es-git/object-mixin": "^0.2.0",
     "@es-git/path-to-object-mixin": "^0.2.0",
     "@es-git/push-mixin": "^0.2.0",
     "@es-git/save-as-mixin": "^0.2.0",
     "@es-git/walkers-mixin": "^0.2.0",
     "@es-git/zlib-mixin": "^0.2.0",
+    "d3": "^4.10.0",
+    "gitgraph.js": "^1.11.4",
     "koa": "^2.3.0",
     "koa-favicon": "^2.0.0",
     "koa-mount": "^3.0.0",
@@ -57,6 +57,7 @@
     "node-fetch": "^1.7.2"
   },
   "devDependencies": {
+    "@types/d3": "^4.10.0",
     "@types/node-fetch": "^1.6.7",
     "babel-loader": "^7.1.2",
     "source-map-loader": "^0.2.1",
