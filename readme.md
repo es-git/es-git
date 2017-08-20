@@ -4,7 +4,7 @@
 
 ## Example
 
-[**DEMO**](https://es-git-examples.mariusgundersen.net/)
+[**DEMOS**](https://es-git-examples.mariusgundersen.net/)
 
 This basic example shows how to do low-level manipulation of an in-memory repository
 
@@ -103,8 +103,8 @@ These mixins add features to the repo. Some of them depend on other mixins, so t
 
 ## Other packages
 
-The **[mix](https://www.npmjs.com/package/@es-git/mix)** package provides a useful mixin function for extending the base repo
-
+* The **[mix](https://www.npmjs.com/package/@es-git/mix)** package provides a useful mixin function for extending the base repo
+* The **[node-git-proxy](https://www.npmjs.com/package/@es-git/node-git-proxy)** package provides a proxy server so you can run git in the browser
 
 ## Relationship to [JS-Git](https://github.com/creationix/js-git)
 
