@@ -11,7 +11,7 @@ const app = new Koa();
 app.use(favicon());
 app.use(serve('./pages'));
 app.use(serve('./js'));
-app.use(mount('/proxy', ctx => proxy(ctx.req, ctx.res)));
+app.use(mount('/proxy', ctx => proxy(ctx.req, ctx.res).catch(e => ctx.status = 500)));
 app.listen(PORT);
 
 console.log(`server started on localhost:${PORT}`);

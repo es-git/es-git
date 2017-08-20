@@ -27,5 +27,5 @@ export default async function proxy(req : http.ServerRequest, res : http.ServerR
     response.pipe(res)
       .on('end', ok)
       .on('error', oops);
-  })));
+  })).on('error', oops));
 }
