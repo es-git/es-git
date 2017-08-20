@@ -1,7 +1,7 @@
 {
   "name": "@es-git/example",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -9,8 +9,7 @@
   "scripts": {
     "clean": "rm -rf ./es ./js",
     "compile": "NODE_ENV=production webpack --progress --colors",
-    "watch": "webpack --watch",
-    "prepublishOnly": "npm run clean && npm run compile && npm test"
+    "watch": "webpack --watch"
   },
   "publishConfig": {
     "access": "public"
@@ -44,7 +43,7 @@
     "@es-git/memory-repo": "^0.2.0",
     "@es-git/mix": "^0.1.2",
     "@es-git/node-fs-repo": "^0.2.0",
-    "@es-git/node-git-proxy": "^0.2.0",
+    "@es-git/node-git-proxy": "^0.3.0",
     "@es-git/object-mixin": "^0.2.0",
     "@es-git/path-to-object-mixin": "^0.2.0",
     "@es-git/push-mixin": "^0.2.0",
