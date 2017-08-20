@@ -9,6 +9,7 @@
   "scripts": {
     "clean": "rm -rf ./es ./js",
     "compile": "NODE_ENV=production webpack --progress --colors",
+    "watch": "webpack --watch",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
   },
   "publishConfig": {
@@ -50,6 +51,8 @@
     "@es-git/save-as-mixin": "^0.2.0",
     "@es-git/walkers-mixin": "^0.2.0",
     "@es-git/zlib-mixin": "^0.2.0",
+    "d3": "^4.10.0",
+    "gitgraph.js": "^1.11.4",
     "koa": "^2.3.0",
     "koa-favicon": "^2.0.0",
     "koa-mount": "^3.0.0",
@@ -57,6 +60,7 @@
     "node-fetch": "^1.7.2"
   },
   "devDependencies": {
+    "@types/d3": "^4.10.0",
     "@types/node-fetch": "^1.6.7",
     "babel-loader": "^7.1.2",
     "source-map-loader": "^0.2.1",

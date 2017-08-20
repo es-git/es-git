@@ -1,6 +1,8 @@
 const webpack = require('webpack');
 const path = require('path');
 
+const debug = process.env.NODE_ENV !== 'production';
+
 const babelLoader = {
   loader: 'babel-loader',
   query: {
@@ -11,12 +13,14 @@ const babelLoader = {
 module.exports = {
   entry: {
     'basic': './ts/basic.ts',
-    'fetch': './ts/fetch.ts'
+    'fetch': './ts/fetch.ts',
+    'gitgraph': './ts/gitgraph.ts'
   },
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'js')
   },
+  devtool: debug ? 'inline-source-map' : 'source-map',
   module: {
     rules: [
       {
