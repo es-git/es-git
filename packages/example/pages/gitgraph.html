@@ -2,8 +2,8 @@
     <head>
       <title>Gitgraph.js - ES-Git</title>
       <style>
-        circle {
-          fill: #999;
+        .dagnode {
+          fill: #d00;
         }
 
         text {
@@ -11,29 +11,19 @@
           dominant-baseline: middle;
         }
 
-        line {
-          stroke: #999;
-          stroke-width: 5px;
-        }
-
-        .node--internal circle {
-          fill: #555;
-        }
-
-        .node--internal text {
-          text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
-        }
-
-        .link {
+        .daglink {
           fill: none;
-          stroke: #555;
-          stroke-opacity: 0.4;
-          stroke-width: 1.5px;
+          stroke: #d00;
+          stroke-width: 5px;
         }
       </style>
     </head>
     <body>
-      <svg width="960" height="2000" viewbox="0 0 960 2000"></svg>
+      <form method="GET">
+        <input type="text" name="repo" id="repo" />
+        <input type="submit" value="fetch">
+      </form>
+      <svg width="960" height="700" viewbox="0 0 960 700"></svg>
       <script src="/gitgraph.js"></script>
     </body>
   </html>

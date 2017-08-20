@@ -3,9 +3,7 @@
   "private": true,
   "version": "0.3.0",
   "description": "",
-  "main": "js/index.js",
-  "types": "es/index.d.ts",
-  "module": "es/index.js",
+  "main": "server.js",
   "scripts": {
     "clean": "rm -rf ./es ./js",
     "compile": "NODE_ENV=production webpack --progress --colors",
