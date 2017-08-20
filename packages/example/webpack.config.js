@@ -10,7 +10,8 @@ const babelLoader = {
 
 module.exports = {
   entry: {
-    'basic': './ts/basic.ts'
+    'basic': './ts/basic.ts',
+    'fetch': './ts/fetch.ts'
   },
   output: {
     filename: '[name].js',
