@@ -7,10 +7,10 @@ import loadAsMixin from '@es-git/load-as-mixin';
 async function test(){
   // Create the repository in memory and
   // enhance it using three mixins
-  class Repo extends mix(MemoryRepo)
-                    .with(objectMixin)
-                    .with(saveAsMixin)
-                    .with(loadAsMixin) {}
+  const Repo = mix(MemoryRepo)
+              .with(objectMixin)
+              .with(saveAsMixin)
+              .with(loadAsMixin);
 
   // Create an instance of the repository
   const repo = new Repo();

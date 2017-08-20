@@ -8,10 +8,7 @@
   "module": "es/index.js",
   "scripts": {
     "clean": "rm -rf ./es ./js",
-    "tsc": "../../node_modules/.bin/tsc",
-    "babel": "../../node_modules/.bin/babel --source-maps -d js es",
-    "compile": "npm run tsc && npm run babel",
-    "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
+    "compile": "NODE_ENV=production webpack --progress --colors",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
   },
   "publishConfig": {
@@ -51,9 +48,17 @@
     "@es-git/save-as-mixin": "^0.2.0",
     "@es-git/walkers-mixin": "^0.2.0",
     "@es-git/zlib-mixin": "^0.2.0",
+    "koa": "^2.3.0",
+    "koa-favicon": "^2.0.0",
+    "koa-mount": "^3.0.0",
+    "koa-static": "^4.0.1",
     "node-fetch": "^1.7.2"
   },
   "devDependencies": {
-    "@types/node-fetch": "^1.6.7"
+    "@types/node-fetch": "^1.6.7",
+    "babel-loader": "^7.1.2",
+    "source-map-loader": "^0.2.1",
+    "ts-loader": "^2.3.3",
+    "webpack": "^3.5.5"
   }
 }
