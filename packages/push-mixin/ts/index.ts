@@ -35,8 +35,9 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       for(const [hash, commit] of localCommits.entries()){
         await this.addToMap(hash, localObjects);
         if(await this.addToMap(commit.body.tree, localObjects)) continue;
-        for await(const {hash} of super.walkTree(commit.body.tree, true)){
-          await this.addToMap(hash, localObjects);
+        let hasSubtree = true
+        for await(const {hash} of withFeedback(super.walkTree(commit.body.tree, true), () => !hasSubtree)){
+          hasSubtree = await this.addToMap(hash, localObjects);
         }
       }
 
@@ -73,4 +74,21 @@ async function getCommonCommits(local : Map<string, CommitObject>, remote : Map<
     }
   }
   return common
+}
+
+async function *withFeedback<T>(iterator : AsyncIterator<T>, feedback : () => any){
+  try{
+    while(true){
+      const next = await iterator.next(feedback());
+      if(next.done){
+        return;
+      }else{
+        yield next.value;
+      }
+    }
+  }finally{
+    if(typeof iterator.return === 'function'){
+      iterator.return();
+    }
+  }
 }

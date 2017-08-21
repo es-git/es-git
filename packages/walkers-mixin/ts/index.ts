@@ -48,11 +48,10 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
         for(const name of Object.keys(object.body)){
           const {mode, hash} = object.body[name];
           const path = [...parentPath, name];
-          if(!isFile(mode)){
-            if(iterateFolders) yield {mode, hash, path};
-            yield* this.walkTree(hash, iterateFolders, path);
-          }else{
+          if(isFile(mode)){
             yield {mode, hash, path};
+          }else if(!iterateFolders || (yield {mode, hash, path}) !== false){
+            yield* this.walkTree(hash, iterateFolders, path);
           }
         }
       }
