@@ -1,6 +1,6 @@
 {
   "name": "@es-git/checkout-mixin",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -41,6 +41,6 @@
   "dependencies": {
     "@es-git/core": "^0.2.0",
     "@es-git/object-mixin": "^0.2.0",
-    "@es-git/walkers-mixin": "^0.2.0"
+    "@es-git/walkers-mixin": "^0.3.2"
   }
 }
