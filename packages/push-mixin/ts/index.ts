@@ -36,7 +36,7 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
         await this.addToMap(hash, localObjects);
         if(await this.addToMap(commit.body.tree, localObjects)) continue;
         for await(const {hash} of super.walkTree(commit.body.tree, true)){
-          if(await this.addToMap(hash, localObjects)) break;
+          await this.addToMap(hash, localObjects);
         }
       }
 
