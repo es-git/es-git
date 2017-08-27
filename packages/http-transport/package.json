@@ -1,6 +1,6 @@
 {
   "name": "@es-git/http-transport",
-  "version": "0.2.0",
+  "version": "0.3.3",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -39,7 +39,7 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/packfile": "^0.2.0",
+    "@es-git/packfile": "^0.3.3",
     "text-encoding": "^0.6.4"
   },
   "devDependencies": {
