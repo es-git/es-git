@@ -18,17 +18,22 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const {remoteRefs, capabilities} = await lsRemote(url, fetch);
       const remoteRef = remoteRefs.filter(r => r.name === ref)[0] || {hash:'00', name: ref};
       if(remoteRef.hash === hash) return '';
-      const commands : Command[] = [
-        {
+      const command : Command = remoteRef.hash == '00'
+        ? {
+          type: 'create',
+          ref,
+          hash
+        } : {
           type: 'update',
           ref,
           oldHash: remoteRef.hash,
           newHash: hash
-        }
-      ];
+        };
+      const remoteHashes = await Promise.all(remoteRefs.map(async r => ({hash:r.hash, known: await super.hasObject(r.hash)})))
+        .then(a => a.filter(x => x.known).map(x => x.hash));
       const localWalk = super.walkCommits(hash);
       const localCommits = await getCommits(localWalk);
-      const remoteWalk = super.walkCommits(...remoteRefs.map(r => r.hash));
+      const remoteWalk = super.walkCommits(...remoteHashes);
       const remoteCommits = await getCommits(remoteWalk);
       const commonCommits = getCommonCommits(localCommits, remoteCommits);
       const localObjects = new Map<Hash, Uint8Array>();
@@ -41,14 +46,14 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
         }
       }
 
-      return await push(url, fetch, commands, localObjects, auth);
+      return await push(url, fetch, [command], localObjects, auth);
     }
 
     private async addToMap(hash : string, map : Map<Hash, Uint8Array>) {
       if(map.has(hash)) return true;
-      const object = await super.loadRaw(hash);
-      if(!object) return true;
-      map.set(hash, object);
+      const raw = await super.loadRaw(hash);
+      if(!raw) return true;
+      map.set(hash, raw);
       return false;
     }
   }

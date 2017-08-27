@@ -40,9 +40,9 @@ export default function *composePushRequest(packfile : Uint8Array, commands : Co
 export function encodeCommand(command : Command){
   switch(command.type){
     case 'create':
-      return `00000000000000000000000000000000000000000000 ${command.hash} ${command.ref}`;
+      return `0000000000000000000000000000000000000000 ${command.hash} ${command.ref}`;
     case 'delete':
-      return `${command.hash} 00000000000000000000000000000000000000000000 ${command.ref}`;
+      return `${command.hash} 0000000000000000000000000000000000000000 ${command.ref}`;
     case 'update':
       return `${command.oldHash} ${command.newHash} ${command.ref}`;
     default:

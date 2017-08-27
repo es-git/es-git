@@ -14,7 +14,7 @@ import {
 export type HashBlob = [string, Uint8Array];
 
 export default function(objects : Iterable<HashBlob>){
-  return concat(...composePackfile([...toEntry(toRawObject(objects))]));
+  return concat(...composePackfile([...toEntry(toRawObject(objects))].sort(byType)));
 }
 
 function *toRawObject(objects : Iterable<HashBlob>) : IterableIterator<RawObject> {
@@ -39,4 +39,8 @@ function *toEntry(objects : IterableIterator<RawObject>) : IterableIterator<Norm
       offset: 0
     }
   }
+}
+
+function byType(a : NormalEntry, b : NormalEntry) {
+  return a.type - b.type;
 }

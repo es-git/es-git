@@ -18,9 +18,10 @@ export default function *composePackfile(items : Entry[]) {
   yield chunk;
 
   for(const item of items){
-    const chunk = concat(...packFrame(item));
-    hash.update(chunk);
-    yield chunk;
+    for(const chunk of packFrame(item)){
+      hash.update(chunk);
+      yield chunk;
+    }
   }
 
   yield packHash(hash.digest());
