@@ -3,7 +3,7 @@ import {
   concat
 } from '@es-git/core';
 import * as pako from 'pako';
-import sha1 from 'git-sha1';
+import sha1, { Sha1 } from 'git-sha1';
 
 import {
   Type,
@@ -13,18 +13,20 @@ import {
 export default function *composePackfile(items : Entry[]) {
   const hash = sha1();
 
-  const chunk = packHeader(items.length);
-  hash.update(chunk);
-  yield chunk;
+  yield update(packHeader(items.length), hash);
 
   for(const item of items){
     for(const chunk of packFrame(item)){
-      hash.update(chunk);
-      yield chunk;
+      yield update(chunk, hash);
     }
   }
 
   yield packHash(hash.digest());
+}
+
+function update(chunk : Uint8Array, hash : Sha1){
+  hash.update(chunk);
+  return chunk;
 }
 
 function packHeader(length : number) {
@@ -60,15 +62,15 @@ function packFrameHeader(type : number, length : number){
     head[i] = length & 0x7f;
     length >>= 7;
   }
-  return head;
+  return new Uint8Array(head);
 }
 
 // write BIG_ENDIAN_MODIFIED_BASE_128_NUMBER
 function packOfsDelta(ref : number){
-  const head = [];
   let offset = ref;
   // Calculate how many digits we need in base 128
   let i = Math.floor(Math.log(offset) / Math.log(0x80));
+  const head = new Uint8Array(i+1);
   // Write the last digit
   head[i] = offset & 0x7f;
   // Then write the rest
