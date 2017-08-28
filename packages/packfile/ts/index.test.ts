@@ -11,7 +11,10 @@ test('pack-unpack', t => {
   ];
 
   const result = unpack(pack(prepare(blobs)));
-  t.deepEqual(blobs, postpare(result));
+  t.deepEqual([
+    'commit 7\0testing',
+    'blob 4\0test'
+  ], postpare(result));
 });
 
 function prepare(blobs : string[]){
