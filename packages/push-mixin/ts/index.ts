@@ -5,19 +5,28 @@ import { lsRemote, push, Fetch, Command, Auth } from '@es-git/http-transport';
 
 export { Fetch, Auth };
 
+export interface RefHash {
+  readonly ref : string
+  readonly hash : Hash
+}
+
+export interface PushOptions {
+  readonly progress? : (status : string) => void
+}
+
 export interface IPushRepo {
-  push(url : string, ref : string, auth? : Auth) : Promise<string>
+  push(url : string, ref : string, auth? : Auth, options? : PushOptions) : Promise<RefHash[]>
 }
 
 export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRepo & IRawRepo>>(repo : T, fetch : Fetch) : Constructor<IPushRepo> & T {
   return class PushRepo extends repo implements IPushRepo {
-    async push(url : string, ref : string, auth? : Auth) : Promise<string> {
+    async push(url : string, ref : string, auth? : Auth, options : PushOptions = {}) : Promise<RefHash[]> {
       const hash = await super.getRef(ref);
       if(!hash) throw new Error(`Unknown ref ${ref}`);
 
       const {remoteRefs, capabilities} = await lsRemote(url, fetch);
       const remoteRef = remoteRefs.filter(r => r.name === ref)[0] || {hash:'00', name: ref};
-      if(remoteRef.hash === hash) return '';
+      if(remoteRef.hash === hash) return [{ref, hash}];
       const command : Command = remoteRef.hash == '00'
         ? {
           type: 'create',
@@ -46,7 +55,14 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
         }
       }
 
-      return await push(url, fetch, [command], localObjects, auth);
+      await push(url, fetch, [command], localObjects, auth);
+
+      return [
+        {
+          ref,
+          hash
+        }
+      ];
     }
 
     private async addToMap(hash : string, map : Map<Hash, Uint8Array>) {

@@ -4,7 +4,8 @@ import { fetch as gitFetch, Fetch } from '@es-git/http-transport';
 export interface FetchOptions {
   readonly refspec? : string | string[]
   readonly depth? : number,
-  readonly unshallow? : boolean
+  readonly unshallow? : boolean,
+  readonly progress? : (status : string) => void
 }
 
 export interface IFetchRepo {
