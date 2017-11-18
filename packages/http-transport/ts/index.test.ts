@@ -49,7 +49,7 @@ test('fetch shallow refs', async t => {
   ]);
 });
 
-test('fetch unshallow refs', async t => {
+test.only('fetch unshallow refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs : string[] = [
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
@@ -81,15 +81,6 @@ function fetchify(fetch : (url: string | Request, init?: RequestInit) => Promise
     if(init && init.body){
       init.body = Buffer.from(init.body as any)
     }
-    const response = await fetch(url, init);
-    return {
-      arrayBuffer: async () => {
-        const buf = await response.buffer();
-        return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-      },
-      text: () => response.text(),
-      status: response.status,
-      statusText: response.statusText
-    };
+    return await fetch(url, init);
   };
 }

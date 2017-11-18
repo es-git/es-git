@@ -94,7 +94,7 @@ const parseLine = switchParse<Token>({
   })
 });
 
-export default async function* parseWantResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterable<Token> {
+export default async function* parseWantResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Token> {
   const buffer = new AsyncBuffer(response);
 
   while(true){
@@ -135,7 +135,7 @@ function switchParse<T>(cases : {[key : string] : (buffer : AsyncBuffer) => Prom
     const char = await line.peek();
     const action = tree[char];
     if(!action){
-      throw new Error(`unknown key '${String.fromCharCode(char)}'`);
+      throw new Error(`unknown key >${String.fromCharCode(char)}< (${char})`);
     }
 
     return action(line);

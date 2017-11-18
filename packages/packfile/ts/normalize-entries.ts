@@ -15,11 +15,11 @@ import {
 import applyDelta from './apply-delta';
 import sha1 from 'git-sha1';
 
-export default function *normalizeEntries(entries : IterableIterator<Entry>) : IterableIterator<RawObject> {
+export default async function *normalizeEntries(entries : AsyncIterableIterator<Entry>) : AsyncIterableIterator<RawObject> {
   const references = new Map<string, NormalEntry>();
   const offsets = new Map<number, NormalEntry>();
 
-  for(let entry of entries){
+  for await(let entry of entries){
     if(entry.type === Type.ofsDelta
     || entry.type === Type.refDelta){
       const base = getBase(entry);

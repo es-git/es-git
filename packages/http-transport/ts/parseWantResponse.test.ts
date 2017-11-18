@@ -1,7 +1,7 @@
 import test from 'ava';
 import parseWantResponse from './parseWantResponse';
 
-test.only('parse side-band-64', async t => {
+test('parse side-band-64', async t => {
   for await(const result of parseWantResponse(chunkify(response))){
     console.log('[', result.type, ']');
     if(result.type === 'progress'){
@@ -14,6 +14,7 @@ test.only('parse side-band-64', async t => {
       continue;
     }
   }
+  t.pass();
 });
 
 async function* chunkify(array : Uint8Array){

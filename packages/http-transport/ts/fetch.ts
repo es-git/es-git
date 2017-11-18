@@ -6,7 +6,7 @@ import negotiatePack from './negotiatePack';
 import composeWantRequest from './composeWantRequest';
 import commonCapabilities from './commonCapabilities';
 import post, { Fetch as FetchPackFetch } from './post';
-import parseWantResponse from './parseWantResponse';
+import parseWantResponse, { Token } from './parseWantResponse';
 import { unpack, RawObject } from '@es-git/packfile';
 import remoteToLocal from './remoteToLocal';
 
@@ -25,7 +25,7 @@ export interface FetchRequest {
 }
 
 export interface FetchResult {
-  objects : IterableIterator<RawObject>
+  objects : AsyncIterableIterator<RawObject>
   refs : Ref[]
   shallow : Hash[]
   unshallow : Hash[]
@@ -43,7 +43,7 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
 
   if(wanted.length == 0){
     return {
-      objects: function*() : IterableIterator<RawObject> {}(),
+      objects: async function*() : AsyncIterableIterator<RawObject> {}(),
       refs: [] as Ref[],
       shallow: [] as Hash[],
       unshallow: [] as Hash[]
@@ -52,15 +52,45 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
 
   const negotiate = negotiatePack(wanted, localRefs, shallows, unshallow ? 0x7fffffff : depth);
   const body = concat(...composeWantRequest(negotiate, commonCapabilities(capabilities)));
-  const response = await post(url, 'git-upload-pack', body, fetch);
-  const parsedResponse = parseWantResponse(response);
-  if(parsedResponse.type !== 'pack') throw new Error('fetch failed, no pack returned');
-
-  return {
-    objects: unpack(parsedResponse.pack),
-    refs: remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[],
-    shallow: parsedResponse.shallow,
-    unshallow: parsedResponse.unshallow
+  const response = post(url, 'git-upload-pack', body, fetch);
+  const result = {
+    shallow: [] as string[],
+    unshallow: [] as string[],
+    refs: remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[]
   };
+  console.log('----');
+  for await(const parsed of parseWantResponse(response)){
+    console.log(parsed.type);
+    switch(parsed.type){
+      case 'shallow':
+        result.shallow.push(parsed.hash);
+        continue;
+      case 'unshallow':
+        result.unshallow.push(parsed.hash);
+        continue;
+      case 'pack':
+        return {
+          ...result,
+          objects: unpack(parsed.chunks)
+        };
+    }
+  }
+  console.log('====');
+  throw new Error('No pack in response :(');
 }
 
+async function* collect(response : AsyncIterableIterator<Token>, progress: (message: string) => void){
+  const shallows : string[] = [];
+  const unshallows : string[] = [];
+  for await(const item of response){
+    if(item.type == 'shallow'){
+      shallows.push(item.hash);
+    }else if(item.type == 'unshallow'){
+      unshallows.push(item.hash);
+    }else if(item.type == 'pack'){
+      yield* unpack(item.chunks);
+    }else if(item.type == 'progress'){
+      progress(item.message);
+    }
+  }
+}

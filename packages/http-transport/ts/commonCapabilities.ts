@@ -11,7 +11,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   //set('thin-pack');
 
-  //set('side-band-64k') || set('side-band');
+  set('side-band-64k') || set('side-band');
 
   set('ofs-delta');
 
