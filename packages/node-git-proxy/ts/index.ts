@@ -20,7 +20,7 @@ export default async function proxy(req : http.ServerRequest, res : http.ServerR
 
   return new Promise((ok, oops) => req.pipe(https.request(request, response => {
     for(const header of Object.keys(response.headers)){
-      res.setHeader(header, response.headers[header]);
+      res.setHeader(header, response.headers[header] as string);
     }
     res.statusCode = response.statusCode || 500;
     res.statusMessage = response.statusMessage || 'Internal Error';

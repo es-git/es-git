@@ -113,7 +113,7 @@ function $step(state : State){
 }
 
 // The first four bytes in a packfile are the bytes 'PACK'
-function $pack(state : State) : State {
+function $pack(state : StartState) : State {
   if(state.buffer.nextInt32() === 0x5041434b)
     return {
       ...state,
@@ -125,7 +125,7 @@ function $pack(state : State) : State {
 
 // The version is stored as an unsigned 32 integer in network byte order.
 // It must be version 2 or 3.
-function $version(state : State) : State {
+function $version(state : PackState) : State {
   const version = state.buffer.nextInt32();
   if (version === 2 || version === 3)
     return {
