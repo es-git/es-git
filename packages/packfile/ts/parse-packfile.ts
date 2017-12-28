@@ -80,6 +80,7 @@ export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint
       yield state.entry;
     }
   } while(state.state !== 'done');
+  state.buffer.complete();
 }
 
 async function $step(state : State){

@@ -90,4 +90,12 @@ export default class AsyncBuffer {
       }
     }
   }
+
+  async isDone(){
+    return this.nextData(1).then(x => false, x => true);
+  }
+
+  async complete(){
+    for await(const rest of this.rest()){}
+  }
 }

@@ -2,3 +2,5 @@
 *.test.js
 *.test.ts
 samples/
+*.test.js.md
+*.test.js.snap
