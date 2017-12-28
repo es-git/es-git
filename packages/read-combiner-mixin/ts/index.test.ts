@@ -1,17 +1,14 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
 import { Type } from '@es-git/core';
 import { IObjectRepo, GitObject } from '@es-git/object-mixin';
 
 import readCombinerMixin from './index';
 
-sinonStubPromise(sinon);
-
 test('load', async t => {
   const load = sinon.stub();
-  const loadPromise = load.returnsPromise();
+  const {promise, resolve} = defer();
+  load.returns(promise);
   const objectRepo = new ReadCombinerRepo({load});
   const result1 = objectRepo.loadObject('object');
   const result2 = objectRepo.loadObject('object');
@@ -20,20 +17,20 @@ test('load', async t => {
     result2.then(x => false),
     Promise.resolve(true)
   ]);
-  loadPromise.resolves({type: Type.blob, body: new Uint8Array(0)});
+  resolve({type: Type.blob, body: new Uint8Array(0)});
   t.true(await race);
 });
 
 test('loadObject of super called only once', async t => {
   const load = sinon.stub();
-  const loadPromise = load.returnsPromise();
+  const {promise, resolve} = defer();
+  load.returns(promise);
   const objectRepo = new ReadCombinerRepo({load});
   const result1 = objectRepo.loadObject('object');
   const result2 = objectRepo.loadObject('object');
   const result3 = objectRepo.loadObject('object');
   const result4 = objectRepo.loadObject('object');
-  load.returns
-  loadPromise.resolves({type: Type.blob, body: new Uint8Array(0)});
+  resolve({type: Type.blob, body: new Uint8Array(0)});
   t.true(load.calledOnce);
 });
 
@@ -53,3 +50,13 @@ const ReadCombinerRepo = readCombinerMixin(class TestRepo {
     return this.load(hash);
   }
 });
+
+function defer(){
+  let resolve = (v? : any) => {};
+  let reject = (e? : any) => {};
+  return {
+    promise: new Promise((res, rej) => {resolve = res, reject = res}),
+    resolve,
+    reject
+  }
+}

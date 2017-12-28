@@ -1,6 +1,6 @@
 import * as pako from 'pako';
-import sha1, { Sha1 } from 'git-sha1';
 import { AsyncBuffer, unpackHash } from '@es-git/core';
+import DigestableAsyncBuffer from './DigestableAsyncBuffer';
 
 import {
   Type,
@@ -12,7 +12,7 @@ type $State<S extends string, T> = T & {
 }
 
 interface StartState {
-  readonly buffer : HashWrapper
+  readonly buffer : DigestableAsyncBuffer
 }
 
 interface PackState extends StartState {
@@ -68,52 +68,10 @@ type State =
   $State<'entry', EntryState> |
   $State<'done', ChecksumState>;
 
-class HashWrapper extends AsyncBuffer{
-  private sha : Sha1
-  constructor(chunks : AsyncIterableIterator<Uint8Array>){
-    super(chunks);
-    this.sha = sha1();
-  }
-
-  get pos(){
-    return super.pos;
-  }
-
-  next() : Promise<number>
-  next(length : number) : Promise<Uint8Array>
-  async next(length? : number) {
-    if(length === undefined){
-      const result = await super.next();
-      this.sha.update(String.fromCharCode(result));
-      return result;
-    }else{
-      const result = await super.next(length);
-      this.sha.update(result);
-      return result;
-    }
-  }
-
-  async nextInt32() : Promise<number> {
-    const buffer = await super.next(4);
-    this.sha.update(buffer);
-    let result = 0;
-    for(let i=0; i<4; i++){
-      result = (result << 8) | buffer[i];
-    }
-    return result;
-  }
-
-  digest(){
-    const result = this.sha.digest();
-    this.sha = sha1();
-    return result;
-  }
-}
-
 export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Entry> {
   let state : State = {
     state: 'start',
-    buffer: new HashWrapper(chunks)
+    buffer: new DigestableAsyncBuffer(chunks)
   };
 
   do {
@@ -129,13 +87,10 @@ async function $step(state : State){
     case 'start':
       return $pack(state);
     case 'pack':
-      console.log('pack', state.buffer.pos);
       return $version(state);
     case 'version':
-      console.log('version', state.buffer.pos);
       return $entries(state);
     case 'entries':
-      console.log('entries', state.buffer.pos);
       return $header(state);
     case 'ofs-header':
       return $ofsDelta(state);
@@ -149,7 +104,6 @@ async function $step(state : State){
       if(state.entryCount > 0){
         return $header(state);
       }else{
-        console.log('cheksum');
         return $checksum(state);
       }
     default:
@@ -185,7 +139,6 @@ async function $version(state : PackState) : Promise<State> {
 // The number of objects in this packfile is also stored as an unsigned 32 bit int.
 async function $entries(state : VersionState) : Promise<State> {
   const entryCount = await state.buffer.nextInt32();
-  console.log(entryCount);
   return {
     ...state,
     state: 'entries',
@@ -276,9 +229,8 @@ async function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : Prom
 // 20 byte checksum
 async function $checksum(state : EntriesState) : Promise<State> {
   const actual = state.buffer.digest();
-  console.log('actual', actual);
   const checksum = unpackHash(await state.buffer.next(20));
-  if (checksum !== actual) throw new Error(`Checksum mismatch: ${actual} != ${checksum}`);
+  if (checksum !== actual) throw new Error(`Checksum mismatch: actual ${actual} != expected ${checksum}`);
   return {
     ...state,
     state: 'done',
