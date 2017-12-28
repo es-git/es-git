@@ -25,7 +25,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   //set('include-tag');
 
-  //set('report-status');
+  set('report-status');
 
   //set('delete-refs');
 

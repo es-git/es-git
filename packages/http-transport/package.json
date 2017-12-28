@@ -23,10 +23,10 @@
   "license": "MIT",
   "ava": {
     "files": [
-      "es/*.test.js"
+      "es/**/*.test.js"
     ],
     "source": [
-      "es/*.js"
+      "es/**/*.js"
     ],
     "require": [
       "babel-register"

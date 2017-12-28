@@ -1,4 +1,3 @@
-import { concat, decode } from '@es-git/core';
 import { Ref, HasObject, Hash } from './types';
 import lsRemote, { Fetch as LsRemoteFetch } from './lsRemote';
 import differingRefs from './differingRefs';
@@ -9,6 +8,7 @@ import post, { Fetch as FetchPackFetch } from './post';
 import parseWantResponse, { Token } from './parseWantResponse';
 import { unpack, RawObject } from '@es-git/packfile';
 import remoteToLocal from './remoteToLocal';
+import defer from './utils/defer';
 
 export type Fetch = LsRemoteFetch & FetchPackFetch;
 export { RawObject };
@@ -27,8 +27,8 @@ export interface FetchRequest {
 export interface FetchResult {
   objects : AsyncIterableIterator<RawObject>
   refs : Ref[]
-  shallow : Hash[]
-  unshallow : Hash[]
+  shallow : Promise<Hash[]>
+  unshallow : Promise<Hash[]>
 }
 
 export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest) : Promise<FetchResult> {
@@ -45,38 +45,50 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     return {
       objects: async function*() : AsyncIterableIterator<RawObject> {}(),
       refs: [] as Ref[],
-      shallow: [] as Hash[],
-      unshallow: [] as Hash[]
+      shallow: Promise.resolve<Hash[]>([]),
+      unshallow: Promise.resolve<Hash[]>([])
     }
   }
 
   const negotiate = negotiatePack(wanted, localRefs, shallows, unshallow ? 0x7fffffff : depth);
-  const body = concat(...composeWantRequest(negotiate, commonCapabilities(capabilities)));
+  const body = composeWantRequest(negotiate, commonCapabilities(capabilities));
   const response = post(url, 'git-upload-pack', body, fetch);
-  const result = {
-    shallow: [] as string[],
-    unshallow: [] as string[],
-    refs: remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[]
-  };
-  console.log('----');
-  for await(const parsed of parseWantResponse(response)){
-    console.log(parsed.type);
+  {
+    const shallow = defer<string[]>();
+    const unshallow = defer<string[]>();
+    return {
+      refs: remoteToLocal(remoteRefs, refspec),
+      objects: unpack(createResult(parseWantResponse(response), shallow.resolve, unshallow.resolve, s => {})),
+      shallow: shallow.promise,
+      unshallow: unshallow.promise
+    };
+  }
+}
+
+async function* createResult(response : AsyncIterableIterator<Token>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress: (message: string) => void){
+  const shallow : string[] = [];
+  const unshallow : string[] = [];
+  for await(const parsed of response){
     switch(parsed.type){
       case 'shallow':
-        result.shallow.push(parsed.hash);
-        continue;
+        shallow.push(parsed.hash);
+        break;
       case 'unshallow':
-        result.unshallow.push(parsed.hash);
-        continue;
+        unshallow.push(parsed.hash);
+        break;
+      case 'ack':
+      case 'nak':
+        break;
       case 'pack':
-        return {
-          ...result,
-          objects: unpack(parsed.chunks)
-        };
+        yield* parsed.chunks;
+        break;
+      case 'progress':
+        progress(parsed.message);
+        break;
     }
   }
-  console.log('====');
-  throw new Error('No pack in response :(');
+  resolveShallow(shallow);
+  resolveUnshallow(unshallow);
 }
 
 async function* collect(response : AsyncIterableIterator<Token>, progress: (message: string) => void){

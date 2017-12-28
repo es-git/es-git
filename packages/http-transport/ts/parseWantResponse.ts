@@ -100,9 +100,11 @@ export default async function* parseWantResponse(response : AsyncIterableIterato
   while(true){
     const line = await unpktLine(buffer);
     if(line){
-      yield parseLine(new AsyncBuffer(line));
+      yield await parseLine(new AsyncBuffer(line));
     }else{
-      break;
+      if(await buffer.isDone()){
+        break;
+      }
     }
   }
 }
