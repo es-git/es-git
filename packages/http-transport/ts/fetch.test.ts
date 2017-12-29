@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { concat } from '@es-git/core';
 
 import fetch, { Fetch, RawObject } from './fetch';
+import streamToAsyncIterator from './utils/streamToAsyncIterator';
 
 test('fetch refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
@@ -13,14 +14,15 @@ test('fetch refs', async t => {
 
   const result = await fetch({
     url,
-    fetch: fakeFetch([
+    //fetch: fetchify(nodeFetch, save([
+    fetch: fakeFetch(([
       __dirname+'/../samples/fetch-refs.get',
       __dirname+'/../samples/fetch-refs.post'
-    ]),
+    ])),
     localRefs,
     refspec: 'refs/heads/fetch-test:refs/remotes/origin/fetch-test',
     hasObject: () => Promise.resolve(false)
-  });
+  }, s => console.log(s));
 
   t.snapshot(await toArray(result.objects));
   t.deepEqual(await result.shallow, []);
@@ -37,23 +39,18 @@ test('fetch shallow refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs : string[] = [];
 
-  const paths = [
-    __dirname+'/../samples/fetch-shallow-refs.get',
-    __dirname+'/../samples/fetch-shallow-refs.post'
-  ];
-
   const result = await fetch({
     url,
-    //fetch: fetchify(nodeFetch, r => r.pipe(fs.createWriteStream(paths.shift() as string))),
-    fetch: fakeFetch([
+    //fetch: fetchify(nodeFetch, save([
+    fetch: fakeFetch(([
       __dirname+'/../samples/fetch-shallow-refs.get',
       __dirname+'/../samples/fetch-shallow-refs.post'
-    ]),
+    ])),
     localRefs,
     refspec: 'refs/heads/fetch-test:refs/remotes/origin/fetch-test',
     hasObject: () => Promise.resolve(false),
     depth: 1
-  });
+  }, s => console.log(s));
   t.snapshot(await toArray(result.objects));
   t.deepEqual(result.refs, [
     {
@@ -75,10 +72,11 @@ test('fetch unshallow refs', async t => {
 
   const result = await fetch({
     url,
-    fetch: fakeFetch([
+    //fetch: fetchify(nodeFetch, save([
+    fetch: fakeFetch(([
       __dirname+'/../samples/fetch-unshallow-refs.get',
       __dirname+'/../samples/fetch-unshallow-refs.post'
-    ]),
+    ])),
     localRefs,
     refspec: 'refs/heads/fetch-test:refs/remotes/origin/fetch-test',
     hasObject: () => Promise.resolve(false),
@@ -86,7 +84,7 @@ test('fetch unshallow refs', async t => {
     shallows: [
       '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
     ]
-  });
+  }, s => console.log(s));
   t.snapshot(await toArray(result.objects));
   t.deepEqual(result.refs, [
     {
@@ -120,13 +118,20 @@ async function toArray<T>(stream : AsyncIterableIterator<T>){
   return array;
 }
 
-function fetchify(fetch : (url: string | Request, init?: RequestInit) => Promise<Response>, onResponse : (stream : NodeJS.ReadableStream) => void){
+function save(paths : string[]){
+  return async (r : NodeJS.ReadableStream) =>
+    new Promise<void>((res, rej) => r.pipe(fs.createWriteStream(paths.shift() as string)).on('finish', res).on('error', rej));
+}
+
+function fetchify(fetch : (url: string | Request, init?: RequestInit) => Promise<Response>, onResponse : (stream : NodeJS.ReadableStream) => Promise<void>){
   return async (url: string | Request, init?: RequestInit) => {
     if(init && init.body){
       init.body = Buffer.from(init.body as any)
     }
     const response = await fetch(url, init);
-    onResponse(response.clone().body);
+    console.log(url);
+    const res = await onResponse(response.clone().body);
+    console.log('done', res);
     return response;
   };
 }

@@ -21,7 +21,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
   //  set('shallow') || set('deepen-relative');
   //}
 
-  set('no-progress');
+  //set('no-progress');
 
   //set('include-tag');
 

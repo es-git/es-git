@@ -31,7 +31,7 @@ export interface FetchResult {
   unshallow : Promise<Hash[]>
 }
 
-export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest) : Promise<FetchResult> {
+export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : (message : string) => void) : Promise<FetchResult> {
   const {capabilities, remoteRefs} = await lsRemote(url, fetch, 'git-upload-pack');
 
   if((depth || unshallow) && !capabilities.has('shallow')){
@@ -58,14 +58,14 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     const unshallow = defer<string[]>();
     return {
       refs: remoteToLocal(remoteRefs, refspec),
-      objects: unpack(createResult(parseWantResponse(response), shallow.resolve, unshallow.resolve, s => {})),
+      objects: unpack(createResult(parseWantResponse(response), shallow.resolve, unshallow.resolve, progress)),
       shallow: shallow.promise,
       unshallow: unshallow.promise
     };
   }
 }
 
-async function* createResult(response : AsyncIterableIterator<Token>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress: (message: string) => void){
+async function* createResult(response : AsyncIterableIterator<Token>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: (message: string) => void){
   const shallow : string[] = [];
   const unshallow : string[] = [];
   for await(const parsed of response){
@@ -83,7 +83,7 @@ async function* createResult(response : AsyncIterableIterator<Token>, resolveSha
         yield* parsed.chunks;
         break;
       case 'progress':
-        progress(parsed.message);
+        if(progress) progress(parsed.message);
         break;
     }
   }
