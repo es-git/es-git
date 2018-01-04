@@ -1,5 +1,6 @@
+import { concat } from '../../core/es';
 import { ClientCaps } from './types';
-import { Buffer, decode, NEWLINE, fromHex } from '@es-git/core';
+import { AsyncBuffer, Buffer, decode, NEWLINE, fromHex } from '@es-git/core';
 
 export interface Response {
   readonly acks : string[]
@@ -13,91 +14,139 @@ export interface AckResponse extends Response {
 
 export interface PackResponse extends Response {
   readonly type : 'pack'
-  readonly pack : Uint8Array
+  readonly pack : AsyncIterable<Uint8Array>
 }
 
 export type WantResponse =
   AckResponse |
   PackResponse;
 
-const parseLine = switchParse<WantResponse>({
-  'ACK ': (buffer, state) => ({
-    ...state,
-    acks: [...state.acks, decode(buffer.next(40))]
+export interface AckToken {
+  readonly type : 'ack'
+  readonly hash : string
+}
+
+export interface NakToken {
+  readonly type : 'nak'
+}
+
+export interface ShallowToken {
+  readonly type : 'shallow'
+  readonly hash : string
+}
+
+export interface UnshallowToken {
+  readonly type : 'unshallow'
+  readonly hash : string
+}
+
+export interface PackToken {
+  readonly type : 'pack'
+  readonly chunks : AsyncIterableIterator<Uint8Array>
+}
+
+export interface ProgressToken {
+  readonly type : 'progress'
+  readonly message : string
+}
+
+export interface ErrorToken {
+  readonly type : 'error'
+  readonly message : string
+}
+
+export type Token =
+  AckToken |
+  NakToken |
+  ShallowToken |
+  UnshallowToken |
+  PackToken |
+  ProgressToken |
+  ErrorToken;
+
+const parseLine = switchParse<Token>({
+  'ACK ': async buffer => ({
+    type: 'ack',
+    hash: decode(await buffer.next(40))
   }),
-  'NAK ': (buffer, state) => state,
-  'shallow ': (buffer, state) => ({
-    ...state,
-    shallow: [...state.shallow, decode(buffer.next(40))]
+  'NAK ': async buffer => ({
+    type: 'nak'
   }),
-  'unshallow ': (buffer, state) => ({
-    ...state,
-    unshallow: [...state.unshallow, decode(buffer.next(40))]
+  'shallow ': async buffer => ({
+    type: 'shallow',
+    hash: decode(await buffer.next(40))
+  }),
+  'unshallow ': async buffer => ({
+    type: 'unshallow',
+    hash: decode(await buffer.next(40))
+  }),
+  '\x01': async buffer => ({
+    type: 'pack',
+    chunks: buffer.rest()
+  }),
+  '\x02': async buffer => ({
+    type: 'progress',
+    message: decode(await consume(buffer.rest()))
+  }),
+  '\x03': async buffer => ({
+    type: 'error',
+    message: decode(await consume(buffer.rest()))
   })
 });
 
-export default function parseWantResponse(response : Uint8Array) : WantResponse {
-  const buffer = new Buffer(response);
-  let result : WantResponse = {
-    type: 'ack',
-    acks: [],
-    shallow: [],
-    unshallow: []
-  };
+export default async function* parseWantResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Token> {
+  const buffer = new AsyncBuffer(response);
 
-  while(!buffer.isDone){
-    if(isPACK(buffer)){
-      result = {
-        ...result,
-        type: 'pack',
-        pack: buffer.rest()
-      };
+  while(true){
+    const line = await unpktLine(buffer);
+    if(line){
+      yield await parseLine(new AsyncBuffer(line));
     }else{
-      const line = unpktLine(buffer);
-      if(line){
-        result = parseLine(new Buffer(line), result);
+      if(await buffer.isDone()){
+        break;
       }
     }
   }
-
-  return result;
 }
 
-function unpktLine(line : Buffer) : Uint8Array | undefined {
-  const size = fromHex(line.next(4));
+async function unpktLine(line : AsyncBuffer) : Promise<AsyncIterableIterator<Uint8Array> | undefined> {
+  const size = fromHex(await line.next(4));
   if(size === 0) {
     return undefined;
   }
-  const result = line.next(size - 4);
-  if(line.peek() === NEWLINE) line.next();
-  return result;
+  return line.rest(size - 4);
 }
 
-function isPACK(buffer : Buffer){
-  return buffer.peekInt32() === 0x5041434b;
+async function consume(stream : AsyncIterableIterator<Uint8Array>){
+  const result : Uint8Array[] = [];
+  for await(const chunk of stream){
+    result.push(chunk);
+  }
+  return concat(...result);
 }
 
-function switchParse<T>(cases : {[key : string] : (buffer : Buffer, state : T) => T}){
+function switchParse<T>(cases : {[key : string] : (buffer : AsyncBuffer) => Promise<T>}){
   const tree = Object.keys(cases)
-    .map(key => ({key: key.split('').map(c => c.charCodeAt(0)), value: cases[key]}))
-    .reduce((out, {key: [k, ...rest], value}) => {
-      out[k] = unwrap(rest.length, value)
+    .map(key => ({char: key.charCodeAt(0), key, value: cases[key]}))
+    .reduce((out, {char, key, value}) => {
+      out[char] = unwrap(key.length, value)
       return out;
-    }, [] as ((buffer : Buffer, state : T) => T)[]);
+    }, [] as ((buffer : AsyncBuffer) => Promise<T>)[]);
 
-  return (line : Buffer, state : T) => {
-    const action = tree[line.next()];
+  return async (line : AsyncBuffer) => {
+    const char = await line.peek();
+    const action = tree[char];
     if(!action){
-      throw new Error(`unknown key ${decode(line.soFar())}`);
+      throw new Error(`unknown key >${String.fromCharCode(char)}< (${char})`);
     }
 
-    return action(line, state);
+    return action(line);
   };
 }
 
-function unwrap<T>(length : number, action : (buffer : Buffer, state : T) => T){
-  return (buffer : Buffer, state : T) => {
-    buffer.next(length);
-    return action(buffer, state);
+function unwrap<T>(length : number, action : (buffer : AsyncBuffer) => Promise<T>){
+  return async (buffer : AsyncBuffer) => {
+    await buffer.next(length);
+    return action(buffer);
   }
 }

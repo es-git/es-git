@@ -1,14 +1,10 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
 import { IRawRepo, Type, Mode, Hash, encode } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitBody, TreeObject, TreeBody } from '@es-git/object-mixin';
 import { IWalkersRepo, HashModePath, HashAndCommitObject } from '@es-git/walkers-mixin';
 
 import checkoutMixin from './index';
-
-sinonStubPromise(sinon);
 
 test('checkout commit', async t => {
   const load = sinon.stub();

@@ -1,4 +1,3 @@
-import { concat, decode } from '@es-git/core';
 import { Ref, HasObject, Hash } from './types';
 import lsRemote, { Fetch as LsRemoteFetch } from './lsRemote';
 import differingRefs from './differingRefs';
@@ -6,9 +5,10 @@ import negotiatePack from './negotiatePack';
 import composeWantRequest from './composeWantRequest';
 import commonCapabilities from './commonCapabilities';
 import post, { Fetch as FetchPackFetch } from './post';
-import parseWantResponse from './parseWantResponse';
+import parseWantResponse, { Token } from './parseWantResponse';
 import { unpack, RawObject } from '@es-git/packfile';
 import remoteToLocal from './remoteToLocal';
+import defer from './utils/defer';
 
 export type Fetch = LsRemoteFetch & FetchPackFetch;
 export { RawObject };
@@ -25,13 +25,13 @@ export interface FetchRequest {
 }
 
 export interface FetchResult {
-  objects : IterableIterator<RawObject>
+  objects : AsyncIterableIterator<RawObject>
   refs : Ref[]
-  shallow : Hash[]
-  unshallow : Hash[]
+  shallow : Promise<Hash[]>
+  unshallow : Promise<Hash[]>
 }
 
-export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest) : Promise<FetchResult> {
+export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : (message : string) => void) : Promise<FetchResult> {
   const {capabilities, remoteRefs} = await lsRemote(url, fetch, 'git-upload-pack');
 
   if((depth || unshallow) && !capabilities.has('shallow')){
@@ -43,24 +43,60 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
 
   if(wanted.length == 0){
     return {
-      objects: function*() : IterableIterator<RawObject> {}(),
+      objects: async function*() : AsyncIterableIterator<RawObject> {}(),
       refs: [] as Ref[],
-      shallow: [] as Hash[],
-      unshallow: [] as Hash[]
+      shallow: Promise.resolve<Hash[]>([]),
+      unshallow: Promise.resolve<Hash[]>([])
     }
   }
 
   const negotiate = negotiatePack(wanted, localRefs, shallows, unshallow ? 0x7fffffff : depth);
-  const body = concat(...composeWantRequest(negotiate, commonCapabilities(capabilities)));
-  const response = await post(url, 'git-upload-pack', body, fetch);
-  const parsedResponse = parseWantResponse(response);
-  if(parsedResponse.type !== 'pack') throw new Error('fetch failed, no pack returned');
-
-  return {
-    objects: unpack(parsedResponse.pack),
-    refs: remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[],
-    shallow: parsedResponse.shallow,
-    unshallow: parsedResponse.unshallow
-  };
+  const body = composeWantRequest(negotiate, commonCapabilities(capabilities));
+  const response = post(url, 'git-upload-pack', body, fetch);
+  {
+    const shallow = defer<string[]>();
+    const unshallow = defer<string[]>();
+    return {
+      refs: remoteToLocal(remoteRefs, refspec),
+      objects: unpack(createResult(response, shallow.resolve, unshallow.resolve, progress), progress),
+      shallow: shallow.promise,
+      unshallow: unshallow.promise
+    };
+  }
 }
 
+async function* createResult(response : AsyncIterableIterator<Uint8Array>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: (message: string) => void){
+  const shallow : string[] = [];
+  const unshallow : string[] = [];
+  for await(const parsed of parseWantResponse(response)){
+    switch(parsed.type){
+      case 'shallow':
+        shallow.push(parsed.hash);
+        break;
+      case 'unshallow':
+        unshallow.push(parsed.hash);
+        break;
+      case 'ack':
+      case 'nak':
+        break;
+      case 'pack':
+        yield* parsed.chunks;
+        break;
+      case 'progress':
+        if(progress) progress(parsed.message);
+        break;
+    }
+  }
+  resolveShallow(shallow);
+  resolveUnshallow(unshallow);
+}
+
+async function* unpackWithProgress(chunks : AsyncIterableIterator<Uint8Array>, progress?: (message : string) => void){
+  let count = 0;
+  for await(const object of unpack(chunks)){
+    count++;
+    if(progress) progress(`Receiving objects: ?% (${count}/?)\r`);
+    yield object;
+  }
+  if(progress) progress(`Receiving objects: 100% (${count}/${count}), done.\n`);
+}

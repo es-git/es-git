@@ -1,7 +1,10 @@
 import { Ref } from './types';
 
-export default function remoteToLocal(refspecs : string[]) : (ref : Ref) => Ref | undefined {
+export default function getRefs(remoteRefs : Ref[], refspec : string[]) : Ref[]{
+  return remoteRefs.map(remoteToLocal(refspec)).filter(x => x) as Ref[];
+}
 
+function remoteToLocal(refspecs : string[]) : (ref : Ref) => Ref | undefined {
   const specs = refspecs.map(spec => spec.split(':')).map(([local, remote]) => ({
     star: local.charAt(local.length-1) === '*',
     test: local.replace('*', ''),

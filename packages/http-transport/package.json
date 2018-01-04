@@ -23,10 +23,10 @@
   "license": "MIT",
   "ava": {
     "files": [
-      "es/*.test.js"
+      "es/**/*.test.js"
     ],
     "source": [
-      "es/*.js"
+      "es/**/*.js"
     ],
     "require": [
       "babel-register"
@@ -39,8 +39,8 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/packfile": "^0.3.4",
-    "text-encoding": "^0.6.4"
+    "@es-git/core": "^0.2.0",
+    "@es-git/packfile": "^0.3.4"
   },
   "devDependencies": {
     "@types/node-fetch": "^1.6.7",

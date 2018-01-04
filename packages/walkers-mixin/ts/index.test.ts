@@ -1,13 +1,9 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
 import { Type, Mode, Hash } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitBody, TreeBody } from '@es-git/object-mixin';
 
 import walkersMixin from './index';
-
-sinonStubPromise(sinon);
 
 test('walk commits', async t => {
   const load = sinon.stub();

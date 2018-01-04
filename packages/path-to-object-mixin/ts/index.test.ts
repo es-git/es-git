@@ -1,13 +1,9 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
 import { Type, Mode, encode } from '@es-git/core';
 import { IObjectRepo, GitObject } from '@es-git/object-mixin';
 
 import pathToObjectMixin from './index';
-
-sinonStubPromise(sinon);
 
 test('load file', async t => {
   const load = sinon.stub();

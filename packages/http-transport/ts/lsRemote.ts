@@ -1,4 +1,4 @@
-import parseRemoteRefs from './parseRefsResponse';
+import parseRefsResponse from './parseRefsResponse';
 import { Ref } from './types';
 
 export interface Result {
@@ -19,7 +19,7 @@ export default async function lsRemote(url : string, fetch : Fetch, service : st
   if(res.status !== 200) throw new Error(`ls-remote failed with ${res.status} ${res.statusText}`);
   const refs = await res.text();
   const capabilities = new Map<string, string | boolean>();
-  const remoteRefs = [...parseRemoteRefs(refs, service, capabilities)];
+  const remoteRefs = [...parseRefsResponse(refs, service, capabilities)];
   return {
     remoteRefs,
     capabilities

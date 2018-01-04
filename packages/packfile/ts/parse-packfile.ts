@@ -1,10 +1,11 @@
 import * as pako from 'pako';
-import sha1 from 'git-sha1';
-import { Buffer, unpackHash } from '@es-git/core';
+import { AsyncBuffer, unpackHash } from '@es-git/core';
+import DigestableAsyncBuffer from './DigestableAsyncBuffer';
 
 import {
   Type,
-  Entry
+  Entry,
+  Progress
 } from './types';
 
 type $State<S extends string, T> = T & {
@@ -12,7 +13,7 @@ type $State<S extends string, T> = T & {
 }
 
 interface StartState {
-  readonly buffer : Buffer
+  readonly buffer : DigestableAsyncBuffer
 }
 
 interface PackState extends StartState {
@@ -24,6 +25,7 @@ interface VersionState extends PackState {
 
 interface EntriesState extends VersionState {
   readonly entryCount : number
+  readonly entryIndex : number
 }
 
 interface HeaderState extends EntriesState {
@@ -68,22 +70,22 @@ type State =
   $State<'entry', EntryState> |
   $State<'done', ChecksumState>;
 
-
-export default function* parsePackfile(chunk : Uint8Array) : IterableIterator<Entry> {
+export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint8Array>, progress?: Progress) : AsyncIterableIterator<Entry> {
   let state : State = {
     state: 'start',
-    buffer: new Buffer(chunk)
+    buffer: new DigestableAsyncBuffer(chunks)
   };
 
   do {
-    state = $step(state);
+    state = await $step(state, progress);
     if(state.state === 'entry'){
       yield state.entry;
     }
   } while(state.state !== 'done');
+  state.buffer.complete();
 }
 
-function $step(state : State){
+async function $step(state : State, progress : Progress){
   switch(state.state){
     case 'start':
       return $pack(state);
@@ -102,7 +104,8 @@ function $step(state : State){
     case 'ref-delta':
       return $body(state);
     case 'entry':
-      if(state.entryCount > 0){
+      if(progress) progress(report(state));
+      if(state.entryCount > state.entryIndex){
         return $header(state);
       }else{
         return $checksum(state);
@@ -113,8 +116,8 @@ function $step(state : State){
 }
 
 // The first four bytes in a packfile are the bytes 'PACK'
-function $pack(state : StartState) : State {
-  if(state.buffer.nextInt32() === 0x5041434b)
+async function $pack(state : StartState) : Promise<State> {
+  if(await state.buffer.nextInt32() === 0x5041434b)
     return {
       ...state,
       state: 'pack'
@@ -125,8 +128,8 @@ function $pack(state : StartState) : State {
 
 // The version is stored as an unsigned 32 integer in network byte order.
 // It must be version 2 or 3.
-function $version(state : PackState) : State {
-  const version = state.buffer.nextInt32();
+async function $version(state : PackState) : Promise<State> {
+  const version = await state.buffer.nextInt32();
   if (version === 2 || version === 3)
     return {
       ...state,
@@ -138,12 +141,13 @@ function $version(state : PackState) : State {
 }
 
 // The number of objects in this packfile is also stored as an unsigned 32 bit int.
-function $entries(state : VersionState) : State {
-  const entryCount = state.buffer.nextInt32();
+async function $entries(state : VersionState) : Promise<State> {
+  const entryCount = await state.buffer.nextInt32();
   return {
     ...state,
     state: 'entries',
-    entryCount
+    entryCount,
+    entryIndex: 0
   };
 }
 
@@ -152,14 +156,14 @@ function $entries(state : VersionState) : State {
 // C is continue bit, TTT is type, S+ is length
 // Second state in the same header parsing.
 // CSSSSSSS*
-function $header(state : EntriesState) : State {
+async function $header(state : EntriesState) : Promise<State> {
   const offset = state.buffer.pos;
-  let byte = state.buffer.next();
+  let byte = await state.buffer.next();
   const type = (byte >> 4) & 0x7;
   let size = byte & 0xf;
   let left = 4;
   while (byte & 0x80) {
-    byte = state.buffer.next();
+    byte = await state.buffer.next();
     size |= (byte & 0x7f) << left;
     left += 7;
   }
@@ -189,30 +193,30 @@ function $header(state : EntriesState) : State {
 }
 
 // Big-endian modified base 128 number encoded ref offset
-function $ofsDelta(state : DeltaHeaderState) : State {
+async function $ofsDelta(state : DeltaHeaderState) : Promise<State> {
   return {
     ...state,
     state: 'ofs-delta',
     type: Type.ofsDelta,
-    ref: varLen(state.buffer)
+    ref: await varLen(state.buffer)
   };
 }
 
 // 20 byte raw sha1 hash for ref
-function $refDelta(state : DeltaHeaderState) : State {
+async function $refDelta(state : DeltaHeaderState) : Promise<State> {
   return {
     ...state,
     state: 'ref-delta',
     type: Type.refDelta,
-    ref: unpackHash(state.buffer.next(20))
+    ref: unpackHash(await state.buffer.next(20))
   };
 }
 
 // Feed the deflated code to the inflate engine
-function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
+async function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : Promise<State> {
   const inf = new pako.Inflate();
   do {
-    inf.push(state.buffer.next(1));
+    inf.push(await state.buffer.next(1));
   } while(inf.err === 0 && inf.result === undefined);
   if(inf.err != 0) throw new Error(`Inflate error ${inf.err} ${inf.msg}`);
   const data = inf.result as Uint8Array;
@@ -223,15 +227,15 @@ function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : State {
     ...state,
     state: 'entry',
     entry: entry(state, data),
-    entryCount: state.entryCount-1
+    entryIndex: state.entryIndex+1
   }
 }
 
 // 20 byte checksum
-function $checksum(state : EntriesState) : State {
-  const actual = sha1(state.buffer.soFar());
-  const checksum = unpackHash(state.buffer.next(20));
-  if (checksum !== actual) throw new Error(`Checksum mismatch: ${actual} != ${checksum}`);
+async function $checksum(state : EntriesState) : Promise<State> {
+  const actual = state.buffer.digest();
+  const checksum = unpackHash(await state.buffer.next(20));
+  if (checksum !== actual) throw new Error(`Checksum mismatch: actual ${actual} != expected ${checksum}`);
   return {
     ...state,
     state: 'done',
@@ -263,12 +267,27 @@ function entry(state : HeaderState | RefDeltaState | OfsDeltaState, body : Uint8
   }
 }
 
-function varLen(buffer : Buffer){
-  let byte = buffer.next();
+async function varLen(buffer : AsyncBuffer){
+  let byte = await buffer.next();
   let ref = byte & 0x7f;
   while (byte & 0x80) {
-    byte = buffer.next();
+    byte = await buffer.next();
     ref = ((ref + 1) << 7) | (byte & 0x7f);
   }
   return ref;
+}
+
+const suffixes = ['Bytes', 'KiB', 'MiB', 'GiB'];
+function report({entryCount: total, entryIndex: pos, buffer} : EntryState){
+  const percent = (pos/total*100)|0;
+  let size = buffer.pos;
+  let suf=0;
+  for(; size > 1024; suf++){
+    size /= 1024;
+  }
+  if(pos === total){
+    return `Receiving objects: ${percent}% (${pos}/${total}), ${size.toFixed(2)} ${suffixes[suf]}, done.\n`
+  }else{
+    return `Receiving objects: ${percent}% (${pos}/${total}), ${size.toFixed(2)} ${suffixes[suf]}\r`
+  }
 }

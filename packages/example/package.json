@@ -46,6 +46,7 @@
     "@es-git/path-to-object-mixin": "^0.2.0",
     "@es-git/push-mixin": "^0.3.4",
     "@es-git/save-as-mixin": "^0.2.0",
+    "@es-git/terminal": "^0.2.0",
     "@es-git/walkers-mixin": "^0.3.2",
     "@es-git/zlib-mixin": "^0.2.0",
     "d3": "^4.10.0",

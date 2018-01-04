@@ -11,7 +11,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   //set('thin-pack');
 
-  //set('side-band-64k') || set('side-band');
+  set('side-band-64k') || set('side-band');
 
   set('ofs-delta');
 
@@ -21,11 +21,11 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
   //  set('shallow') || set('deepen-relative');
   //}
 
-  set('no-progress');
+  //set('no-progress');
 
-  //set('include-tag');
+  set('include-tag');
 
-  //set('report-status');
+  set('report-status');
 
   //set('delete-refs');
 

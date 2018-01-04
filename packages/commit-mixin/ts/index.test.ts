@@ -1,13 +1,9 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
 import { IRawRepo, Type, Mode, Hash } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject, TreeBody, Person } from '@es-git/object-mixin';
 
 import commitMixin, {Folder} from './index';
-
-sinonStubPromise(sinon);
 
 test('commit', async t => {
   const saveObjectStub = sinon.stub();

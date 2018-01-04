@@ -1,10 +1,10 @@
-import { RawObject } from './types';
+import { RawObject, Progress } from './types';
 
 import parsePackfile from './parse-packfile';
 import normalizeEntries from './normalize-entries';
 
 export { RawObject };
 
-export default function unpack(chunk : Uint8Array) : IterableIterator<RawObject> {
-  return normalizeEntries(parsePackfile(chunk));
+export default function unpack(chunks : AsyncIterableIterator<Uint8Array>, progress? : Progress) : AsyncIterableIterator<RawObject> {
+  return normalizeEntries(parsePackfile(chunks, progress), progress);
 }

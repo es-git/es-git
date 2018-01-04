@@ -1,8 +1,5 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import 'sinon-stub-promise';
-const sinonStubPromise = require('sinon-stub-promise');
-sinonStubPromise(sinon);
 
 import differingRefs from './differingRefs';
 

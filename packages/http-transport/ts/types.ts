@@ -26,6 +26,8 @@ export interface EditableClientCaps {
   'multi_ack_detailed' : boolean
   'no-done' : boolean
   'ofs-delta' : boolean
+  'report-status' : boolean
+  'include-tag' : boolean
 }
 
 export type ClientCaps = Readonly<EditableClientCaps>;

@@ -3,7 +3,7 @@ import { Ref } from './types';
 
 export default function *parseRefsResponse(response : string, service : string, capabilities? : Map<string, string | boolean>) : IterableIterator<Ref> {
   const [line, tail] = unpktLine(response);
-  if(line !== `# service=${service}`) throw new Error('unknown response');
+  if(line !== `# service=${service}`) throw new Error(`unknown response "${line}", expected "# service=${service}"`);
   for(const line of unpktLines(tail)){
     if(line.indexOf('\0') > 0){
       const [idObj, caps] = line.split('\0');

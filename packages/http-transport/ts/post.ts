@@ -1,3 +1,5 @@
+import { concat } from '@es-git/core';
+import streamToAsyncIterator from './utils/streamToAsyncIterator';
 
 export type Fetch = (url : string, init? : RequestInit) => Promise<Response>;
 export interface RequestInit {
@@ -10,11 +12,11 @@ export interface RequestInit {
 export interface Response {
   readonly status : number
   readonly statusText : string
-  arrayBuffer() : Promise<ArrayBuffer>
+  readonly body : NodeJS.ReadableStream | ReadableStream
 }
 export type Auth = {username : string, password : string};
 
-export default async function post(url : string, service : string, body : Uint8Array, fetch : Fetch, auth? : Auth) : Promise<Uint8Array> {
+export default async function* post(url : string, service : string, body : IterableIterator<Uint8Array>, fetch : Fetch, auth? : Auth) : AsyncIterableIterator<Uint8Array> {
   const res = await fetch(`${url}/${service}`, {
     method: 'POST',
     headers: {
@@ -22,10 +24,12 @@ export default async function post(url : string, service : string, body : Uint8A
       'Accept': `application/x-${service}-result`,
       ...authorization(auth)
     },
-    body: body.buffer as ArrayBuffer
+    body: concat(...body).buffer as ArrayBuffer
   });
   if(res.status !== 200) throw new Error(`POST ${url}/${service} failed ${res.status} ${res.statusText}`);
-  return new Uint8Array(await res.arrayBuffer());
+  for await(const chunk of streamToAsyncIterator(res.body)){
+    yield chunk;
+  }
 }
 
 function authorization(auth? : Auth) : {} {

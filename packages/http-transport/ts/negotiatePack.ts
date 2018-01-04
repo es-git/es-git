@@ -12,7 +12,3 @@ export default function negotiatePack(wants : Hash[], haves : Hash[], shallows=[
     done: true
   };
 }
-
-function findCommon(a : string[], b : string[]){
-  return a.filter(a => b.indexOf(a) >= 0);
-}

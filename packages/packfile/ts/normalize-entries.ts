@@ -10,20 +10,23 @@ import {
   NormalEntry,
   OfsDeltaEntry,
   RefDeltaEntry,
-  RawObject
+  RawObject,
+  Progress
 } from './types';
 import applyDelta from './apply-delta';
 import sha1 from 'git-sha1';
 
-export default function *normalizeEntries(entries : IterableIterator<Entry>) : IterableIterator<RawObject> {
+export default async function *normalizeEntries(entries : AsyncIterableIterator<Entry>, progress? : Progress) : AsyncIterableIterator<RawObject> {
   const references = new Map<string, NormalEntry>();
   const offsets = new Map<number, NormalEntry>();
+  let deltas = 0;
 
-  for(let entry of entries){
+  for await(let entry of entries){
     if(entry.type === Type.ofsDelta
     || entry.type === Type.refDelta){
       const base = getBase(entry);
       const body = applyDelta(entry.body, base.body)
+      deltas++;
       entry = {
         type: base.type,
         body,
@@ -43,6 +46,8 @@ export default function *normalizeEntries(entries : IterableIterator<Entry>) : I
       hash
     };
   }
+
+  if(progress) progress(`Resolving deltas: 100% (${deltas}/${deltas}), done.\n`);
 
   function getBase(entry : OfsDeltaEntry | RefDeltaEntry) {
     if(entry.type === Type.ofsDelta) {
