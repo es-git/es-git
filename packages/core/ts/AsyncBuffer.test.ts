@@ -24,7 +24,7 @@ test('next(12)', async t => {
   const buffer = new AsyncBuffer(generate());
   const result1 = await buffer.next(12);
   const result2 = await buffer.next(12);
-  t.is(result1.join(','), '1,2,3,4,5');
+  t.is(result1.join(','), '1,2,3,4,5,1,2,3,4,5,1,2');
   t.is(buffer.pos, 24);
   await buffer.next(6);
 });
