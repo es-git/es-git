@@ -78,15 +78,18 @@ export default class AsyncBuffer {
     if(length !== undefined){
       while(length > this.data.length - this.pointer){
         const chunkSize = this.data.length - this.pointer;
-        yield await this.next(chunkSize);
-        length -= chunkSize;
-        if(length > 0) this.peek(1);
+        if(chunkSize == 0){
+          await this.peek(1);
+        }else{
+          yield await this.next(chunkSize);
+          length -= chunkSize;
+        }
       }
       yield await this.next(length);
     }else{
       yield await this.next(this.data.length - this.pointer);
       for await(const chunk of this.source){
-        yield await chunk
+        yield await chunk;
       }
     }
   }
