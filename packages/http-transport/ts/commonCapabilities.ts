@@ -23,7 +23,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   //set('no-progress');
 
-  //set('include-tag');
+  set('include-tag');
 
   set('report-status');
 

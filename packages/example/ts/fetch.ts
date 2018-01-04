@@ -3,6 +3,7 @@ import MemoryRepo from '@es-git/memory-repo';
 import object from '@es-git/object-mixin';
 import walkers from '@es-git/walkers-mixin';
 import fetchMixin from '@es-git/fetch-mixin';
+import Terminal from '@es-git/terminal';
 
 (async function(){
 
@@ -12,14 +13,29 @@ import fetchMixin from '@es-git/fetch-mixin';
     document.location.search = '?repo=https://github.com/es-git/test-pull';
     return;
   }
-  (document.querySelector('#repo') as any).value = 'https://'+match[1];
+  const inputElm = document.querySelector<HTMLInputElement>('#repo') as HTMLInputElement;
+  const outputElm = document.querySelector<HTMLPreElement>('pre') as HTMLPreElement;
+  inputElm.value = 'https://'+match[1];
 
   const Repo = mix(MemoryRepo)
   .with(object)
   .with(walkers)
   .with(fetchMixin, fetch);
+  const terminal = new Terminal(m => outputElm.innerText = m);
+
+  terminal.logLine('Creating local repo');
 
   const repo = new Repo();
-  await repo.fetch(`/proxy/${match[1]}.git`);
+  terminal.logLine(`Fetching from ${url}.git`);
+  const result = await repo.fetch(`/proxy/${match[1]}.git`, {
+    progress: message => terminal.log(message)
+  })
+
+  for(const ref of result){
+    terminal.logLine(`* ${ref.ref} -> ${ref.to}`);
+  }
+
+  terminal.logLine('');
+  terminal.logLine('Done!');
 
 })().then(_ => console.log('success!'), e => console.error(e));

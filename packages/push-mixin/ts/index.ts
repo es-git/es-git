@@ -55,7 +55,9 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
         }
       }
 
-      await push(url, fetch, [command], localObjects, auth);
+      for await(const line of push(url, fetch, [command], localObjects, auth)){
+
+      }
 
       return [
         {

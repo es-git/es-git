@@ -4,7 +4,8 @@ import DigestableAsyncBuffer from './DigestableAsyncBuffer';
 
 import {
   Type,
-  Entry
+  Entry,
+  Progress
 } from './types';
 
 type $State<S extends string, T> = T & {
@@ -24,6 +25,7 @@ interface VersionState extends PackState {
 
 interface EntriesState extends VersionState {
   readonly entryCount : number
+  readonly entryIndex : number
 }
 
 interface HeaderState extends EntriesState {
@@ -68,14 +70,14 @@ type State =
   $State<'entry', EntryState> |
   $State<'done', ChecksumState>;
 
-export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Entry> {
+export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint8Array>, progress?: Progress) : AsyncIterableIterator<Entry> {
   let state : State = {
     state: 'start',
     buffer: new DigestableAsyncBuffer(chunks)
   };
 
   do {
-    state = await $step(state);
+    state = await $step(state, progress);
     if(state.state === 'entry'){
       yield state.entry;
     }
@@ -83,7 +85,7 @@ export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint
   state.buffer.complete();
 }
 
-async function $step(state : State){
+async function $step(state : State, progress : Progress){
   switch(state.state){
     case 'start':
       return $pack(state);
@@ -102,7 +104,8 @@ async function $step(state : State){
     case 'ref-delta':
       return $body(state);
     case 'entry':
-      if(state.entryCount > 0){
+      if(progress) progress(report(state));
+      if(state.entryCount > state.entryIndex){
         return $header(state);
       }else{
         return $checksum(state);
@@ -143,7 +146,8 @@ async function $entries(state : VersionState) : Promise<State> {
   return {
     ...state,
     state: 'entries',
-    entryCount
+    entryCount,
+    entryIndex: 0
   };
 }
 
@@ -223,7 +227,7 @@ async function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : Prom
     ...state,
     state: 'entry',
     entry: entry(state, data),
-    entryCount: state.entryCount-1
+    entryIndex: state.entryIndex+1
   }
 }
 
@@ -271,4 +275,19 @@ async function varLen(buffer : AsyncBuffer){
     ref = ((ref + 1) << 7) | (byte & 0x7f);
   }
   return ref;
+}
+
+const suffixes = ['Bytes', 'KiB', 'MiB', 'GiB'];
+function report({entryCount: total, entryIndex: pos, buffer} : EntryState){
+  const percent = (pos/total*100)|0;
+  let size = buffer.pos;
+  let suf=0;
+  for(; size > 1024; suf++){
+    size /= 1024;
+  }
+  if(pos === total){
+    return `Receiving objects: ${percent}% (${pos}/${total}), ${size.toFixed(2)} ${suffixes[suf]}, done.\n`
+  }else{
+    return `Receiving objects: ${percent}% (${pos}/${total}), ${size.toFixed(2)} ${suffixes[suf]}\r`
+  }
 }

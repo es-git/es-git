@@ -58,17 +58,17 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     const unshallow = defer<string[]>();
     return {
       refs: remoteToLocal(remoteRefs, refspec),
-      objects: unpack(createResult(parseWantResponse(response), shallow.resolve, unshallow.resolve, progress)),
+      objects: unpack(createResult(response, shallow.resolve, unshallow.resolve, progress), progress),
       shallow: shallow.promise,
       unshallow: unshallow.promise
     };
   }
 }
 
-async function* createResult(response : AsyncIterableIterator<Token>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: (message: string) => void){
+async function* createResult(response : AsyncIterableIterator<Uint8Array>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: (message: string) => void){
   const shallow : string[] = [];
   const unshallow : string[] = [];
-  for await(const parsed of response){
+  for await(const parsed of parseWantResponse(response)){
     switch(parsed.type){
       case 'shallow':
         shallow.push(parsed.hash);
@@ -91,18 +91,12 @@ async function* createResult(response : AsyncIterableIterator<Token>, resolveSha
   resolveUnshallow(unshallow);
 }
 
-async function* collect(response : AsyncIterableIterator<Token>, progress: (message: string) => void){
-  const shallows : string[] = [];
-  const unshallows : string[] = [];
-  for await(const item of response){
-    if(item.type == 'shallow'){
-      shallows.push(item.hash);
-    }else if(item.type == 'unshallow'){
-      unshallows.push(item.hash);
-    }else if(item.type == 'pack'){
-      yield* unpack(item.chunks);
-    }else if(item.type == 'progress'){
-      progress(item.message);
-    }
+async function* unpackWithProgress(chunks : AsyncIterableIterator<Uint8Array>, progress?: (message : string) => void){
+  let count = 0;
+  for await(const object of unpack(chunks)){
+    count++;
+    if(progress) progress(`Receiving objects: ?% (${count}/?)\r`);
+    yield object;
   }
+  if(progress) progress(`Receiving objects: 100% (${count}/${count}), done.\n`);
 }

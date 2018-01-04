@@ -9,16 +9,22 @@ export interface FetchOptions {
 }
 
 export interface IFetchRepo {
-  fetch(url : string, options? : FetchOptions) : Promise<void>
+  fetch(url : string, options? : FetchOptions) : Promise<FetchResult[]>
+}
+
+export interface FetchResult {
+  readonly ref : string
+  readonly from : string | undefined
+  readonly to : string
 }
 
 export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fetch : Fetch) : Constructor<IFetchRepo> & T {
   return class FetchRepo extends repo implements IFetchRepo {
-    async fetch(url : string, options : FetchOptions = {}) : Promise<void>{
+    async fetch(url : string, options : FetchOptions = {}) : Promise<FetchResult[]>{
       const refNames = await super.listRefs();
       const localRefs = await Promise.all(refNames.map(name => super.getRef(name) as Promise<string>));
       const shallows = toArray(await super.loadMetadata('shallow'));
-      const {objects, refs, shallow, unshallow} = await gitFetch({
+      const {objects, refs, ...result} = await gitFetch({
         url,
         fetch,
         localRefs,
@@ -26,17 +32,28 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
         hasObject: hash => super.hasObject(hash),
         depth: options.depth,
         shallows
-      });
+      },
+      options.progress);
 
-      for(const {hash, body} of objects){
+      for await(const {hash, body} of objects){
         await super.saveRaw(hash, body);
+      }
+
+      const unshallow = await result.unshallow;
+      const shallow = await result.shallow;
+      if(shallow.length || unshallow.length){
+        await super.saveMetadata('shallow', fromArray(shallows.concat(shallow).filter(hash => !unshallow.includes(hash))));
       }
 
       for(const {name, hash} of refs){
         await super.setRef(name, hash);
       }
 
-      await super.saveMetadata('shallow', fromArray(shallows.concat(shallow).filter(hash => !unshallow.includes(hash))));
+      return refs.map(({name, hash}) => ({
+        ref: name,
+        from: localRefs[refNames.indexOf(name)],
+        to: hash
+      }))
     }
   }
 }
@@ -49,10 +66,6 @@ export function toArray(contents : Uint8Array | undefined){
   return decode(contents).split('\n');
 }
 
-export function fromArray(lines : Hash[]) : Uint8Array | undefined {
-  if(lines.length == 0){
-    return undefined;
-  }
-
+export function fromArray(lines : Hash[]) : Uint8Array {
   return encode(lines.join('\n'));
 }

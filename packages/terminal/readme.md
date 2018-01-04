@@ -13,12 +13,18 @@ npm install --save @es-git/terminal
 ```ts
 import Teminal from '@es-git/terminal';
 
-const terminal = new Terminal();
+//Create a terminal, and log to the console
+const terminal = new Terminal(m => console.log(m));
 
-terminal.log('ready');
-terminal.content;//ready
-terminal.log('\rset\r');
-terminal.content;//set
-terminal.log('go!!!');
-terminal.content;//go!!!
-``
+//log normal text
+terminal.log('ready');//ready
+
+//carriage return (\r) will reset cursor to start of line
+terminal.log('\rset\r');//set
+
+//append newline at end of line
+terminal.logLine('go!!!');//go!!!
+
+console.log(terminal.content); //go!!!
+
+```
