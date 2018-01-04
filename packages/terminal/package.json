@@ -1,6 +1,6 @@
 {
   "name": "@es-git/terminal",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -37,6 +37,5 @@
   },
   "peerDependencies": {
     "babel-runtime": "^6.22.0"
-  },
-  "dependencies": {}
+  }
 }

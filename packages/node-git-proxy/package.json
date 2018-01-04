@@ -1,6 +1,6 @@
 {
   "name": "@es-git/node-git-proxy",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
