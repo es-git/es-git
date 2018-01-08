@@ -79,7 +79,7 @@ export default class AsyncBuffer {
       while(length > this.data.length - this.pointer){
         const chunkSize = this.data.length - this.pointer;
         if(chunkSize == 0){
-          await this.peek(1);
+          await this.nextData(1);
         }else{
           yield await this.next(chunkSize);
           length -= chunkSize;
@@ -92,6 +92,19 @@ export default class AsyncBuffer {
         yield await chunk;
       }
     }
+  }
+
+  async chunk(){
+    if(this.pointer === this.data.length){
+      await this.nextData(1);
+    }
+    const pointer = this.pointer;
+    this.pointer = this.data.length;
+    return this.data.subarray(pointer);
+  }
+
+  rewind(length : number){
+    this.pointer -= length;
   }
 
   async isDone(){

@@ -4,6 +4,7 @@ import { AsyncBuffer } from '@es-git/core';
 export default class DigestableAsyncBuffer extends AsyncBuffer{
   private sha : Sha1
   private temp : Uint8Array;
+  private tempChunk : Uint8Array | undefined;
   constructor(chunks : AsyncIterableIterator<Uint8Array>){
     super(chunks);
     this.sha = sha1();
@@ -33,6 +34,18 @@ export default class DigestableAsyncBuffer extends AsyncBuffer{
       result = (result << 8) | buffer[i];
     }
     return result;
+  }
+
+  async chunk() {
+    if(this.tempChunk) this.sha.update(this.tempChunk);
+    this.tempChunk = await super.chunk();
+    return this.tempChunk;
+  }
+
+  rewind(length : number){
+    if(this.tempChunk) this.sha.update(this.tempChunk.subarray(0, this.tempChunk.length - length));
+    this.tempChunk = undefined;
+    super.rewind(length);
   }
 
   digest(){

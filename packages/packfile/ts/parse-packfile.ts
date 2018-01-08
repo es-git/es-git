@@ -216,8 +216,9 @@ async function $refDelta(state : DeltaHeaderState) : Promise<State> {
 async function $body(state : HeaderState | OfsDeltaState | RefDeltaState) : Promise<State> {
   const inf = new pako.Inflate();
   do {
-    inf.push(await state.buffer.next(1));
+    inf.push(await state.buffer.chunk());
   } while(inf.err === 0 && inf.result === undefined);
+  state.buffer.rewind((inf as any).strm.avail_in);
   if(inf.err != 0) throw new Error(`Inflate error ${inf.err} ${inf.msg}`);
   const data = inf.result as Uint8Array;
   if (data.length !== state.size)
