@@ -7,11 +7,11 @@ import lsRemote from './lsRemote';
 test('error response', async t => {
   const fetch = sinon.stub();
   fetch.resolves({
-    text: () => Promise.resolve(''),
+    text: () => Promise.resolve('Repo not found'),
     status: 401,
     statusText: 'Unauthorized'
   });
-  await t.throws(lsRemote('https://github.com/my/repo.git', fetch), 'ls-remote failed with 401 Unauthorized');
+  await t.throws(lsRemote('https://github.com/my/repo.git', fetch), 'ls-remote failed with 401 Unauthorized\nRepo not found');
 });
 
 test(async t => {

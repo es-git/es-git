@@ -1,11 +1,11 @@
 import { Type, Mode, Constructor, IRawRepo, Hash, isFile, encode, decode } from '@es-git/core';
-import { fetch as gitFetch, lsRemote, Fetch, Ref, RefChange } from '@es-git/http-transport';
+import { fetch as gitFetch, lsRemote, Fetch, Ref, RefChange, Progress } from '@es-git/http-transport';
 
 export interface FetchOptions {
   readonly refspec? : string | string[]
   readonly depth? : number,
   readonly unshallow? : boolean,
-  readonly progress? : (status : string) => void
+  readonly progress? : Progress
 }
 
 export interface IFetchRepo {

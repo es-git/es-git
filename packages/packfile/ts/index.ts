@@ -1,5 +1,6 @@
 export {
-  RawObject
+  RawObject,
+  Progress
 } from './types';
 
 export { default as unpack }  from './unpack';

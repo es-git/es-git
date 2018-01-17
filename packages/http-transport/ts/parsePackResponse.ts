@@ -94,7 +94,7 @@ const parseLine = switchParse<Token>({
   })
 });
 
-export default async function* parseWantResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Token> {
+export default async function* parsePackResponse(response : AsyncIterableIterator<Uint8Array>) : AsyncIterableIterator<Token> {
   const buffer = new AsyncBuffer(response);
 
   while(true){

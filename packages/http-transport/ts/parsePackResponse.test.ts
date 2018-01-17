@@ -1,5 +1,5 @@
 import test from 'ava';
-import parseWantResponse from './parseWantResponse';
+import parsePackResponse from './parsePackResponse';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
 import * as fs from 'fs';
 
@@ -21,7 +21,7 @@ test('parse side-band-64', async t => {
   ];
   const actualTypes = [];
   let actualProgress = '';
-  for await(const result of parseWantResponse(streamToAsyncIterator(fs.createReadStream(sampleFile)))){
+  for await(const result of parsePackResponse(streamToAsyncIterator(fs.createReadStream(sampleFile)))){
     actualTypes.push(result.type);
     if(result.type === 'progress'){
       actualProgress += result.message;

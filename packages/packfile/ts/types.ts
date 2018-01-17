@@ -34,4 +34,4 @@ export interface RawObject {
   readonly body : Uint8Array
 }
 
-export type Progress = undefined | ((message : string) => void);
+export type Progress = (message : string) => void;

@@ -26,7 +26,7 @@ export type Command =
 
 export default function *composePushRequest(packfile : Uint8Array, commands : Command[]){
   const [command, ...remainingCommands] = commands;
-  yield pktLine(encodeCommand(command) + '\0 report-status side-band-64k agent=es-git');
+  yield pktLine(encodeCommand(command) + '\0report-status side-band-64k agent=es-git');
 
   for(const command of remainingCommands){
     yield pktLine(encodeCommand(command));

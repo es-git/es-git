@@ -5,8 +5,8 @@ import negotiatePack from './negotiatePack';
 import composeWantRequest from './composeWantRequest';
 import commonCapabilities from './commonCapabilities';
 import post, { Fetch as FetchPackFetch } from './post';
-import parseWantResponse, { Token } from './parseWantResponse';
-import { unpack, RawObject } from '@es-git/packfile';
+import parsePackResponse, { Token } from './parsePackResponse';
+import { unpack, RawObject, Progress } from '@es-git/packfile';
 import remotesToLocals from './remotesToLocals';
 import defer from './utils/defer';
 
@@ -37,7 +37,7 @@ export interface RefChange {
   readonly to : string
 }
 
-export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : (message : string) => void) : Promise<FetchResult> {
+export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : Progress) : Promise<FetchResult> {
   const {capabilities, remoteRefs} = await lsRemote(url, fetch, 'git-upload-pack');
 
   if((depth || unshallow) && !capabilities.has('shallow')){
@@ -74,10 +74,10 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
   }
 }
 
-async function* createResult(response : AsyncIterableIterator<Uint8Array>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: (message: string) => void){
+async function* createResult(response : AsyncIterableIterator<Uint8Array>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: Progress){
   const shallow : string[] = [];
   const unshallow : string[] = [];
-  for await(const parsed of parseWantResponse(response)){
+  for await(const parsed of parsePackResponse(response)){
     switch(parsed.type){
       case 'shallow':
         shallow.push(parsed.hash);
@@ -92,6 +92,9 @@ async function* createResult(response : AsyncIterableIterator<Uint8Array>, resol
         yield* parsed.chunks;
         break;
       case 'progress':
+        if(progress) progress(parsed.message);
+        break;
+      case 'error':
         if(progress) progress(parsed.message);
         break;
     }

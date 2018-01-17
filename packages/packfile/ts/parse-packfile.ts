@@ -85,7 +85,7 @@ export default async function* parsePackfile(chunks : AsyncIterableIterator<Uint
   state.buffer.complete();
 }
 
-async function $step(state : State, progress : Progress){
+async function $step(state : State, progress? : Progress){
   switch(state.state){
     case 'start':
       return $pack(state);
