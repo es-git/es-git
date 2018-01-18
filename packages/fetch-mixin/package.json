@@ -1,6 +1,6 @@
 {
   "name": "@es-git/fetch-mixin",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -40,6 +40,6 @@
   },
   "dependencies": {
     "@es-git/core": "^0.4.2",
-    "@es-git/http-transport": "^0.4.2"
+    "@es-git/http-transport": "^0.4.3"
   }
 }
