@@ -42,16 +42,16 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
   const refs = remotesToLocals(remoteRefs, refspec);
   const differingRefs = await findDifferingRefs(localRefs, refs, hasObject);
 
-  if(differingRefs.length === 0 && !unshallow){
+  const wanted = differingRefs.filter(ref => !ref.hasRemote).map(ref => ref.remoteHash).concat(unshallow && shallows || [] as string[]);
+
+  if(wanted.length === 0){
     return {
       objects: async function*() : AsyncIterableIterator<RawObject> {}(),
-      refs: [] as Ref[],
+      refs: differingRefs.map(ref => ({name: ref.local, hash: ref.remoteHash})),
       shallow: Promise.resolve<Hash[]>([]),
       unshallow: Promise.resolve<Hash[]>([])
     }
   }
-
-  const wanted = differingRefs.filter(ref => !ref.hasRemote).map(ref => ref.remoteHash).concat(unshallow && shallows || [] as string[]);
 
   const negotiate = negotiatePack(wanted, localRefs.map(ref => ref.hash), shallows, unshallow ? 0x7fffffff : depth);
   const body = composeWantRequest(negotiate, commonCapabilities(capabilities));
