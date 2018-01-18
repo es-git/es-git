@@ -1,13 +1,13 @@
 import { Ref, HasObject, Hash } from './types';
 import lsRemote, { Fetch as LsRemoteFetch } from './lsRemote';
-import differingRefs from './differingRefs';
+import findDifferingRefs from './findDifferingRefs';
 import negotiatePack from './negotiatePack';
 import composeWantRequest from './composeWantRequest';
 import commonCapabilities from './commonCapabilities';
 import post, { Fetch as FetchPackFetch } from './post';
 import parseWantResponse, { Token } from './parseWantResponse';
 import { unpack, RawObject } from '@es-git/packfile';
-import remoteToLocal from './remoteToLocal';
+import remotesToLocals from './remotesToLocals';
 import defer from './utils/defer';
 
 export type Fetch = LsRemoteFetch & FetchPackFetch;
@@ -16,7 +16,7 @@ export { RawObject };
 export interface FetchRequest {
   readonly url : string
   readonly fetch : Fetch
-  readonly localRefs: Hash[]
+  readonly localRefs: Ref[]
   readonly refspec : string | string[]
   hasObject(hash : string) : Promise<boolean>
   readonly depth? : number
@@ -39,9 +39,10 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
   }
 
   refspec = Array.isArray(refspec) ? refspec : [refspec];
-  const wanted = await differingRefs(localRefs, remoteRefs, refspec, hasObject, shallows, unshallow);
+  const refs = remotesToLocals(remoteRefs, refspec);
+  const differingRefs = await findDifferingRefs(localRefs, refs, hasObject);
 
-  if(wanted.length == 0){
+  if(differingRefs.length === 0 && !unshallow){
     return {
       objects: async function*() : AsyncIterableIterator<RawObject> {}(),
       refs: [] as Ref[],
@@ -50,14 +51,16 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     }
   }
 
-  const negotiate = negotiatePack(wanted, localRefs, shallows, unshallow ? 0x7fffffff : depth);
+  const wanted = differingRefs.filter(ref => !ref.hasRemote).map(ref => ref.remoteHash).concat(unshallow && shallows || [] as string[]);
+
+  const negotiate = negotiatePack(wanted, localRefs.map(ref => ref.hash), shallows, unshallow ? 0x7fffffff : depth);
   const body = composeWantRequest(negotiate, commonCapabilities(capabilities));
   const response = post(url, 'git-upload-pack', body, fetch);
   {
     const shallow = defer<string[]>();
     const unshallow = defer<string[]>();
     return {
-      refs: remoteToLocal(remoteRefs, refspec),
+      refs: differingRefs.map(ref => ({name: ref.local, hash: ref.remoteHash})),
       objects: unpack(createResult(response, shallow.resolve, unshallow.resolve, progress), progress),
       shallow: shallow.promise,
       unshallow: unshallow.promise

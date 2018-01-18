@@ -22,7 +22,7 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
   return class FetchRepo extends repo implements IFetchRepo {
     async fetch(url : string, options : FetchOptions = {}) : Promise<FetchResult[]>{
       const refNames = await super.listRefs();
-      const localRefs = await Promise.all(refNames.map(name => super.getRef(name) as Promise<string>));
+      const localRefs = await Promise.all(refNames.map(async name => ({name, hash: await super.getRef(name) as string})));
       const shallows = toArray(await super.loadMetadata('shallow'));
       const {objects, refs, ...result} = await gitFetch({
         url,
@@ -51,7 +51,7 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
 
       return refs.map(({name, hash}) => ({
         ref: name,
-        from: localRefs[refNames.indexOf(name)],
+        from: localRefs[refNames.indexOf(name)].hash,
         to: hash
       }))
     }

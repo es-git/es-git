@@ -5,11 +5,15 @@ import { concat } from '@es-git/core';
 
 import fetch, { Fetch, RawObject } from './fetch';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
+import { Ref } from './types';
 
 test('fetch refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
-    '04859931d7cbee5dff2f0b5b95b9e2693a5241d1',
+    {
+      name: 'refs/remotes/origin/fetch-test',
+      hash: '04859931d7cbee5dff2f0b5b95b9e2693a5241d1'
+    },
   ];
 
   const result = await fetch({
@@ -37,7 +41,7 @@ test('fetch refs', async t => {
 
 test('fetch shallow refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
-  const localRefs : string[] = [];
+  const localRefs : Ref[] = [];
 
   const result = await fetch({
     url,
@@ -67,7 +71,10 @@ test('fetch shallow refs', async t => {
 test('fetch unshallow refs', async t => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
-    '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
+    {
+      name: 'refs/remotes/origin/fetch-test',
+      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
+    }
   ];
 
   const result = await fetch({
@@ -86,12 +93,7 @@ test('fetch unshallow refs', async t => {
     ]
   }, s => console.log(s));
   t.snapshot(await toArray(result.objects));
-  t.deepEqual(result.refs, [
-    {
-      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
-      name: 'refs/remotes/origin/fetch-test'
-    }
-  ]);
+  t.deepEqual(result.refs, []);
   t.deepEqual(await result.shallow, []);
   t.deepEqual(await result.unshallow, [
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'

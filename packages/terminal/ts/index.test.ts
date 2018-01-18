@@ -70,6 +70,12 @@ test(t => {
 
 test(t => {
   const terminal = new Terminal();
+  terminal.log('some\rthing\relse\r');
+  t.is(terminal.content, 'else');
+});
+
+test(t => {
+  const terminal = new Terminal();
   terminal.log('start\n');
   terminal.log('1/5\r');
   terminal.log('2/5\r');

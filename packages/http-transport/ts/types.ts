@@ -5,6 +5,12 @@ export interface Ref {
   readonly name : string
 }
 
+export interface RemoteLocalRef {
+  readonly remote : string
+  readonly local : string
+  readonly hash : string
+}
+
 export interface UploadRequest {
   readonly done : boolean
   readonly wants : Hash[]
