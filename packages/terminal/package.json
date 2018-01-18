@@ -1,6 +1,6 @@
 {
   "name": "@es-git/terminal",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
