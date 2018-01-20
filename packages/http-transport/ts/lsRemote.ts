@@ -1,6 +1,8 @@
 import parseRefsResponse from './parseRefsResponse';
 import { Ref } from './types';
 
+export { Ref };
+
 export interface Result {
   readonly capabilities : Map<string, string | boolean>,
   readonly remoteRefs : Ref[]
