@@ -16,7 +16,7 @@ export interface FetchResponse {
 
 export default async function lsRemote(url : string, fetch : Fetch, service : string = 'git-upload-pack') : Promise<Result> {
   const res = await fetch(`${url}/info/refs?service=${service}`);
-  if(res.status !== 200) throw new Error(`ls-remote failed with ${res.status} ${res.statusText}`);
+  if(res.status !== 200) throw new Error(`ls-remote failed with ${res.status} ${res.statusText}\n${await res.text()}`);
   const refs = await res.text();
   const capabilities = new Map<string, string | boolean>();
   const remoteRefs = [...parseRefsResponse(refs, service, capabilities)];
