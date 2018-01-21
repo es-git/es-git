@@ -1,6 +1,6 @@
 {
   "name": "@es-git/walkers-mixin",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
