@@ -1,6 +1,6 @@
 import test from 'ava';
 import * as sinon from 'sinon';
-import { IRawRepo, Type, Mode, Hash } from '@es-git/core';
+import { IRawRepo, Type, Hash } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject, TreeBody, Person } from '@es-git/object-mixin';
 
 import commitMixin, {Folder} from './index';
@@ -19,11 +19,9 @@ test('commit', async t => {
       'folder1': {
         files: {
           'file1': {
-            mode: Mode.file,
             text: 'file1Text'
           },
           'file2': {
-            mode: Mode.file,
             hash: 'file2Hash'
           }
         }

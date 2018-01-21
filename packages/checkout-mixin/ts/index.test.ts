@@ -26,6 +26,7 @@ test('checkout commit', async t => {
   if(!file1) return t.fail();
   t.is(file1.hash, 'file1Hash');
   t.is(file1.text, 'test');
+  t.false(file1.isExecutable);
 });
 
 test('checkout subtree', async t => {
@@ -54,6 +55,7 @@ test('checkout subtree', async t => {
   if(!file1) return t.fail();
   t.is(file1.hash, 'file1Hash');
   t.is(file1.text, 'test');
+  t.false(file1.isExecutable);
 });
 
 test('checkout branch', async t => {
@@ -66,7 +68,7 @@ test('checkout branch', async t => {
   walkTreeStub.withArgs('treeHash').returns(async function *() : AsyncIterableIterator<HashModePath>{
     yield {
       hash: 'file1Hash',
-      mode: Mode.file,
+      mode: Mode.exec,
       path: ['file.txt']
     };
   }());
@@ -77,6 +79,7 @@ test('checkout branch', async t => {
   const file1 = result.files['file.txt'];
   if(!file1) return t.fail();
   t.is(file1.text, 'test');
+  t.true(file1.isExecutable);
 });
 
 const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObjectRepo, IRawRepo {

@@ -14,7 +14,7 @@ export type Folder = {
 
 export type File = {
   readonly hash : Hash
-  readonly mode : number,
+  readonly isExecutable : boolean,
   readonly body : Uint8Array,
   readonly text : string
 }
@@ -34,15 +34,15 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
       const commit = await super.loadObject(hash);
       if(!commit) throw new Error(`Cannot find object ${hash}`);
       if(commit.type !== Type.commit) throw new Error(`${hash} is not a commit`);
-      const result = {files: {}, folders: {}, hash: commit.body.tree};
+      const result : Folder = {files: {}, folders: {}, hash: commit.body.tree};
       for await(const {path, mode, hash} of super.walkTree(commit.body.tree, true)){
         if(isFile(mode)){
           const file = await super.loadObject(hash);
           if(!file) throw new Error(`Cannot find object ${hash} for file ${path.join('/')}`);
           if(file.type !== Type.blob) throw new Error(`${hash} is not a blob for file ${path.join('/')}`);
-          recursivelyMakeFile(result, path, mode, hash, file.body);
+          recursivelyMakeFile(result, path, mode === Mode.exec, hash, file.body);
         }else{
-          recursivelyMakeFolder(result, path, mode, hash);
+          recursivelyMakeFolder(result, path, hash);
         }
       }
       return result;
@@ -56,21 +56,21 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
   }
 }
 
-function recursivelyMakeFile(parent : any, path : string[], mode : Mode, hash : Hash, body : Uint8Array){
+function recursivelyMakeFile(parent : Folder, path : string[], isExecutable : boolean, hash : Hash, body : Uint8Array){
   const [name, ...subPath] = path;
   if(subPath.length === 0){
-    parent.files[name] = {
+    parent.files[name]! = {
       hash,
-      mode,
+      isExecutable,
       body,
       get text(){return decode(body)}
     }
   }else{
-    recursivelyMakeFile(parent.folders[name], subPath, mode, hash, body);
+    recursivelyMakeFile(parent.folders[name], subPath, isExecutable, hash, body);
   }
 }
 
-function recursivelyMakeFolder(parent : any, path : string[], mode : Mode, hash : Hash){
+function recursivelyMakeFolder(parent : any, path : string[], hash : Hash){
   const [name, ...subPath] = path;
   if(subPath.length === 0){
     parent.folders[name] = {
@@ -79,6 +79,6 @@ function recursivelyMakeFolder(parent : any, path : string[], mode : Mode, hash 
       folders: {}
     };
   }else{
-    recursivelyMakeFolder(parent.folders[name], subPath, mode, hash);
+    recursivelyMakeFolder(parent.folders[name], subPath, hash);
   }
 }

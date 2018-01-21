@@ -11,17 +11,17 @@ export type Folder = {
 }
 
 export type File = {
-  readonly mode : Mode,
+  readonly isExecutable? : boolean
   readonly body : Uint8Array
 }
 
 export type TextFile = {
-  readonly mode : Mode,
+  readonly isExecutable? : boolean
   readonly text : string
 }
 
 export type ExistingFile = {
-  readonly mode : Mode,
+  readonly isExecutable? : boolean
   readonly hash : Hash
 }
 
@@ -74,7 +74,7 @@ export default function commitMixin<T extends Constructor<IObjectRepo & IRawRepo
       if(folder.files){
         for(const name of Object.keys(folder.files)){
           const hash = await this.saveFile(folder.files[name]);
-          body[name] = {hash, mode: folder.files[name].mode};
+          body[name] = {hash, mode: folder.files[name].isExecutable ? Mode.exec : Mode.file};
         }
       }
 
