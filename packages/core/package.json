@@ -1,6 +1,6 @@
 {
   "name": "@es-git/core",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
