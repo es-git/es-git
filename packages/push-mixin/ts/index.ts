@@ -2,6 +2,7 @@ import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
 import { IWalkersRepo, HashAndCommitObject, withFeedback } from '@es-git/walkers-mixin';
 import { lsRemote, push, Fetch, Command, Auth, Progress } from '@es-git/http-transport';
+import getCommitsToPush from './getCommitsToPush';
 
 export { Fetch, Auth };
 
@@ -41,12 +42,9 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const remoteHashes = await Promise.all(remoteRefs.map(async ({hash}) => ({hash, known: await super.hasObject(hash)})))
         .then(a => a.filter(x => x.known).map(x => x.hash));
       const localWalk = super.walkCommits(...pairsToUpdate.map(p => p.hash));
-      const localCommits = await getCommits(localWalk);
-      const remoteWalk = super.walkCommits(...remoteHashes);
-      const remoteCommits = await getCommits(remoteWalk);
-      const commonCommits = getCommonCommits(localCommits, remoteCommits);
+      const localCommits = await getCommitsToPush(localWalk, ...remoteHashes.map(hash => super.walkCommits(hash)));
       const localObjects = new Map<Hash, Uint8Array>();
-      for(const [hash, commit] of localCommits.entries()){
+      for(const {hash, commit} of localCommits){
         await this.addToMap(hash, localObjects, options.progress);
         if(await this.addToMap(commit.body.tree, localObjects, options.progress)) continue;
         const walkTree = withFeedback(super.walkTree(commit.body.tree, true), true);
@@ -87,28 +85,6 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       return pairs as RefHash[];
     }
   }
-}
-
-async function getCommits(walker : AsyncIterableIterator<HashAndCommitObject>){
-  const commits = new Map<string, CommitObject>();
-  for await(const commit of walker){
-    commits.set(commit.hash, commit.commit);
-  }
-
-  return commits;
-}
-
-async function getCommonCommits(local : Map<string, CommitObject>, remote : Map<string, CommitObject>){
-  const common = new Map<string, CommitObject>();
-  for(const key of local.keys()){
-    const object = remote.get(key);
-    if(object){
-      common.set(key, object);
-      local.delete(key);
-      remote.delete(key);
-    }
-  }
-  return common
 }
 
 function makeCommand({ref, hash, remoteHash} : {ref : string, hash : string, remoteHash : string}) : Command{
