@@ -1,6 +1,6 @@
 import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
-import { IWalkersRepo, HashAndCommitObject } from '@es-git/walkers-mixin';
+import { IWalkersRepo, HashAndCommitObject, withFeedback } from '@es-git/walkers-mixin';
 import { lsRemote, push, Fetch, Command, Auth, Progress } from '@es-git/http-transport';
 
 export { Fetch, Auth };
@@ -49,9 +49,9 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       for(const [hash, commit] of localCommits.entries()){
         await this.addToMap(hash, localObjects, options.progress);
         if(await this.addToMap(commit.body.tree, localObjects, options.progress)) continue;
-        let hasSubtree = true
-        for await(const {hash} of withFeedback(super.walkTree(commit.body.tree, true), () => !hasSubtree)){
-          hasSubtree = await this.addToMap(hash, localObjects, options.progress);
+        const walkTtree = withFeedback(super.walkTree(commit.body.tree, true), true);
+        for await(const {hash} of walkTtree){
+          walkTtree.feedback = await this.addToMap(hash, localObjects, options.progress);
         }
       }
       if(options.progress) options.progress(`Counting objects: ${localObjects.size}, done.\n`);
@@ -109,23 +109,6 @@ async function getCommonCommits(local : Map<string, CommitObject>, remote : Map<
     }
   }
   return common
-}
-
-async function *withFeedback<T>(iterator : AsyncIterator<T>, feedback : () => any){
-  try{
-    while(true){
-      const next = await iterator.next(feedback());
-      if(next.done){
-        return;
-      }else{
-        yield next.value;
-      }
-    }
-  }finally{
-    if(typeof iterator.return === 'function'){
-      iterator.return();
-    }
-  }
 }
 
 function makeCommand({ref, hash, remoteHash} : {ref : string, hash : string, remoteHash : string}) : Command{

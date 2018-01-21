@@ -32,7 +32,8 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
         const commit = await super.loadObject(hash);
         if(!commit) throw new Error(`Could not find object ${hash}`);
         if(commit.type !== Type.commit) throw new Error(`Object is not a commit ${hash}`);
-        yield {hash, commit};
+        const visitParents = yield {hash, commit};
+        if(visitParents === false) continue;
         for(const parent of commit.body.parents){
           if(visited.has(parent)) continue;
           visited.add(parent);
@@ -55,6 +56,21 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
           }
         }
       }
+    }
+  }
+}
+
+export function withFeedback<TOut, TIn>(iterator : AsyncIterableIterator<TOut>, feedback : TIn) : AsyncIterableIterator<TOut> & { feedback : TIn} {
+  return {
+    ...iterator,
+    next() {
+      return iterator.next(feedback);
+    },
+    set feedback(value : TIn) {
+      feedback = value;
+    },
+    get feedback() {
+      return feedback;
     }
   }
 }

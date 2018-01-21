@@ -154,7 +154,7 @@ test('Local longer than remote', async t => {
     {hash:'444', commit: {}},
   ]);
   t.is(local.count, 5);
-  t.is(remote.count, 5);
+  t.is(remote.count, 6);
 });
 
 test('Remote longer than local', async t => {
@@ -185,6 +185,54 @@ test('Remote longer than local', async t => {
   t.is(remote.count, 5);
 });
 
+test('Merge Local ahead of Remote', async t => {
+  /*
+
+    * 111 <- L
+   /|
+  * | 222
+  * | 444
+  | * 333
+  | * 555 <- R
+   \|
+    * aaa
+    * bbb
+    * ccc
+    * ddd
+    * eee
+    * fff
+
+  */
+  const merge = {hash: 'aaa', parents: [
+    {hash: 'bbb', parents: [
+      {hash: 'ccc', parents: [
+        {hash: 'ddd', parents: [
+          {hash: 'eee', parents: [
+            {hash: 'fff', parents: []}
+          ]}
+        ]}
+      ]}
+    ]}
+  ]};
+  const tree = {hash: '111', parents: [
+    {hash: '222', parents: [
+      {hash: '444', parents: [merge]}
+    ]},
+    {hash: '333', parents: [
+      {hash: '555', parents: [merge]}
+    ]},
+  ]}
+  const local = walk(tree);
+  const remote = walk(tree.parents[1].parents[0]);
+  const result = await getCommitsToPush(local, remote);
+  t.deepEqual(result, [
+    {hash:'111', commit: {}},
+    {hash:'222', commit: {}},
+    {hash:'333', commit: {}},
+    {hash:'444', commit: {}},
+  ]);
+});
+
 async function toArray<T>(stream : AsyncIterableIterator<T>){
   const result = [];
   for await(const item of stream){
@@ -199,11 +247,32 @@ function stream<T>(iterable : T[]){
     async *iterable(){
       for(const item of iterable){
         count++;
-        yield item;
+        if(false === (yield item)) break;
       }
     },
     get count(){
       return count;
+    }
+  }
+}
+
+interface Node {
+  readonly hash : string,
+  readonly parents : Node[]
+}
+
+async function* walk(node : Node) : AsyncIterableIterator<HashAndCommit<{}>> {
+  const queue = [node];
+  const visited = new Set<string>(node.hash);
+  while(queue.length > 0){
+    const commit = queue.shift();
+    if(!commit) return;
+    const visitParents = yield {hash: commit.hash, commit: {}};
+    if(visitParents === false) continue;
+    for(const parent of commit.parents){
+      if(visited.has(parent.hash)) continue;
+      visited.add(parent.hash);
+      queue.push(parent);
     }
   }
 }
