@@ -27,7 +27,10 @@ const repo = new Repo();
 for await(const commit of repo.walkComits(await repo.getRef('refs/heads/master'))){
   console.log(commit.message);
 }
-for await(const file of repo.walkTree(await repo.getRef('refs/heads/master'))){
+for await(const fileOrFolder of repo.walkTree(await repo.getRef('refs/heads/master'))){
+  console.log(fileOrFolder.path.join('/'));
+}
+for await(const file of repo.listFiles(await repo.getRef('refs/heads/master'))){
   console.log(file.path.join('/'));
 }
 ```
@@ -39,7 +42,8 @@ for await(const file of repo.walkTree(await repo.getRef('refs/heads/master'))){
 ```js
 interface IWalkersRepo {
   walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject>
-  walkTree(hash : Hash, iterateFolders? : boolean) : AsyncIterableIterator<HashModePath>
+  walkTree(hash : Hash) : AsyncIterableIterator<HashModePath>
+  listFiles(hash: Hash): AsyncIterableIterator<HashModePath>
 }
 
 type Hash = string;

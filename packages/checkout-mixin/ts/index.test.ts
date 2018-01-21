@@ -107,6 +107,9 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
     yield* this.walkTreeStub(hash);
   }
 
+  listFiles(hash: Hash): AsyncIterableIterator<HashModePath> {
+    throw new Error("Method not implemented.");
+  }
   listRefs(): Promise<string[]> {
     throw new Error("Method not implemented.");
   }
