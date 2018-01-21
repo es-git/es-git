@@ -32,7 +32,7 @@ import Terminal from '@es-git/terminal';
   })
 
   for(const ref of result){
-    terminal.logLine(`* ${ref.ref} -> ${ref.to}`);
+    terminal.logLine(`* ${ref.name} -> ${ref.to}`);
   }
 
   terminal.logLine('');

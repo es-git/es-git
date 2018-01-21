@@ -16,6 +16,7 @@ module.exports = [
     entry: {
       'basic': './ts/basic.ts',
       'fetch': './ts/fetch.ts',
+      'push': './ts/push.ts',
       'gitgraph': './ts/gitgraph.ts'
     },
     output: {

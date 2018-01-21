@@ -1,0 +1,30 @@
+<html>
+    <head>
+      <title>Fetch - ES-Git</title>
+      <style>
+        label {
+          display: block;
+        }
+      </style>
+    </head>
+    <body>
+      <form method="GET">
+        <label for="content">File content</label>
+        <textarea name="content" id="content" rows="10" cols="50"></textarea>
+        <br>
+        <label for="message">Commit message</label>
+        <textarea name="message" id="message" rows="5" cols="50">Commited online</textarea>
+        <br>
+        <label for="name">Author name</label>
+        <input name="name" id="name" value="push-test" />
+        <br>
+        <label for="email">Author email</label>
+        <input name="email" id="email" value="push-test@mariusgundersen.net" />
+        <br>
+        <input type="submit" value="commit">
+        <input type="button" value="push" id="push">
+      </form>
+      <pre>Loading...</pre>
+      <script src="/push.js"></script>
+    </body>
+  </html>
