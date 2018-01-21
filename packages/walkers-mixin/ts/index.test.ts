@@ -64,6 +64,63 @@ test('walk tree', async t => {
       path: ['file.txt'],
     },
     {
+      hash: '/node_modules',
+      mode: 16384,
+      path: ['node_modules'],
+    },
+    {
+      hash: '/node_modules/folder',
+      mode: 16384,
+      path: ['node_modules', 'folder'],
+    },
+    {
+      hash: '/node_modules/folder/package.json',
+      mode: 33188,
+      path: ['node_modules', 'folder', 'package.json'],
+    },
+    {
+      hash: '/src',
+      mode: 16384,
+      path: ['src'],
+    },
+    {
+      hash: '/src/index.js',
+      mode: 33188,
+      path: ['src', 'index.js'],
+    },
+    {
+      hash: '/src/index.test.js',
+      mode: 33188,
+      path: ['src', 'index.test.js'],
+    },
+  ]);
+});
+
+
+test('list files', async t => {
+  const load = sinon.stub();
+  const repo = new WalkersRepo({load});
+  const folder = makeFolder(
+    'rootHash',
+    '/file.txt',
+    '/node_modules/folder/package.json',
+    '/src/index.js',
+    '/src/index.test.js'
+  );
+  load.callsFake(hash => ({type: Type.tree, body: folder[hash]}));
+  const results = [];
+  for await(const result of repo.listFiles('rootHash')){
+    if(!result) return t.fail();
+    results.push(result);
+  }
+  t.is(load.callCount, 4);
+  t.deepEqual(results, [
+    {
+      hash: '/file.txt',
+      mode: 33188,
+      path: ['file.txt'],
+    },
+    {
       hash: '/node_modules/folder/package.json',
       mode: 33188,
       path: ['node_modules', 'folder', 'package.json'],

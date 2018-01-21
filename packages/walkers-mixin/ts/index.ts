@@ -15,6 +15,7 @@ export type HashModePath = {
 export interface IWalkersRepo {
   walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject>
   walkTree(hash : Hash) : AsyncIterableIterator<HashModePath>
+  listFiles(hash : Hash) : AsyncIterableIterator<HashModePath>
 }
 
 export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IWalkersRepo> & T {
@@ -55,6 +56,12 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
             yield* this.walkTree(hash, path);
           }
         }
+      }
+    }
+
+    async *listFiles(hash : Hash){
+      for await(const entry of this.walkTree(hash)){
+        if(isFile(entry.mode)) yield entry;
       }
     }
   }
