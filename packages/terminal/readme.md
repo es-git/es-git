@@ -25,6 +25,9 @@ terminal.log('\rset\r');//set
 //append newline at end of line
 terminal.logLine('go!!!');//go!!!
 
+//append just a newline
+terminal.logLine();//go!!!\n
+
 console.log(terminal.content); //go!!!
 
 ```

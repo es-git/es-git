@@ -34,8 +34,12 @@ export default class Terminal{
     return this._content;
   }
 
-  logLine(message : string){
-    return this.log(message+'\n');
+  logLine(message? : string){
+    if(message){
+      return this.log(message+'\n');
+    }else{
+      return this.log('\n');
+    }
   }
 
   get content(){
