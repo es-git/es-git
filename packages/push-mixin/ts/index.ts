@@ -49,9 +49,9 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       for(const [hash, commit] of localCommits.entries()){
         await this.addToMap(hash, localObjects, options.progress);
         if(await this.addToMap(commit.body.tree, localObjects, options.progress)) continue;
-        const walkTtree = withFeedback(super.walkTree(commit.body.tree, true), true);
-        for await(const {hash} of walkTtree){
-          walkTtree.feedback = await this.addToMap(hash, localObjects, options.progress);
+        const walkTree = withFeedback(super.walkTree(commit.body.tree, true), true);
+        for await(const {hash} of walkTree){
+          walkTree.continue = await this.addToMap(hash, localObjects, options.progress);
         }
       }
       if(options.progress) options.progress(`Counting objects: ${localObjects.size}, done.\n`);

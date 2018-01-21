@@ -6,46 +6,62 @@ export interface HashAndCommit<T> {
   readonly commit : T
 }
 
-export default async function getCommitsToPush<T>(localWalk : AsyncIterableIterator<HashAndCommit<T>>, remoteWalk : AsyncIterableIterator<HashAndCommit<T>>){
+export default async function getCommitsToPush<T>(localWalk : AsyncIterableIterator<HashAndCommit<T>>, ...remoteWalks : AsyncIterableIterator<HashAndCommit<T>>[]){
   const localCommits = new Map<string, HashAndCommit<T>>();
   const remoteCommits = new Map<string, HashAndCommit<T>>();
-  const zippedWalker = withFeedback(zip(localWalk, remoteWalk), [true, true]);
-  for await(let [local, remote] of zippedWalker){
-    zippedWalker.feedback[0] = true;
-    zippedWalker.feedback[1] = true;
-    if(remote && local && remote.hash === local.hash){
-      zippedWalker.feedback[0] = false;
-      zippedWalker.feedback[1] = false;
-    }else{
-      if(remote){
-        if(localCommits.has(remote.hash)){
-          localCommits.delete(remote.hash);
-          while(remote && (local ? local.hash !== remote.hash : true)){
-            const next = await remoteWalk.next();
-            remote = next.value;
-            if(remote) {
-              localCommits.delete(remote.hash);
-            }
-          }
-          zippedWalker.feedback[0] = false;
-          zippedWalker.feedback[1] = false;
-          local = undefined;
-        }else{
-          remoteCommits.set(remote.hash, remote);
-        }
-      }
-      if(local) {
-        if(remoteCommits.has(local.hash)){
-          zippedWalker.feedback[0] = false;
-        }else{
-          localCommits.set(local.hash, local);
-        }
+  const localWalker = withFeedback(localWalk, true);
+  const remoteWalkers = withFeedback(zip(...remoteWalks), remoteWalks.map(n => true));
+  let localFound = false;
+  for await(const local of localWalker){
+    localWalker.continue = true;
+    const remotes = await remoteWalkers.next();
+    if(!remotes.done){
+      await walkRemotes(remotes.value, local);
+    }
+    if(local) {
+      if(remoteCommits.has(local.hash)){
+        localWalker.continue = false;
+        localFound = true;
       }else{
-        break;
+        localCommits.set(local.hash, local);
       }
     }
   }
+  if(!localFound){
+    for await(const remotes of remoteWalkers){
+      await walkRemotes(remotes);
+    }
+  }
   return [...(localCommits.values())];
+
+  async function walkRemotes(remotes : (HashAndCommit<T> | undefined)[], local? : HashAndCommit<T>){
+    for(let [remote, index] of remotes.map((v, i) => [v, i] as [HashAndCommit<T> | undefined, number])){
+      remoteWalkers.continue[index] = true;
+      if(remote && local && remote.hash === local.hash){
+        localWalker.continue = false;
+        remoteWalkers.continue[index] = false;
+        remoteCommits.set(remote.hash, remote);
+      }else if(remote){
+        if(localCommits.has(remote.hash)){
+          localCommits.delete(remote.hash);
+          remoteCommits.set(remote.hash, remote);
+          while(remote && (local ? local.hash !== remote.hash : true)){
+            const next = await remoteWalks[index].next();
+            remote = next.value;
+            if(remote) {
+              localCommits.delete(remote.hash);
+              remoteCommits.set(remote.hash, remote);
+            }
+          }
+          localWalker.continue = false;
+          remoteWalkers.continue[index] = false;
+        }
+        if(remote) {
+          remoteCommits.set(remote.hash, remote);
+        }
+      }
+    }
+  }
 }
 
 export async function* zip<T>(...iterators : AsyncIterableIterator<T>[]) : AsyncIterableIterator<(T | undefined)[]>{
