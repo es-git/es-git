@@ -14,7 +14,7 @@ export type HashModePath = {
 
 export interface IWalkersRepo {
   walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject>
-  walkTree(hash : Hash, iterateFolders? : boolean) : AsyncIterableIterator<HashModePath>
+  walkTree(hash : Hash) : AsyncIterableIterator<HashModePath>
 }
 
 export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IWalkersRepo> & T {
@@ -42,7 +42,7 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
       }
     }
 
-    async *walkTree(hash : Hash, iterateFolders = false, parentPath: string[] = []) : AsyncIterableIterator<HashModePath> {
+    async *walkTree(hash : Hash, parentPath: string[] = []) : AsyncIterableIterator<HashModePath> {
       const object = await super.loadObject(hash);
       if(!object) throw new Error(`Could not find object ${hash}`);
       if(object.type === Type.tree){
@@ -51,8 +51,8 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
           const path = [...parentPath, name];
           if(isFile(mode)){
             yield {mode, hash, path};
-          }else if(!iterateFolders || (yield {mode, hash, path}) !== false){
-            yield* this.walkTree(hash, iterateFolders, path);
+          }else if((yield {mode, hash, path}) !== false){
+            yield* this.walkTree(hash, path);
           }
         }
       }

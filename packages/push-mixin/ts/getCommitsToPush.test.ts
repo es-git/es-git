@@ -27,12 +27,14 @@ test('No Remote', async t => {
   const remote = stream([
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'aaa', commit: {}},
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
+  t.deepEqual(result.remoteCommits, []);
   t.is(local.count, 3);
+  t.is(remote.count, 0);
 });
 
 test('Remote = Local', async t => {
@@ -47,7 +49,10 @@ test('Remote = Local', async t => {
     {hash:'ccc', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, []);
+  t.deepEqual(result.localCommits, []);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'aaa', commit: {}}
+  ]);
   t.is(local.count, 1);
   t.is(remote.count, 1);
 });
@@ -67,16 +72,25 @@ test('Local ahead of Remote', async t => {
   const remote = stream([
     {hash:'ddd', commit: {}},
     {hash:'eee', commit: {}},
-    {hash:'fff', commit: {}}
+    {hash:'fff', commit: {}},
+    {hash:'ggg', commit: {}},
+    {hash:'hhh', commit: {}},
+    {hash:'iii', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'aaa', commit: {}},
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
+    {hash:'fff', commit: {}},
+    {hash:'ggg', commit: {}}
+  ]);
   t.is(local.count, 4);
-  t.is(remote.count, 3);
+  t.is(remote.count, 4);
 });
 
 test('Local ahead of Remote1, Remote2 unrelated', async t => {
@@ -94,22 +108,38 @@ test('Local ahead of Remote1, Remote2 unrelated', async t => {
   const remote1 = stream([
     {hash:'ddd', commit: {}},
     {hash:'eee', commit: {}},
-    {hash:'fff', commit: {}}
+    {hash:'fff', commit: {}},
+    {hash:'ggg', commit: {}},
+    {hash:'hhh', commit: {}},
+    {hash:'iii', commit: {}}
   ]);
   const remote2 = stream([
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
-    {hash:'333', commit: {}}
+    {hash:'333', commit: {}},
+    {hash:'444', commit: {}},
+    {hash:'555', commit: {}},
+    {hash:'666', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote1.iterable(), remote2.iterable());
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'aaa', commit: {}},
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'ddd', commit: {}},
+    {hash:'111', commit: {}},
+    {hash:'eee', commit: {}},
+    {hash:'222', commit: {}},
+    {hash:'fff', commit: {}},
+    {hash:'333', commit: {}},
+    {hash:'ggg', commit: {}},
+    {hash:'444', commit: {}},
+  ]);
   t.is(local.count, 4);
-  t.is(remote1.count, 3);
-  t.is(remote2.count, 3);
+  t.is(remote1.count, 4);
+  t.is(remote2.count, 4);
 });
 
 test('Remote ahead of Local', async t => {
@@ -133,7 +163,16 @@ test('Remote ahead of Local', async t => {
     {hash:'iii', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, []);
+  t.deepEqual(result.localCommits, []);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'aaa', commit: {}},
+    {hash:'bbb', commit: {}},
+    {hash:'ccc', commit: {}},
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
+    {hash:'fff', commit: {}},
+    {hash:'ggg', commit: {}}
+  ]);
   t.is(local.count, 4);
   t.is(remote.count, 7);
 });
@@ -153,7 +192,15 @@ test('Remote ahead of Local short history', async t => {
     {hash:'fff', commit: {}},
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, []);
+  t.deepEqual(result.localCommits, []);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'aaa', commit: {}},
+    {hash:'bbb', commit: {}},
+    {hash:'ccc', commit: {}},
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
+    {hash:'fff', commit: {}},
+  ]);
   t.is(local.count, 3);
   t.is(remote.count, 6);
 });
@@ -180,11 +227,18 @@ test('Local longer than remote', async t => {
     {hash:'iii', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
     {hash:'333', commit: {}},
     {hash:'444', commit: {}},
+  ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'aaa', commit: {}},
+    {hash:'bbb', commit: {}},
+    {hash:'ccc', commit: {}},
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
   ]);
   t.is(local.count, 5);
   t.is(remote.count, 5);
@@ -210,9 +264,16 @@ test('Remote longer than local', async t => {
     {hash:'iii', commit: {}}
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
+  ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'aaa', commit: {}},
+    {hash:'bbb', commit: {}},
+    {hash:'ccc', commit: {}},
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
   ]);
   t.is(local.count, 4);
   t.is(remote.count, 5);
@@ -258,11 +319,19 @@ test('Remote closest to merge', async t => {
   const local = walk(tree);
   const remote = walk(tree.parents[1].parents[0]);
   const result = await getCommitsToPush(local, remote);
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
     {hash:'333', commit: {}},
     {hash:'444', commit: {}},
+  ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'555', commit: {}},
+    {hash:'aaa', commit: {}},
+    {hash:'bbb', commit: {}},
+    {hash:'ccc', commit: {}},
+    {hash:'ddd', commit: {}},
+    {hash:'eee', commit: {}},
   ]);
 });
 test('Local closest to merge', async t => {
@@ -305,9 +374,15 @@ test('Local closest to merge', async t => {
   const local = walk(tree);
   const remote = walk(tree.parents[1]);
   const result = await getCommitsToPush(local, remote);
-  t.deepEqual(result, [
+  t.deepEqual(result.localCommits, [
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
+  ]);
+  t.deepEqual(result.remoteCommits, [
+    {hash:'333', commit: {}},
+    {hash:'444', commit: {}},
+    {hash:'555', commit: {}},
+    {hash:'aaa', commit: {}},
   ]);
 });
 

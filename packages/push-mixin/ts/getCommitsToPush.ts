@@ -32,7 +32,10 @@ export default async function getCommitsToPush<T>(localWalk : AsyncIterableItera
       await walkRemotes(remotes);
     }
   }
-  return [...(localCommits.values())];
+  return {
+    localCommits: [...(localCommits.values())],
+    remoteCommits: [...(remoteCommits.values())]
+  };
 
   async function walkRemotes(remotes : (HashAndCommit<T> | undefined)[], local? : HashAndCommit<T>){
     for(let [remote, index] of remotes.map((v, i) => [v, i] as [HashAndCommit<T> | undefined, number])){

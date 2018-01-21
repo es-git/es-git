@@ -42,16 +42,29 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const remoteHashes = await Promise.all(remoteRefs.map(async ({hash}) => ({hash, known: await super.hasObject(hash)})))
         .then(a => a.filter(x => x.known).map(x => x.hash));
       const localWalk = super.walkCommits(...pairsToUpdate.map(p => p.hash));
-      const localCommits = await getCommitsToPush(localWalk, ...remoteHashes.map(hash => super.walkCommits(hash)));
-      const localObjects = new Map<Hash, Uint8Array>();
-      for(const {hash, commit} of localCommits){
-        await this.addToMap(hash, localObjects, options.progress);
-        if(await this.addToMap(commit.body.tree, localObjects, options.progress)) continue;
-        const walkTree = withFeedback(super.walkTree(commit.body.tree, true), true);
-        for await(const {hash} of walkTree){
-          walkTree.continue = await this.addToMap(hash, localObjects, options.progress);
+      const {localCommits, remoteCommits} = await getCommitsToPush(localWalk, ...remoteHashes.map(hash => super.walkCommits(hash)));
+      const remoteObjects = new Set<Hash>();
+      if(localCommits.length > 0){
+        for(const {hash, commit} of remoteCommits){
+          await this.addToSet(hash, remoteObjects);
+          if(await this.addToSet(commit.body.tree, remoteObjects)) continue;
+          const walkTree = withFeedback(super.walkTree(commit.body.tree), true);
+          for await(const {hash} of walkTree){
+            walkTree.continue = await this.addToSet(hash, remoteObjects);
+          }
         }
       }
+
+      const localObjects = new Map<Hash, Uint8Array>();
+      for(const {hash, commit} of localCommits){
+        await this.addToMap(hash, localObjects, remoteObjects, options.progress);
+        if(await this.addToMap(commit.body.tree, localObjects, remoteObjects, options.progress)) continue;
+        const walkTree = withFeedback(super.walkTree(commit.body.tree), true);
+        for await(const {hash} of walkTree){
+          walkTree.continue = await this.addToMap(hash, localObjects, remoteObjects, options.progress);
+        }
+      }
+
       if(options.progress) options.progress(`Counting objects: ${localObjects.size}, done.\n`);
 
       await push(url, fetch, pairsToUpdate.map(makeCommand), localObjects, auth, options.progress);
@@ -64,8 +77,14 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       return pairsToUpdate;
     }
 
-    private async addToMap(hash : string, map : Map<Hash, Uint8Array>, progress? : Progress) {
-      if(map.has(hash)) return true;
+    private async addToSet(hash : string, set : Set<Hash>) {
+      if(set.has(hash)) return true;
+      set.add(hash);
+      return false;
+    }
+
+    private async addToMap(hash : string, map : Map<Hash, Uint8Array>, set : Set<Hash>, progress? : Progress) {
+      if(map.has(hash) || set.has(hash)) return true;
       const raw = await super.loadRaw(hash);
       if(!raw) return true;
       map.set(hash, raw);
