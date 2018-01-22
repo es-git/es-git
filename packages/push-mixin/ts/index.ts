@@ -42,10 +42,10 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const remoteHashes = await Promise.all(remoteRefs.map(async ({hash}) => ({hash, known: await super.hasObject(hash)})))
         .then(a => a.filter(x => x.known).map(x => x.hash));
       const localWalk = super.walkCommits(...pairsToUpdate.map(p => p.hash));
-      const {localCommits, remoteCommits} = await getCommitsToPush(localWalk, ...remoteHashes.map(hash => super.walkCommits(hash)));
+      const {localCommits, commonCommits} = await getCommitsToPush(localWalk, ...remoteHashes.map(hash => super.walkCommits(hash)));
       const remoteObjects = new Set<Hash>();
       if(localCommits.length > 0){
-        for(const {hash, commit} of remoteCommits){
+        for(const {hash, commit} of commonCommits){
           await this.addToSet(hash, remoteObjects);
           if(await this.addToSet(commit.body.tree, remoteObjects)) continue;
           const walkTree = withFeedback(super.walkTree(commit.body.tree), true);

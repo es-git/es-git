@@ -32,7 +32,7 @@ test('No Remote', async t => {
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
-  t.deepEqual(result.remoteCommits, []);
+  t.deepEqual(result.commonCommits, []);
   t.is(local.count, 3);
   t.is(remote.count, 0);
 });
@@ -50,7 +50,7 @@ test('Remote = Local', async t => {
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
   t.deepEqual(result.localCommits, []);
-  t.deepEqual(result.remoteCommits, [
+  t.deepEqual(result.commonCommits, [
     {hash:'aaa', commit: {}}
   ]);
   t.is(local.count, 1);
@@ -83,11 +83,8 @@ test('Local ahead of Remote', async t => {
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
-    {hash:'fff', commit: {}},
-    {hash:'ggg', commit: {}}
+  t.deepEqual(result.commonCommits, [
+    {hash:'ddd', commit: {}}
   ]);
   t.is(local.count, 4);
   t.is(remote.count, 4);
@@ -127,15 +124,8 @@ test('Local ahead of Remote1, Remote2 unrelated', async t => {
     {hash:'bbb', commit: {}},
     {hash:'ccc', commit: {}}
   ]);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'ddd', commit: {}},
-    {hash:'111', commit: {}},
-    {hash:'eee', commit: {}},
-    {hash:'222', commit: {}},
-    {hash:'fff', commit: {}},
-    {hash:'333', commit: {}},
-    {hash:'ggg', commit: {}},
-    {hash:'444', commit: {}},
+  t.deepEqual(result.commonCommits, [
+    {hash:'ddd', commit: {}}
   ]);
   t.is(local.count, 4);
   t.is(remote1.count, 4);
@@ -164,14 +154,8 @@ test('Remote ahead of Local', async t => {
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
   t.deepEqual(result.localCommits, []);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}},
+  t.deepEqual(result.commonCommits, [
     {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
-    {hash:'fff', commit: {}},
-    {hash:'ggg', commit: {}}
   ]);
   t.is(local.count, 4);
   t.is(remote.count, 7);
@@ -193,13 +177,8 @@ test('Remote ahead of Local short history', async t => {
   ]);
   const result = await getCommitsToPush(local.iterable(), remote.iterable());
   t.deepEqual(result.localCommits, []);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}},
+  t.deepEqual(result.commonCommits, [
     {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
-    {hash:'fff', commit: {}},
   ]);
   t.is(local.count, 3);
   t.is(remote.count, 6);
@@ -233,12 +212,8 @@ test('Local longer than remote', async t => {
     {hash:'333', commit: {}},
     {hash:'444', commit: {}},
   ]);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}},
-    {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
+  t.deepEqual(result.commonCommits, [
+    {hash:'ddd', commit: {}}
   ]);
   t.is(local.count, 5);
   t.is(remote.count, 5);
@@ -268,12 +243,8 @@ test('Remote longer than local', async t => {
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
   ]);
-  t.deepEqual(result.remoteCommits, [
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}},
-    {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
+  t.deepEqual(result.commonCommits, [
+    {hash:'ddd', commit: {}}
   ]);
   t.is(local.count, 4);
   t.is(remote.count, 5);
@@ -286,6 +257,7 @@ test('Remote closest to merge', async t => {
    /|
   * | 222
   * | 444
+  * | 666
   | * 333
   | * 555 <- R
    \|
@@ -310,7 +282,9 @@ test('Remote closest to merge', async t => {
   ]};
   const tree = {hash: '111', parents: [
     {hash: '222', parents: [
-      {hash: '444', parents: [merge]}
+      {hash: '444', parents: [
+        {hash: '666', parents: [merge]}
+      ]}
     ]},
     {hash: '333', parents: [
       {hash: '555', parents: [merge]}
@@ -324,14 +298,11 @@ test('Remote closest to merge', async t => {
     {hash:'222', commit: {}},
     {hash:'333', commit: {}},
     {hash:'444', commit: {}},
+    {hash:'666', commit: {}},
   ]);
-  t.deepEqual(result.remoteCommits, [
+  t.deepEqual(result.commonCommits, [
     {hash:'555', commit: {}},
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}},
-    {hash:'ddd', commit: {}},
-    {hash:'eee', commit: {}},
+    {hash:'aaa', commit: {}}
   ]);
 });
 test('Local closest to merge', async t => {
@@ -378,10 +349,8 @@ test('Local closest to merge', async t => {
     {hash:'111', commit: {}},
     {hash:'222', commit: {}},
   ]);
-  t.deepEqual(result.remoteCommits, [
+  t.deepEqual(result.commonCommits, [
     {hash:'333', commit: {}},
-    {hash:'444', commit: {}},
-    {hash:'555', commit: {}},
     {hash:'aaa', commit: {}},
   ]);
 });
