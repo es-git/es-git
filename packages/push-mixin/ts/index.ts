@@ -46,28 +46,35 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       const remoteObjects = new Set<Hash>();
       if(localCommits.length > 0){
         for(const {hash, commit} of commonCommits){
-          await this.addToSet(hash, remoteObjects);
-          if(await this.addToSet(commit.body.tree, remoteObjects)) continue;
+          await addToSet(hash, remoteObjects);
+          if(await addToSet(commit.body.tree, remoteObjects)) continue;
           const walkTree = withFeedback(super.walkTree(commit.body.tree), true);
           for await(const {hash} of walkTree){
-            walkTree.continue = await this.addToSet(hash, remoteObjects);
+            walkTree.continue = await addToSet(hash, remoteObjects);
           }
         }
       }
 
-      const localObjects = new Map<Hash, Uint8Array>();
+      const localObjects = new Set<Hash>();
       for(const {hash, commit} of localCommits){
-        await this.addToMap(hash, localObjects, remoteObjects, options.progress);
-        if(await this.addToMap(commit.body.tree, localObjects, remoteObjects, options.progress)) continue;
+        if(await addToSet(hash, localObjects, remoteObjects)) continue;
+        if(await addToSet(commit.body.tree, localObjects, remoteObjects)) continue;
+        if(options.progress) options.progress(`Counting objects: ${localObjects.size}\r`);
         const walkTree = withFeedback(super.walkTree(commit.body.tree), true);
         for await(const {hash} of walkTree){
-          walkTree.continue = await this.addToMap(hash, localObjects, remoteObjects, options.progress);
+          walkTree.continue = await addToSet(hash, localObjects, remoteObjects);
+          if(!walkTree.continue && options.progress) options.progress(`Counting objects: ${localObjects.size}\r`);
         }
       }
 
       if(options.progress) options.progress(`Counting objects: ${localObjects.size}, done.\n`);
 
-      await push(url, fetch, pairsToUpdate.map(makeCommand), localObjects, auth, options.progress);
+      const objects = {
+        count: localObjects.size,
+        stream: read(localObjects.values(), hash => this.loadRaw(hash))
+      };
+
+      await push(url, fetch, pairsToUpdate.map(makeCommand), objects, auth, options.progress);
 
       if(typeof remote !== 'string'){
         const remotePrefix = `refs/remotes/${remote.remote}/`;
@@ -75,21 +82,6 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
       }
 
       return pairsToUpdate;
-    }
-
-    private async addToSet(hash : string, set : Set<Hash>) {
-      if(set.has(hash)) return true;
-      set.add(hash);
-      return false;
-    }
-
-    private async addToMap(hash : string, map : Map<Hash, Uint8Array>, set : Set<Hash>, progress? : Progress) {
-      if(map.has(hash) || set.has(hash)) return true;
-      const raw = await super.loadRaw(hash);
-      if(!raw) return true;
-      map.set(hash, raw);
-      if(progress) progress(`Counting objects: ${map.size}\r`);
-      return false;
     }
 
     private async getRefs(ref : string | string[]){
@@ -103,6 +95,20 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
 
       return pairs as RefHash[];
     }
+  }
+}
+
+async function addToSet(hash : string, include : Set<Hash>, exclude? : Set<Hash>) {
+  if(include.has(hash) || exclude && exclude.has(hash)) return true;
+  include.add(hash);
+  return false;
+}
+
+async function* read(objects : IterableIterator<Hash>, loadRaw : (hash : Hash) => Promise<Uint8Array | undefined>) : AsyncIterableIterator<[string, Uint8Array]> {
+  for(const hash of objects){
+    const object = await loadRaw(hash);
+    if(!object) throw new Error(`Could not load ${hash}`);
+    yield [hash, object];
   }
 }
 

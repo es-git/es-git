@@ -1,7 +1,7 @@
 import pktLine from './pkt-line';
 import { UploadRequest, ClientCaps } from './types';
 
-export default function *composeWantRequest(request : UploadRequest, capabilities : ClientCaps) {
+export default async function *composeWantRequest(request : UploadRequest, capabilities : ClientCaps) {
   const[hash, ...wants] = request.wants;
   yield pktLine(`want ${hash} ${composeCaps(capabilities)}`);
 

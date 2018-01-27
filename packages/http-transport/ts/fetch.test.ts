@@ -1,9 +1,9 @@
 import test from 'ava';
-import nodeFetch, { Request, RequestInit, Response } from 'node-fetch';
+import nodeFetch, { Request, Response } from 'node-fetch';
 import * as fs from 'fs';
 import { concat } from '@es-git/core';
 
-import fetch, { Fetch, RawObject } from './fetch';
+import fetch, { Fetch, FetchRequest, RawObject } from './fetch';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
 import { Ref } from './types';
 

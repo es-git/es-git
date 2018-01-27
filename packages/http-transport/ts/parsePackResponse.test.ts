@@ -5,7 +5,7 @@ import * as fs from 'fs';
 
 const sampleFile = __dirname + '/../samples/fetchResponse.txt';
 
-test('parse side-band-64', async t => {
+test.only('parse side-band-64', async t => {
   const expectedTypes = [
     'nak',
     'progress',

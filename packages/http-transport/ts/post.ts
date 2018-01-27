@@ -1,5 +1,6 @@
 import { concat } from '@es-git/core';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
+import asyncIteratorToBuffer from './utils/asyncIteratorToBuffer';
 
 export type Fetch = (url : string, init? : RequestInit) => Promise<Response>;
 export interface RequestInit {
@@ -25,7 +26,7 @@ export type Response = {
 
 export type Auth = {username : string, password : string};
 
-export default async function* post(url : string, service : string, body : IterableIterator<Uint8Array>, fetch : Fetch, auth? : Auth) : AsyncIterableIterator<Uint8Array> {
+export default async function* post(url : string, service : string, body : AsyncIterableIterator<Uint8Array>, fetch : Fetch, auth? : Auth) : AsyncIterableIterator<Uint8Array> {
   const res = await fetch(`${url}/${service}`, {
     method: 'POST',
     headers: {
@@ -33,13 +34,10 @@ export default async function* post(url : string, service : string, body : Itera
       'Accept': `application/x-${service}-result`,
       ...authorization(auth)
     },
-    body: concat(...body).buffer as ArrayBuffer
+    body: await asyncIteratorToBuffer(body)
   });
   if(res.status !== 200) throw new Error(`POST ${url}/${service} failed ${res.status} ${res.statusText}`);
-  const stream = isModern(res) ? streamToAsyncIterator(res.body) : streamify(res.arrayBuffer());
-  for await(const chunk of stream){
-    yield chunk;
-  }
+  yield* isModern(res) ? streamToAsyncIterator(res.body) : streamify(res.arrayBuffer());
 }
 
 function authorization(auth? : Auth) : {} {

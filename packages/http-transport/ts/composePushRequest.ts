@@ -24,7 +24,7 @@ export type Command =
   DeleteCommand |
   UpdateCommand;
 
-export default function *composePushRequest(packfile : Uint8Array, commands : Command[]){
+export default async function *composePushRequest(packfile : AsyncIterableIterator<Uint8Array>, commands : Command[]){
   const [command, ...remainingCommands] = commands;
   yield pktLine(encodeCommand(command) + '\0report-status side-band-64k agent=es-git');
 
@@ -34,7 +34,7 @@ export default function *composePushRequest(packfile : Uint8Array, commands : Co
 
   yield pktLine(null);
 
-  yield packfile;
+  yield* packfile;
 }
 
 export function encodeCommand(command : Command){

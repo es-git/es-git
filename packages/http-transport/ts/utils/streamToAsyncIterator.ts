@@ -1,12 +1,18 @@
 import defer from './defer';
 
-export default async function* streamToAsyncIterator(readable : NodeJS.ReadableStream | ReadableStream) : AsyncIterableIterator<Uint8Array> {
+export default function streamToAsyncIterator(readable : NodeJS.ReadableStream | ReadableStream) : AsyncIterableIterator<Uint8Array> {
   const reader = isBrowser(readable) ? readable.getReader() : toReader(readable);
-  while(true){
-    const {value, done} = await reader.read() as {value : Uint8Array, done : boolean};
-    if(done) return;
-    yield value;
-  }
+  return {
+    next(){
+      return reader.read();
+    },
+    return(){
+      return reader.releaseLock();
+    },
+    [Symbol.asyncIterator](){
+      return this;
+    }
+  } as any as AsyncIterableIterator<Uint8Array>;
 }
 
 function toReader(stream : NodeJS.ReadableStream){
@@ -32,6 +38,8 @@ function toReader(stream : NodeJS.ReadableStream){
         done: false,
         value: new Uint8Array(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength))
       };
+    },
+    releaseLock(){
     }
   }
 }

@@ -4,10 +4,13 @@ import { promisify } from 'util';
 
 import unpack from './unpack';
 import { Type, OfsDeltaEntry, Entry } from './types';
+import pipe from './pipe';
 
 test('unpack sample1', async t => {
   const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample1.pack');
-  const entries = await collect(unpack(gen(toUint8Array(pack))));
+  const entries = await pipe(stream(pack))
+    .pipe(unpack)
+    .then(collect);
 
   t.snapshot(entries);
   t.is(entries.length, 2651);
@@ -15,14 +18,16 @@ test('unpack sample1', async t => {
 
 test('unpack sample2', async t => {
   const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample2.pack');
-  const entries = await collect(unpack(gen(toUint8Array(pack))));
+  const entries = await pipe(stream(pack))
+    .pipe(unpack)
+    .then(collect);
 
   t.snapshot(entries);
   t.is(entries.length, 3);
 });
 
-async function* gen<T>(item : T) : AsyncIterableIterator<T> {
-  yield item;
+async function* stream(item : Buffer) : AsyncIterableIterator<Uint8Array> {
+  yield toUint8Array(item);
 }
 
 async function collect<T>(iterator : AsyncIterableIterator<T>){

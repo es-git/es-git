@@ -2,6 +2,7 @@ import test from 'ava';
 import { pack, unpack, RawObject } from './index';
 
 import { encode, decode } from '@es-git/core';
+import pipe from './pipe';
 
 test('pack-unpack', async t => {
 
@@ -10,22 +11,21 @@ test('pack-unpack', async t => {
     'commit 7\0testing'
   ];
 
-  const result = unpack(gen(pack(prepare(blobs))));
+  const result = pipe(prepare(blobs))
+                .pipe(x => pack(x, 2))
+                .pipe(unpack)
+                .then(collect);
   t.deepEqual([
     'commit 7\0testing',
     'blob 4\0test'
-  ], await postpare(result));
+  ], await result);
 });
 
-async function* gen<T>(item : T) : AsyncIterableIterator<T> {
-  yield item;
+async function* prepare(blobs : string[]){
+  yield* blobs.map(x => (['00', encode(x)] as [string, Uint8Array]));
 }
 
-function prepare(blobs : string[]){
-  return blobs.map(x => (['00', encode(x)] as [string, Uint8Array]));
-}
-
-async function postpare(iterator : AsyncIterableIterator<RawObject>){
+async function collect(iterator : AsyncIterableIterator<RawObject>){
   const result : string[] = [];
   for await(const item of iterator){
     result.push(decode(item.body));

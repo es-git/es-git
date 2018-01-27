@@ -10,12 +10,12 @@ import {
   Entry
 } from './types';
 
-export default function *composePackfile(items : Entry[]) {
+export default async function *composePackfile(items : AsyncIterableIterator<Entry>, count : number) {
   const hash = sha1();
 
-  yield update(packHeader(items.length), hash);
+  yield update(packHeader(count), hash);
 
-  for(const item of items){
+  for await(const item of items){
     for(const chunk of packFrame(item)){
       yield update(chunk, hash);
     }
