@@ -1,4 +1,5 @@
 import test from 'ava';
+import walk, { parse } from '@es-git/ascii-graph-walker';
 
 import getCommitsToPush, {zip, HashAndCommit} from './getCommitsToPush';
 
@@ -19,22 +20,16 @@ test('zip', async t => {
 });
 
 test('No Remote', async t => {
-  const local = stream([
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}}
-  ]);
-  const remote = stream([
-  ]);
-  const result = await getCommitsToPush(local.iterable(), remote.iterable());
+  const walk = parse`a--b--(c)`;
+  const local = walk(dummyCommit, '()');
+  const remote = walk(dummyCommit, '[]');
+  const result = await getCommitsToPush(local, remote);
   t.deepEqual(result.localCommits, [
-    {hash:'aaa', commit: {}},
-    {hash:'bbb', commit: {}},
-    {hash:'ccc', commit: {}}
+    {hash:'c', commit: {}},
+    {hash:'b', commit: {}},
+    {hash:'a', commit: {}}
   ]);
   t.deepEqual(result.commonCommits, []);
-  t.is(local.count, 3);
-  t.is(remote.count, 0);
 });
 
 test('Remote = Local', async t => {
@@ -251,107 +246,43 @@ test('Remote longer than local', async t => {
 });
 
 test('Remote closest to merge', async t => {
-  /*
+  const walk = parse`
+                   5--4--2
+                  /       \
+  o--o--o--o--o--b--[a]--3--(1)
+  `;
 
-    * 111 <- L
-   /|
-  * | 222
-  * | 444
-  * | 666
-  | * 333
-  | * 555 <- R
-   \|
-    * aaa
-    * bbb
-    * ccc
-    * ddd
-    * eee
-    * fff
-
-  */
-  const merge = {hash: 'aaa', parents: [
-    {hash: 'bbb', parents: [
-      {hash: 'ccc', parents: [
-        {hash: 'ddd', parents: [
-          {hash: 'eee', parents: [
-            {hash: 'fff', parents: []}
-          ]}
-        ]}
-      ]}
-    ]}
-  ]};
-  const tree = {hash: '111', parents: [
-    {hash: '222', parents: [
-      {hash: '444', parents: [
-        {hash: '666', parents: [merge]}
-      ]}
-    ]},
-    {hash: '333', parents: [
-      {hash: '555', parents: [merge]}
-    ]},
-  ]}
-  const local = walk(tree);
-  const remote = walk(tree.parents[1].parents[0]);
+  const local = walk(dummyCommit, '()');
+  const remote = walk(dummyCommit, '[]');
   const result = await getCommitsToPush(local, remote);
   t.deepEqual(result.localCommits, [
-    {hash:'111', commit: {}},
-    {hash:'222', commit: {}},
-    {hash:'333', commit: {}},
-    {hash:'444', commit: {}},
-    {hash:'666', commit: {}},
+    {hash:'1', commit: {}},
+    {hash:'2', commit: {}},
+    {hash:'3', commit: {}},
+    {hash:'4', commit: {}},
+    {hash:'5', commit: {}},
   ]);
   t.deepEqual(result.commonCommits, [
-    {hash:'555', commit: {}},
-    {hash:'aaa', commit: {}}
+    {hash:'a', commit: {}},
+    {hash:'b', commit: {}}
   ]);
 });
 test('Local closest to merge', async t => {
-  /*
-
-    * 111 <- L
-   /|
-  * | 222
-  | * 333 <- R
-  | * 444
-  | * 555
-   \|
-    * aaa
-    * bbb
-    * ccc
-    * ddd
-    * eee
-    * fff
-
-  */
-  const merge = {hash: 'aaa', parents: [
-    {hash: 'bbb', parents: [
-      {hash: 'ccc', parents: [
-        {hash: 'ddd', parents: [
-          {hash: 'eee', parents: [
-            {hash: 'fff', parents: []}
-          ]}
-        ]}
-      ]}
-    ]}
-  ]};
-  const tree = {hash: '111', parents: [
-    {hash: '222', parents: [merge]},
-    {hash: '333', parents: [
-      {hash: '444', parents: [
-        {hash: '555', parents: [merge]}
-      ]}
-    ]},
-  ]}
-  const local = walk(tree);
-  const remote = walk(tree.parents[1]);
+  const walk = parse`
+                   ------2---
+                  /          \
+  o--o--o--o--o--b--o--o--[a]--(1)
+  `;
+  const local = walk(dummyCommit, '()');
+  const remote = walk(dummyCommit, '[]');
   const result = await getCommitsToPush(local, remote);
   t.deepEqual(result.localCommits, [
-    {hash:'111', commit: {}},
-    {hash:'222', commit: {}},
+    {hash:'1', commit: {}},
+    {hash:'2', commit: {}},
   ]);
   t.deepEqual(result.commonCommits, [
-    {hash:'333', commit: {}},
-    {hash:'aaa', commit: {}},
+    {hash:'a', commit: {}},
+    {hash:'b', commit: {}},
   ]);
 });
 
@@ -383,7 +314,7 @@ interface Node {
   readonly parents : Node[]
 }
 
-async function* walk(node : Node) : AsyncIterableIterator<HashAndCommit<{}>> {
+async function* walkit(node : Node) : AsyncIterableIterator<HashAndCommit<{}>> {
   const queue = [node];
   const visited = new Set<string>(node.hash);
   while(queue.length > 0){
@@ -398,6 +329,8 @@ async function* walk(node : Node) : AsyncIterableIterator<HashAndCommit<{}>> {
     }
   }
 }
+
+const dummyCommit = (hash : string) => ({});
 
 function ofLength(count=10){
   const result = [];

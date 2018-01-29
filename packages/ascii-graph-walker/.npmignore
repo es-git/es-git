@@ -1,0 +1,6 @@
+.*
+*.test.js
+*.test.ts
+*.test.js.md
+*.test.js.snap
+samples
