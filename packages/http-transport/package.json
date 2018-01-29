@@ -1,6 +1,6 @@
 {
   "name": "@es-git/http-transport",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@es-git/core": "^0.5.0",
-    "@es-git/packfile": "^0.5.0"
+    "@es-git/packfile": "^0.6.0"
   },
   "devDependencies": {
     "@types/node-fetch": "^1.6.7",
