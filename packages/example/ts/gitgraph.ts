@@ -32,7 +32,7 @@ import * as d3 from 'd3';
   const edges = [];
   let y = 0;
   const hashes = [await repo.getRef('refs/remotes/origin/master') as string];
-  for await(const {hash, commit: {body: commit}} of repo.walkCommits(...hashes)){
+  for await(const {hash, commit} of repo.walkCommits(...hashes)){
     nodes.set(hash, {
       index: hash,
       label: commit.message,

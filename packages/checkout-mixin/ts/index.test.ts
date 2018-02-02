@@ -2,7 +2,7 @@ import test from 'ava';
 import * as sinon from 'sinon';
 import { IRawRepo, Type, Mode, Hash, encode } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitBody, TreeObject, TreeBody } from '@es-git/object-mixin';
-import { IWalkersRepo, HashModePath, HashAndCommitObject } from '@es-git/walkers-mixin';
+import { IWalkersRepo, HashModePath, HashAndCommitBody } from '@es-git/walkers-mixin';
 
 import checkoutMixin from './index';
 
@@ -100,7 +100,7 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
     return this.load(hash);
   }
 
-  async *walkCommits(hash : Hash) : AsyncIterableIterator<HashAndCommitObject> {
+  async *walkCommits(hash : Hash) : AsyncIterableIterator<HashAndCommitBody> {
   }
 
   async *walkTree(hash : Hash) : AsyncIterableIterator<HashModePath> {

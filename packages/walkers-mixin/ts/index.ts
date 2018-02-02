@@ -1,9 +1,9 @@
 import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
+import { IObjectRepo, GitObject, CommitObject, TreeObject, CommitBody } from '@es-git/object-mixin';
 
-export type HashAndCommitObject = {
+export type HashAndCommitBody = {
   readonly hash : Hash
-  readonly commit : CommitObject
+  readonly commit : CommitBody
 }
 
 export type HashModePath = {
@@ -13,7 +13,7 @@ export type HashModePath = {
 }
 
 export interface IWalkersRepo {
-  walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject>
+  walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitBody>
   walkTree(hash : Hash) : AsyncIterableIterator<HashModePath>
   listFiles(hash : Hash) : AsyncIterableIterator<HashModePath>
 }
@@ -24,7 +24,7 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
       super(...args);
     }
 
-    async *walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitObject> {
+    async *walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitBody> {
       const queue = hash;
       const visited = new Set<Hash>(queue);
       while(queue.length > 0){
@@ -33,7 +33,7 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
         const commit = await super.loadObject(hash);
         if(!commit) throw new Error(`Could not find object ${hash}`);
         if(commit.type !== Type.commit) throw new Error(`Object is not a commit ${hash}`);
-        const visitParents = yield {hash, commit};
+        const visitParents = yield {hash, commit: commit.body};
         if(visitParents === false) continue;
         for(const parent of commit.body.parents){
           if(visited.has(parent)) continue;
