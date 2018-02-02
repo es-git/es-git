@@ -20,14 +20,18 @@ export function toRows(template : TemplateStringsArray){
 
 export function parse(template : TemplateStringsArray){
   const rows = toRows(template);
-  return async function* walk<T>(getCommit : (hash : string) => T, start='()'){
+  return async function* walk<T>(start='()'){
     const queue = [...findStarts(rows, start)];
     for(const {hash, row, col} of queue){
-      if((yield {
+      const parents = [...followPath(rows, row, col, '-')].map(hexify);
+      const commit = {
         hash,
-        commit: getCommit(hash)
-      }) !== false){
-        queue.push(...[...followPath(rows, row, col, '-')].map(hexify));
+        commit: {
+          parents: parents.map(p => p.hash)
+        }
+      };
+      if((yield commit) !== false){
+        queue.push(...parents);
       }
     };
   }
@@ -139,20 +143,42 @@ export function hexify(node : Node){
   }
 }
 
-export function* findStarts(rows : string[], start='()'){
-  const char = start[start.length-1];
+function isValidMatch(match : string){
+  const prefix = match[0];
+  const suffix = match[match.length-1];
+  if(!(prefix === '(' && suffix === ')')
+  && !(prefix === '[' && suffix === ']')
+  && !(prefix === '{' && suffix === '}')){
+    throw new Error('invalid start, must be [*], (*) or {*}');
+  }
+
+  if(match[1] === '*' && match.length === 3){
+    return true;
+  }
+
+  for(let i=1; i<match.length-1; i++){
+    if(!isHex(match[i])){
+      throw new Error('start must contain a hex');
+    }
+  }
+}
+
+export function* findStarts(rows : string[], match='(*)'){
+  isValidMatch(match);
+  const prefix = match[0];
+  const suffix = match[match.length-1];
   for(const row of rows){
-    let prevPos = -1
-    let pos = row.indexOf(char);
-    while(pos > prevPos){
+    let pos = row.indexOf(suffix);
+    while(pos > -1){
       const hash = parseHex(row, pos-1);
-      yield {
-        row: rows.indexOf(row),
-        col: pos-hash.length,
-        hash
-      };
-      prevPos = pos;
-      pos = row.indexOf(char, pos);
+      if(`${prefix}*${suffix}` === match || `${prefix}${hash}${suffix}` === match){
+        yield {
+          row: rows.indexOf(row),
+          col: pos-hash.length,
+          hash
+        };
+      }
+      pos = row.indexOf(suffix, pos+1);
     }
   }
 }

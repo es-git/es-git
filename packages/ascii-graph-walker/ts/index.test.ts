@@ -111,9 +111,28 @@ test('find start', t => {
 test('find start []', t => {
   const result = findStarts(toRows`
   a--o--[beef]
-  `, '[]');
+  `, '[*]');
 
   t.deepEqual(result.next().value, {row: 1, col: 9, hash: 'beef'});
+  t.true(result.next().done);
+});
+
+test('find start [beef]', t => {
+  const result = findStarts(toRows`
+  [a]--o--[beef]--[b]
+  `, '[beef]');
+
+  t.deepEqual(result.next().value, {row: 1, col: 11, hash: 'beef'});
+  t.true(result.next().done);
+});
+
+test('find start [] twice on same row', t => {
+  const result = findStarts(toRows`
+  a--o--[beef]--[dead]
+  `, '[*]');
+
+  t.deepEqual(result.next().value, {row: 1, col: 9, hash: 'beef'});
+  t.deepEqual(result.next().value, {row: 1, col: 17, hash: 'dead'});
   t.true(result.next().done);
 });
 
@@ -129,19 +148,19 @@ test('walkSync', t => {
 });
 
 test('walk [] and ()', async t => {
-  const diagram = parse`a--o--[b]--(c)`;
-  const walkerA = diagram(h => ({}), '[]');
-  const walkerB = diagram(h => ({}), '()');
+  const walk = parse`a--o--[b]--(c)`;
+  const walkerA = walk('[*]');
+  const walkerB = walk('(*)');
 
-  t.deepEqual((await walkerA.next()).value, {hash: 'b', commit: {}});
-  t.deepEqual((await walkerA.next()).value, {hash: '0a3', commit: {}});
-  t.deepEqual((await walkerA.next()).value, {hash: 'a', commit: {}});
+  t.deepEqual((await walkerA.next()).value, {hash: 'b', commit: {parents: ['0a3']}});
+  t.deepEqual((await walkerA.next()).value, {hash: '0a3', commit: {parents: ['a']}});
+  t.deepEqual((await walkerA.next()).value, {hash: 'a', commit: {parents: []}});
   t.true((await walkerA.next()).done);
 
-  t.deepEqual((await walkerB.next()).value, {hash: 'c', commit: {}});
-  t.deepEqual((await walkerB.next()).value, {hash: 'b', commit: {}});
-  t.deepEqual((await walkerB.next()).value, {hash: '0a3', commit: {}});
-  t.deepEqual((await walkerB.next()).value, {hash: 'a', commit: {}});
+  t.deepEqual((await walkerB.next()).value, {hash: 'c', commit: {parents: ['b']}});
+  t.deepEqual((await walkerB.next()).value, {hash: 'b', commit: {parents: ['0a3']}});
+  t.deepEqual((await walkerB.next()).value, {hash: '0a3', commit: {parents: ['a']}});
+  t.deepEqual((await walkerB.next()).value, {hash: 'a', commit: {parents: []}});
   t.true((await walkerB.next()).done);
 });
 
