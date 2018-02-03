@@ -1,88 +1,112 @@
 import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
 import { IWalkersRepo, withFeedback } from '@es-git/walkers-mixin';
-import { lsRemote, push, Fetch, Command, Auth, Progress } from '@es-git/http-transport';
+import { lsRemote, push, Fetch, Command, Auth, Progress, Ref } from '@es-git/http-transport';
 import findCommonCommits from './findCommonCommits';
 import getObjectsToPush from './getObjectsToPush';
 
 export { Fetch, Auth };
 
-export interface RefHash {
-  readonly ref : string
-  readonly hash : Hash
-}
-
 export interface PushOptions {
   readonly progress? : Progress
 }
 
-export interface RemoteUrl {
-  readonly remote : string
-  readonly url : string
+export interface LocalRemoteTrackingRef {
+  readonly local : string
+  readonly remote? : string
+  readonly tracking? : string
+}
+
+export interface RefResult {
+  readonly local : string
+  readonly remote? : string
+  readonly tracking? : string
+  readonly hash : string
+  readonly remoteHash? : string
 }
 
 export interface IPushRepo {
-  push(remote : string | RemoteUrl, ref : string | string[], auth? : Auth, options? : PushOptions) : Promise<RefHash[]>
+  push(url : string, ref : string | LocalRemoteTrackingRef | (string | LocalRemoteTrackingRef)[], auth? : Auth, options? : PushOptions) : Promise<RefResult[]>
 }
 
 export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRepo & IRawRepo>>(repo : T, fetch : Fetch) : Constructor<IPushRepo> & T {
   return class PushRepo extends repo implements IPushRepo {
-    async push(remote : string | RemoteUrl, ref : string | string[], auth? : Auth, options : PushOptions = {}) : Promise<RefHash[]> {
-      const pairs = await getRefs(ref, ref => super.getRef(ref));
+    async push(url : string, ref : string | LocalRemoteTrackingRef | (string | LocalRemoteTrackingRef)[], auth? : Auth, options : PushOptions = {}) : Promise<RefResult[]> {
+      const refs = await getRefs(ref, ref => super.getRef(ref));
 
-      const url = typeof remote === 'string' ? remote : remote.url;
+      const {remoteRefs} = await lsRemote(url, fetch);
+      const remoteMap = new Map<string, string>(remoteRefs.map<[string, string]>(r => [r.name, r.hash]));
 
-      const {remoteRefs, capabilities} = await lsRemote(url, fetch);
-
-      const pairsToUpdate = pairs.map(({ref, hash}) => ({
-        ref,
-        hash,
-        remoteHash: (remoteRefs.filter(r => r.name === ref)[0] || {hash:'00'}).hash
+      const refsToPush = refs.map(ref => ({
+        ...ref,
+        remoteHash: remoteMap.get(ref.remote)
       })).filter(p => p.hash !== p.remoteHash);
-      if(pairsToUpdate.length === 0) return [];
 
-      const localHashes = pairsToUpdate.map(l => l.hash);
+      if(refsToPush.length === 0) return [];
+
+      const localHashes = refsToPush.map(l => l.hash);
       const remoteHashes = remoteRefs.map(r => r.hash);
 
-      const objects = await getObjectsToPush(localHashes, remoteHashes, this, options.progress ? options.progress : () => {});
+      const objects = await getObjectsToPush(localHashes, remoteHashes, {
+        walkCommits: (...hash : string[]) => super.walkCommits(...hash),
+        walkTree: (hash : string) => super.walkTree(hash),
+        loadRaw: (hash : string) => super.loadRaw(hash),
+        progress: (message : string) => options.progress && options.progress(message)
+      });
 
-      await push(url, fetch, pairsToUpdate.map(makeCommand), objects, auth, options.progress);
+      await push(url, fetch, refsToPush.map(makeCommand), objects, auth, options.progress);
 
-      if(typeof remote !== 'string'){
-        const remotePrefix = `refs/remotes/${remote.remote}/`;
-        await Promise.all(pairsToUpdate.map(({ref, hash}) => super.setRef(ref.replace('refs/heads/', remotePrefix), hash)));
+      for(const ref of refsToPush){
+        if(ref.tracking){
+          await super.setRef(ref.tracking, ref.hash);
+        }
       }
 
-      return pairsToUpdate;
+      return refsToPush;
     }
   }
 }
 
-
-async function getRefs(ref : string | string[], getRef : (ref : string) => Promise<string | undefined>){
+async function getRefs(ref : string | LocalRemoteTrackingRef | (string | LocalRemoteTrackingRef)[], getRef : (ref : string) => Promise<string | undefined>){
   const refs = Array.isArray(ref) ? ref : [ref];
-  const pairs = await Promise.all(refs.map(async ref => ({
-    ref,
-    hash: await getRef(ref)
+  const pairs = await Promise.all(refs.map(toObject).map(async ref => ({
+    ...ref,
+    hash: await getRef(ref.local).then(h => h || '??')
   })));
-  const unknownRefs = pairs.filter(p => p.hash === undefined);
-  if(unknownRefs.length > 0) throw new Error(`Unknown refs ${unknownRefs.map(p => p.ref).join(', ')}`);
+  const unknownRefs = pairs.filter(p => p.hash === '??');
+  if(unknownRefs.length > 0) throw new Error(`Unknown refs ${unknownRefs.map(p => p.local).join(', ')}`);
 
-  return pairs as RefHash[];
+  return pairs;
 }
 
-function makeCommand({ref, hash, remoteHash} : {ref : string, hash : string, remoteHash : string}) : Command{
-  if(remoteHash === '00'){
+function toObject(ref : string | LocalRemoteTrackingRef){
+  if(typeof ref === 'string'){
+    return {
+      local: ref,
+      remote: ref,
+      tracking: undefined
+    }
+  }
+
+  return {
+    local: ref.local,
+    remote: ref.remote || ref.local,
+    tracking: ref.tracking
+  };
+}
+
+function makeCommand({remote, hash, remoteHash} : {remote : string, hash : string, remoteHash? : string}) : Command{
+  if(remoteHash === undefined){
     return {
       type: 'create',
-      ref,
+      ref: remote,
       hash
     };
   }
 
   return {
     type: 'update',
-    ref,
+    ref: remote,
     oldHash: remoteHash,
     newHash: hash
   };
