@@ -68,13 +68,13 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
 }
 
 export function withFeedback<TOut, TIn>(iterator : AsyncIterableIterator<TOut>, feedback : TIn) : AsyncIterableIterator<TOut> & { continue : TIn} {
-  const result = {
+  return {
     ...iterator,
     next() {
-      return iterator.next(result.continue);
+      const result = iterator.next(this.continue);
+      this.continue = feedback;
+      return result;
     },
     continue: feedback
   };
-
-  return result;
 }

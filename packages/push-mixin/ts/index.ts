@@ -4,6 +4,7 @@ import { IWalkersRepo, withFeedback } from '@es-git/walkers-mixin';
 import { lsRemote, push, Fetch, Command, Auth, Progress, Ref } from '@es-git/http-transport';
 import findCommonCommits from './findCommonCommits';
 import getObjectsToPush from './getObjectsToPush';
+import { RemoteLocalRef } from '../../http-transport/es/types';
 
 export { Fetch, Auth };
 
@@ -19,10 +20,10 @@ export interface LocalRemoteTrackingRef {
 
 export interface RefResult {
   readonly local : string
-  readonly remote? : string
+  readonly remote : string
   readonly tracking? : string
   readonly hash : string
-  readonly remoteHash? : string
+  readonly oldHash? : string
 }
 
 export interface IPushRepo {
@@ -39,8 +40,8 @@ export default function pushMixin<T extends Constructor<IObjectRepo & IWalkersRe
 
       const refsToPush = refs.map(ref => ({
         ...ref,
-        remoteHash: remoteMap.get(ref.remote)
-      })).filter(p => p.hash !== p.remoteHash);
+        oldHash: remoteMap.get(ref.remote)
+      })).filter(p => p.hash !== p.oldHash);
 
       if(refsToPush.length === 0) return [];
 
@@ -95,19 +96,19 @@ function toObject(ref : string | LocalRemoteTrackingRef){
   };
 }
 
-function makeCommand({remote, hash, remoteHash} : {remote : string, hash : string, remoteHash? : string}) : Command{
-  if(remoteHash === undefined){
+function makeCommand({local: ref, hash, oldHash} : RefResult) : Command{
+  if(oldHash === undefined){
     return {
       type: 'create',
-      ref: remote,
+      ref,
       hash
     };
   }
 
   return {
     type: 'update',
-    ref: remote,
-    oldHash: remoteHash,
+    ref,
+    oldHash,
     newHash: hash
   };
 }

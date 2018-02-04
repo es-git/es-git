@@ -37,13 +37,12 @@ import Terminal from '@es-git/terminal';
 
   const repo = new Repo();
   terminal.logLine(`Fetching from ${url}.git`);
-  const result = await repo.fetch(`/proxy/${url}.git`, {
-    refspec: 'refs/heads/master:refs/heads/master',
+  const result = await repo.fetch(`/proxy/${url}.git`, 'refs/heads/master:refs/heads/master', {
     progress: message => terminal.log(message)
   })
 
   for(const ref of result){
-    terminal.logLine(`* ${ref.name} -> ${ref.to}`);
+    terminal.logLine(`* ${ref.name} -> ${ref.hash}`);
   }
 
   terminal.logLine('');

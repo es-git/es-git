@@ -2,20 +2,19 @@ import { Type, Mode, Constructor, IRawRepo, Hash, isFile, encode, decode } from 
 import { fetch as gitFetch, lsRemote, Fetch, Ref, RefChange, Progress } from '@es-git/http-transport';
 
 export interface FetchOptions {
-  readonly refspec? : string | string[]
   readonly depth? : number,
   readonly unshallow? : boolean,
   readonly progress? : Progress
 }
 
 export interface IFetchRepo {
-  fetch(url : string, options? : FetchOptions) : Promise<RefChange[]>
+  fetch(url : string, refspec? : string | string[], options? : FetchOptions) : Promise<RefChange[]>
   lsRemote(url : string) : Promise<Ref[]>
 }
 
 export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fetch : Fetch) : Constructor<IFetchRepo> & T {
   return class FetchRepo extends repo implements IFetchRepo {
-    async fetch(url : string, options : FetchOptions = {}) : Promise<RefChange[]> {
+    async fetch(url : string, refspec? : string | string[], options : FetchOptions = {}) : Promise<RefChange[]> {
       const refNames = await super.listRefs();
       const localRefs = await Promise.all(refNames.map(async name => ({name, hash: await super.getRef(name) as string})));
       const shallows = toArray(await super.loadMetadata('shallow'));
@@ -23,7 +22,7 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
         url,
         fetch,
         localRefs,
-        refspec: options.refspec || 'refs/heads/*:refs/remotes/origin/*',
+        refspec: refspec || 'refs/heads/*:refs/remotes/origin/*',
         hasObject: hash => super.hasObject(hash),
         depth: options.depth,
         shallows
@@ -40,12 +39,13 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
         await super.saveMetadata('shallow', fromArray(shallows.concat(shallow).filter(hash => !unshallow.includes(hash))));
       }
 
-      for(const {name, to} of refs){
-        await super.setRef(name, to);
+      for(const {name, hash} of refs){
+        await super.setRef(name, hash);
       }
 
       return refs;
     }
+
     async lsRemote(url : string) : Promise<Ref[]> {
       const result = await lsRemote(url, fetch);
       return result.remoteRefs;
