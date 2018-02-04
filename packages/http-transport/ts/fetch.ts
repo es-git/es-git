@@ -33,8 +33,8 @@ export interface FetchResult {
 
 export interface RefChange {
   readonly name : string
-  readonly from : string | undefined
-  readonly to : string
+  readonly oldHash : string | undefined
+  readonly hash : string
 }
 
 export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : Progress) : Promise<FetchResult> {
@@ -53,7 +53,7 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
   if(wanted.length === 0){
     return {
       objects: async function*() : AsyncIterableIterator<RawObject> {}(),
-      refs: differingRefs.map(ref => ({name: ref.local, from: ref.localHash, to: ref.remoteHash})),
+      refs: differingRefs.map(ref => ({name: ref.local, oldHash: ref.localHash, hash: ref.remoteHash})),
       shallow: Promise.resolve<Hash[]>([]),
       unshallow: Promise.resolve<Hash[]>([])
     }
@@ -66,7 +66,7 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     const shallow = defer<string[]>();
     const unshallow = defer<string[]>();
     return {
-      refs: differingRefs.map(ref => ({name: ref.local, from: ref.localHash, to: ref.remoteHash})),
+      refs: differingRefs.map(ref => ({name: ref.local, oldHash: ref.localHash, hash: ref.remoteHash})),
       objects: unpack(createResult(response, shallow.resolve, unshallow.resolve, progress), progress),
       shallow: shallow.promise,
       unshallow: unshallow.promise

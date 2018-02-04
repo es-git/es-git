@@ -33,8 +33,8 @@ test('fetch refs', async t => {
   t.deepEqual(await result.unshallow, []);
   t.deepEqual(result.refs, [
     {
-      from: '04859931d7cbee5dff2f0b5b95b9e2693a5241d1',
-      to: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
+      oldHash: '04859931d7cbee5dff2f0b5b95b9e2693a5241d1',
+      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
       name: 'refs/remotes/origin/fetch-test'
     }
   ]);
@@ -59,8 +59,8 @@ test('fetch shallow refs', async t => {
   t.snapshot(await toArray(result.objects));
   t.deepEqual(result.refs, [
     {
-      from: undefined,
-      to: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
+      oldHash: undefined,
+      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
       name: 'refs/remotes/origin/fetch-test'
     }
   ]);

@@ -27,7 +27,7 @@ server.listen(80);
 //////////////////////////////////////
 //index.js
 import mix from '@es-git/mix';
-import Memory from '@es-git/__template__';
+import Memory from '@es-git/memory-repo';
 import objectMixin from '@es-git/object-mixin';
 import walkersMixin from '@es-git/walkers-mixin';
 import fetchMixin from '@es-git/fetch-mixin';

@@ -5,17 +5,19 @@ import walkers from '@es-git/walkers-mixin';
 import fetchMixin from '@es-git/fetch-mixin';
 import Terminal from '@es-git/terminal';
 
-(async function(){
+const formElm = document.querySelector<HTMLFormElement>('form') as HTMLFormElement;
+const inputElm = document.querySelector<HTMLInputElement>('#repo') as HTMLInputElement;
+const outputElm = document.querySelector<HTMLPreElement>('pre') as HTMLPreElement;
 
-  const url = new URL(document.location.href).searchParams.get('repo');
+formElm.addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const url = inputElm.value;
   const match = url && /^\https:\/\/(.*)$/.exec(url);
   if(!match){
-    document.location.search = '?repo=https://github.com/es-git/test-pull';
+    outputElm.innerText = 'not a valid url';
     return;
   }
-  const inputElm = document.querySelector<HTMLInputElement>('#repo') as HTMLInputElement;
-  const outputElm = document.querySelector<HTMLPreElement>('pre') as HTMLPreElement;
-  inputElm.value = 'https://'+match[1];
 
   const Repo = mix(MemoryRepo)
   .with(object)
@@ -27,15 +29,14 @@ import Terminal from '@es-git/terminal';
 
   const repo = new Repo();
   terminal.logLine(`Fetching from ${url}.git`);
-  const result = await repo.fetch(`/proxy/${match[1]}.git`, {
+  const result = await repo.fetch(`/proxy/${match[1]}.git`, 'refs/heads/*:refs/heads/*', {
     progress: message => terminal.log(message)
   })
 
   for(const ref of result){
-    terminal.logLine(`* ${ref.name} -> ${ref.to}`);
+    terminal.logLine(`* ${ref.name} -> ${ref.hash}`);
   }
 
   terminal.logLine('');
   terminal.logLine('Done!');
-
-})().then(_ => console.log('success!'), e => console.error(e));
+});

@@ -18,7 +18,7 @@ test('walk commits', async t => {
   for await(const result of repo.walkCommits('commit5')){
     if(!result) return t.fail();
     t.is(result.hash, `commit${commit}`);
-    t.is(result.commit.body.message, `commit${commit}`);
+    t.is(result.commit.message, `commit${commit}`);
     commit--;
   }
   t.is(load.callCount, 6);
@@ -35,7 +35,7 @@ test('walk merge commit', async t => {
   load.withArgs('commit0').resolves({type: Type.commit, body: makeCommit('commit0')});
   for await(const result of repo.walkCommits('commit5')){
     if(!result) return t.fail();
-    t.is(result.hash, result.commit.body.message);
+    t.is(result.hash, result.commit.message);
   }
   t.is(load.callCount, 6);
 });
