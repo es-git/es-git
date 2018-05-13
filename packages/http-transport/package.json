@@ -43,7 +43,7 @@
     "@es-git/packfile": "^0.6.0"
   },
   "devDependencies": {
-    "@types/node-fetch": "^1.6.7",
-    "node-fetch": "^1.7.1"
+    "@types/node-fetch": "^1.6.9",
+    "node-fetch": "^2.1.2"
   }
 }

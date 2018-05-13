@@ -40,7 +40,7 @@ export default function fetchMixin<T extends Constructor<IRawRepo>>(repo : T, fe
       }
 
       for(const {name, hash} of refs){
-        await super.setRef(name, hash);
+        if(name) await super.setRef(name, hash);
       }
 
       return refs;

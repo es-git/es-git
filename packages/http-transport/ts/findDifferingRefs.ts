@@ -4,8 +4,7 @@ export default async function findDifferingRefs(localRefs : Ref[], remoteRefs : 
   const localRefHashes = new Map(localRefs.map(r => [r.name, r.hash] as [string, string]));
 
   const different = remoteRefs.map(ref => ({
-    local: ref.local,
-    remote: ref.remote,
+    name: ref.local,
     remoteHash: ref.hash,
     localHash: localRefHashes.get(ref.local)
   })).filter(r => r.remoteHash !== r.localHash);

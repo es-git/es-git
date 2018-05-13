@@ -32,9 +32,16 @@ export interface FetchResult {
 }
 
 export interface RefChange {
-  readonly name : string
+  readonly name : string | undefined
   readonly oldHash : string | undefined
   readonly hash : string
+}
+
+interface RefDiff {
+  readonly name : string | undefined
+  readonly localHash : string | undefined
+  readonly remoteHash : string
+  readonly hasRemote : boolean
 }
 
 export default async function fetch({url, fetch, localRefs, refspec, hasObject, depth, shallows, unshallow} : FetchRequest, progress? : Progress) : Promise<FetchResult> {
@@ -44,16 +51,17 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     throw new Error('remote does not support shallow fetch');
   }
 
-  refspec = Array.isArray(refspec) ? refspec : [refspec];
-  const refs = remotesToLocals(remoteRefs, refspec);
-  const differingRefs = await findDifferingRefs(localRefs, refs, hasObject);
+  const differingRefs = await getRefsToFetch(refspec, remoteRefs, localRefs, hasObject);
 
-  const wanted = differingRefs.filter(ref => !ref.hasRemote).map(ref => ref.remoteHash).concat(unshallow && shallows || [] as string[]);
+  const wanted = differingRefs
+    .filter(ref => !ref.hasRemote)
+    .map(ref => ref.remoteHash)
+    .concat(unshallow && shallows || [] as string[]);
 
   if(wanted.length === 0){
     return {
       objects: async function*() : AsyncIterableIterator<RawObject> {}(),
-      refs: differingRefs.map(ref => ({name: ref.local, oldHash: ref.localHash, hash: ref.remoteHash})),
+      refs: differingRefs.map(ref => ({name: ref.name, oldHash: ref.localHash, hash: ref.remoteHash})),
       shallow: Promise.resolve<Hash[]>([]),
       unshallow: Promise.resolve<Hash[]>([])
     }
@@ -66,12 +74,29 @@ export default async function fetch({url, fetch, localRefs, refspec, hasObject, 
     const shallow = defer<string[]>();
     const unshallow = defer<string[]>();
     return {
-      refs: differingRefs.map(ref => ({name: ref.local, oldHash: ref.localHash, hash: ref.remoteHash})),
+      refs: differingRefs.map(ref => ({name: ref.name, oldHash: ref.localHash, hash: ref.remoteHash})),
       objects: unpack(createResult(response, shallow.resolve, unshallow.resolve, progress), progress),
       shallow: shallow.promise,
       unshallow: unshallow.promise
     };
   }
+}
+
+async function getRefsToFetch(refspec: string | string[], remoteRefs: Ref[], localRefs: Ref[], hasObject: (hash: string) => Promise<boolean>) : Promise<RefDiff[]> {
+  if(!Array.isArray(refspec) && /^[a-f0-9]{40}$/i.test(refspec)){
+    return [
+      {
+        hasRemote: await hasObject(refspec),
+        localHash: undefined,
+        remoteHash: refspec,
+        name: undefined
+      }
+    ];
+  }
+
+  refspec = Array.isArray(refspec) ? refspec : [refspec];
+  const refs = remotesToLocals(remoteRefs, refspec);
+  return await findDifferingRefs(localRefs, refs, hasObject);
 }
 
 async function* createResult(response : AsyncIterableIterator<Uint8Array>, resolveShallow : (v : string[]) => void, resolveUnshallow : (v : string[]) => void, progress?: Progress){

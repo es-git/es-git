@@ -13,9 +13,9 @@ test('nothing locally', async t => {
   const result = await findDifferingRefs([], remoteRefs, hasObject);
 
   t.deepEqual(result, [
-    {remote:'/refs/heads/a', local:'/refs/remotes/origin/a', remoteHash:'aaa', localHash:undefined, hasRemote: false},
-    {remote:'/refs/heads/b', local:'/refs/remotes/origin/b', remoteHash:'bbb', localHash:undefined, hasRemote: false},
-    {remote:'/refs/heads/c', local:'/refs/remotes/origin/c', remoteHash:'ccc', localHash:undefined, hasRemote: false}
+    {name:'/refs/remotes/origin/a', remoteHash:'aaa', localHash:undefined, hasRemote: false},
+    {name:'/refs/remotes/origin/b', remoteHash:'bbb', localHash:undefined, hasRemote: false},
+    {name:'/refs/remotes/origin/c', remoteHash:'ccc', localHash:undefined, hasRemote: false}
   ]);
   t.true(hasObject.calledThrice);
 });
@@ -53,9 +53,9 @@ test('local ahead of remote', async t => {
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
   t.deepEqual(result, [
-    {remote:'/refs/heads/a', local:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: true},
-    {remote:'/refs/heads/b', local:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: true},
-    {remote:'/refs/heads/c', local:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: true}
+    {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: true},
+    {name:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: true},
+    {name:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: true}
   ]);
   t.true(hasObject.calledThrice);
 });
@@ -75,9 +75,9 @@ test('remote ahead of local', async t => {
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
   t.deepEqual(result, [
-    {remote:'/refs/heads/a', local:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false},
-    {remote:'/refs/heads/b', local:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: false},
-    {remote:'/refs/heads/c', local:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: false}
+    {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false},
+    {name:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: false},
+    {name:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: false}
   ]);
   t.true(hasObject.calledThrice);
 });
@@ -95,7 +95,7 @@ test('more local than remote', async t => {
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
   t.deepEqual(result, [
-    {remote:'/refs/heads/a', local:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false}
+    {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false}
   ]);
   t.true(hasObject.calledOnce);
 });

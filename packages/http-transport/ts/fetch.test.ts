@@ -1,5 +1,5 @@
 import test from 'ava';
-import nodeFetch, { Request, Response } from 'node-fetch';
+import nodeFetch, { Request, Response, RequestInit } from 'node-fetch';
 import * as fs from 'fs';
 import { concat } from '@es-git/core';
 
@@ -100,6 +100,39 @@ test('fetch unshallow refs', async t => {
   t.deepEqual(await result.unshallow, [
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
   ]);
+});
+
+test('fetch sha1 refs', async t => {
+  const url = 'https://github.com/es-git/test-pull.git';
+  const localRefs = [
+    {
+      name: 'refs/remotes/origin/fetch-test',
+      hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
+    }
+  ];
+
+  const result = await fetch({
+    url,
+    //fetch: fetchify(nodeFetch, save([
+    fetch: fakeFetch(([
+      __dirname+'/../samples/fetch-sha1-refs.get',
+      __dirname+'/../samples/fetch-sha1-refs.post'
+    ])),
+    localRefs,
+    refspec: 'a8cf377bea61e300d3d7ab259340358187f103a9',
+    hasObject: () => Promise.resolve(false),
+    depth: 1
+  }, s => console.log(s));
+  t.snapshot(await toArray(result.objects));
+  t.deepEqual(result.refs, [{
+    name: undefined,
+    oldHash: undefined,
+    hash: 'a8cf377bea61e300d3d7ab259340358187f103a9'
+  }]);
+  t.deepEqual(await result.shallow, [
+    'a8cf377bea61e300d3d7ab259340358187f103a9'
+  ]);
+  t.deepEqual(await result.unshallow, []);
 });
 
 function fakeFetch(paths : string[]) : Fetch {
