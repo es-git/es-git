@@ -6,7 +6,7 @@
   "types": "es/index.d.ts",
   "module": "es/index.js",
   "browser": {
-    "text-encoding": "es/text-encoding.browser.js"
+    "text-encoding": "./es/text-encoding.browser.js"
   },
   "scripts": {
     "clean": "rm -rf ./es ./js",

@@ -12,6 +12,16 @@ export type Folder = {
   }
 }
 
+type PartialFolder = {
+  readonly hash : Hash
+  readonly files : {
+    [key : string] : File;
+  }
+  readonly folders : {
+    [key : string] : Folder;
+  }
+}
+
 export type File = {
   readonly hash : Hash
   readonly isExecutable : boolean,
@@ -34,7 +44,7 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
       const commit = await super.loadObject(hash);
       if(!commit) throw new Error(`Cannot find object ${hash}`);
       if(commit.type !== Type.commit) throw new Error(`${hash} is not a commit`);
-      const result : Folder = {files: {}, folders: {}, hash: commit.body.tree};
+      const result : PartialFolder = {files: {}, folders: {}, hash: commit.body.tree};
       for await(const {path, mode, hash} of super.walkTree(commit.body.tree)){
         if(isFile(mode)){
           const file = await super.loadObject(hash);
@@ -45,7 +55,7 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
           recursivelyMakeFolder(result, path, hash);
         }
       }
-      return result;
+      return result as Folder;
     }
 
     async checkout(ref : string) : Promise<Folder> {
@@ -56,10 +66,10 @@ export default function checkoutMixin<T extends Constructor<IWalkersRepo & IObje
   }
 }
 
-function recursivelyMakeFile(parent : Folder, path : string[], isExecutable : boolean, hash : Hash, body : Uint8Array){
+function recursivelyMakeFile(parent : PartialFolder, path : string[], isExecutable : boolean, hash : Hash, body : Uint8Array){
   const [name, ...subPath] = path;
   if(subPath.length === 0){
-    parent.files[name]! = {
+    parent.files[name] = {
       hash,
       isExecutable,
       body,
@@ -70,7 +80,7 @@ function recursivelyMakeFile(parent : Folder, path : string[], isExecutable : bo
   }
 }
 
-function recursivelyMakeFolder(parent : any, path : string[], hash : Hash){
+function recursivelyMakeFolder(parent : PartialFolder, path : string[], hash : Hash){
   const [name, ...subPath] = path;
   if(subPath.length === 0){
     parent.folders[name] = {
