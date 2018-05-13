@@ -5,6 +5,9 @@
   "main": "js/index.js",
   "types": "es/index.d.ts",
   "module": "es/index.js",
+  "browser": {
+    "text-encoding": "es/text-encoding.browser.js"
+  },
   "scripts": {
     "clean": "rm -rf ./es ./js",
     "tsc": "../../node_modules/.bin/tsc",
