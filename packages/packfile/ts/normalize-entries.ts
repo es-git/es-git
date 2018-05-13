@@ -1,7 +1,8 @@
 import {
   concat,
   encode,
-  Hash
+  Hash,
+  sha1
 } from '@es-git/core'
 
 import {
@@ -14,7 +15,6 @@ import {
   Progress
 } from './types';
 import applyDelta from './apply-delta';
-import sha1 from 'git-sha1';
 
 export default async function *normalizeEntries(entries : AsyncIterableIterator<Entry>, progress? : Progress) : AsyncIterableIterator<RawObject> {
   const references = new Map<string, NormalEntry>();

@@ -1,9 +1,10 @@
 import {
   packHash,
-  concat
+  concat,
+  sha1,
+  Sha1
 } from '@es-git/core';
 import * as pako from 'pako';
-import sha1, { Sha1 } from 'git-sha1';
 
 import {
   Type,
@@ -13,20 +14,15 @@ import {
 export default async function *composePackfile(items : AsyncIterableIterator<Entry>, count : number) {
   const hash = sha1();
 
-  yield update(packHeader(count), hash);
+  yield hash.update(packHeader(count));
 
   for await(const item of items){
     for(const chunk of packFrame(item)){
-      yield update(chunk, hash);
+      yield hash.update(chunk);
     }
   }
 
   yield packHash(hash.digest());
-}
-
-function update(chunk : Uint8Array, hash : Sha1){
-  hash.update(chunk);
-  return chunk;
 }
 
 function packHeader(length : number) {

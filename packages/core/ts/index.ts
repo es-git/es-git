@@ -69,3 +69,4 @@ export { default as mix, Constructor, ConstructorWith, Mixin, MixinWithParam } f
 
 export { default as Buffer } from './Buffer';
 export { default as AsyncBuffer } from './AsyncBuffer';
+export { default as sha1, Sha1 } from './sha1';

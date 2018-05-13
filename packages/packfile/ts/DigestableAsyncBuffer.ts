@@ -1,5 +1,4 @@
-import sha1, { Sha1 } from 'git-sha1';
-import { AsyncBuffer } from '@es-git/core';
+import { AsyncBuffer, sha1, Sha1 } from '@es-git/core';
 
 export default class DigestableAsyncBuffer extends AsyncBuffer{
   private sha : Sha1
@@ -21,8 +20,7 @@ export default class DigestableAsyncBuffer extends AsyncBuffer{
       return result;
     }else{
       const result = await super.next(length);
-      this.sha.update(result);
-      return result;
+      return this.sha.update(result);
     }
   }
 

@@ -1,6 +1,5 @@
 {
   "name": "@es-git/ascii-graph-walker",
-  "private": true,
   "version": "0.8.2",
   "description": "",
   "main": "js/index.js",
