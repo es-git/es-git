@@ -1,6 +1,6 @@
 {
   "name": "@es-git/push-mixin",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@es-git/core": "^0.5.0",
-    "@es-git/http-transport": "^0.7.0",
+    "@es-git/http-transport": "^0.8.0",
     "@es-git/object-mixin": "^0.0.1",
     "@es-git/packfile": "^0.6.0",
     "@es-git/walkers-mixin": "^0.7.0"
