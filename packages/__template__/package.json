@@ -1,7 +1,7 @@
 {
   "name": "@es-git/__template__",
   "private": true,
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -40,6 +40,6 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/core": "^0.8.1"
+    "@es-git/core": "^0.8.2"
   }
 }
