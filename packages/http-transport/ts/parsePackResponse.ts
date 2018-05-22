@@ -1,6 +1,5 @@
-import { concat } from '../../core/es';
 import { ClientCaps } from './types';
-import { AsyncBuffer, Buffer, decode, NEWLINE, fromHex } from '@es-git/core';
+import { AsyncBuffer, Buffer, decode, NEWLINE, fromHex, concat } from '@es-git/core';
 
 export interface Response {
   readonly acks : string[]

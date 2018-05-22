@@ -4,7 +4,6 @@ import { IWalkersRepo, withFeedback } from '@es-git/walkers-mixin';
 import { lsRemote, push, Fetch, Command, Auth, Progress, Ref } from '@es-git/http-transport';
 import findCommonCommits from './findCommonCommits';
 import getObjectsToPush from './getObjectsToPush';
-import { RemoteLocalRef } from '../../http-transport/es/types';
 
 export { Fetch, Auth };
 

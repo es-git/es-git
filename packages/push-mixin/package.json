@@ -46,6 +46,6 @@
     "@es-git/walkers-mixin": "^0.8.3"
   },
   "devDependencies": {
-    "@es-git/ascii-graph-walker": "^0.6.0"
+    "@es-git/ascii-graph-walker": "^0.8.0"
   }
 }
