@@ -1,6 +1,6 @@
 {
   "name": "@es-git/http-transport",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
