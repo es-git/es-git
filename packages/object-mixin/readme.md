@@ -1,11 +1,11 @@
-# objects-mixin
+# object-mixin
 
 This is part of the [ES-Git](https://github.com/es-git/es-git) project.
 
 ## Install
 
 ```bash
-npm install --save @es-git/objects-mixin
+npm install --save @es-git/object-mixin
 ```
 
 ## Usage
@@ -15,11 +15,11 @@ Mix this in with an [IRawRepo](https://www.npmjs.com/package/@es-git/core#IRawRe
 This mixin can encode objects as binary and calculate their hash before saving to an `IRawRepo`. Using the hash it can load the binary from the `IRawRepo` and then decode the object.
 
 ```js
-import objectsMixin from '@es-git/objects-mixin';
+import objectMixin from '@es-git/object-mixin';
 import MemoryRepo from '@es-git/memory-repo';
 
 const Repo = mix(MemoryRepo)
-            .with(objectsMixin);
+            .with(objectMixin);
 
 const repo = new Repo();
 const hash = await repo.saveObject(gitObject);
