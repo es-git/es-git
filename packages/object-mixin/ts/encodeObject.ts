@@ -13,7 +13,6 @@ import {
   TreeBody,
   TagBody,
   CommitBody,
-  ModeHash,
   Person,
   SecondsWithOffset
 } from './index';

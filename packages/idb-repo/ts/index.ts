@@ -1,6 +1,6 @@
 import idb, { DB } from 'idb';
 
-import { IRawRepo, Type, Hash } from '@es-git/core';
+import { IRawRepo, Hash } from '@es-git/core';
 
 export { DB };
 

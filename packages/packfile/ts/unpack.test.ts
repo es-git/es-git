@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import { promisify } from 'util';
 
 import unpack from './unpack';
-import { Type, OfsDeltaEntry, Entry } from './types';
 import pipe from './pipe';
 
 test('unpack sample1', async t => {

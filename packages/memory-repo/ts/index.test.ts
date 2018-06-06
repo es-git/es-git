@@ -1,6 +1,5 @@
 import test from 'ava';
 
-import { Type } from '@es-git/core'
 import MemoryRepo from './index';
 
 const repo = new MemoryRepo();

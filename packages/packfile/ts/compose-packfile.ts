@@ -1,9 +1,8 @@
 import {
   packHash,
-  concat,
-  sha1,
-  Sha1
+  sha1
 } from '@es-git/core';
+
 import * as pako from 'pako';
 
 import {

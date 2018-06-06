@@ -1,4 +1,3 @@
-import { concat } from '@es-git/core';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
 import asyncIteratorToBuffer from './utils/asyncIteratorToBuffer';
 

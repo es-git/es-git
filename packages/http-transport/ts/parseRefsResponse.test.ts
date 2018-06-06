@@ -1,5 +1,4 @@
 import test from 'ava';
-import * as sinon from 'sinon';
 import * as fs from 'fs';
 
 import parseRefsResponse from './parseRefsResponse';

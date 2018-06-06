@@ -1,4 +1,4 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile, encode, decode } from '@es-git/core';
+import { Constructor, IRawRepo, Hash, encode, decode } from '@es-git/core';
 import { fetch as gitFetch, lsRemote, Fetch, Ref, RefChange, Progress } from '@es-git/http-transport';
 
 export interface FetchOptions {

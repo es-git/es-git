@@ -1,5 +1,4 @@
-import { decode } from '@es-git/core';
-import { pack, RawObject, Progress, HashBlob } from '@es-git/packfile';
+import { pack, Progress, HashBlob } from '@es-git/packfile';
 
 import composePushRequest, { Command } from './composePushRequest';
 import post, { Fetch, Auth } from './post';

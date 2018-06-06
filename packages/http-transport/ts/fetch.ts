@@ -1,11 +1,11 @@
-import { Ref, HasObject, Hash } from './types';
+import { Ref, Hash } from './types';
 import lsRemote, { Fetch as LsRemoteFetch } from './lsRemote';
 import findDifferingRefs from './findDifferingRefs';
 import negotiatePack from './negotiatePack';
 import composeWantRequest from './composeWantRequest';
 import commonCapabilities from './commonCapabilities';
 import post, { Fetch as FetchPackFetch } from './post';
-import parsePackResponse, { Token } from './parsePackResponse';
+import parsePackResponse from './parsePackResponse';
 import { unpack, RawObject, Progress } from '@es-git/packfile';
 import remotesToLocals from './remotesToLocals';
 import defer from './utils/defer';
@@ -128,12 +128,3 @@ async function* createResult(response : AsyncIterableIterator<Uint8Array>, resol
   resolveUnshallow(unshallow);
 }
 
-async function* unpackWithProgress(chunks : AsyncIterableIterator<Uint8Array>, progress?: (message : string) => void){
-  let count = 0;
-  for await(const object of unpack(chunks)){
-    count++;
-    if(progress) progress(`Receiving objects: ?% (${count}/?)\r`);
-    yield object;
-  }
-  if(progress) progress(`Receiving objects: 100% (${count}/${count}), done.\n`);
-}

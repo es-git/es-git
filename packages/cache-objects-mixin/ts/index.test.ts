@@ -1,7 +1,7 @@
 import test from 'ava';
 import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
-import { IObjectRepo, GitObject } from '@es-git/object-mixin';
+import { GitObject } from '@es-git/object-mixin';
 
 import cacheObjectsMixin from './index';
 

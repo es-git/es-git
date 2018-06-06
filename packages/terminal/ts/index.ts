@@ -1,4 +1,4 @@
-export default class Terminal{
+export default class Terminal {
   private _content = '';
   private _newline = 0;
   private _cursor = 0;

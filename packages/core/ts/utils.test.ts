@@ -1,5 +1,5 @@
 import test, { TestContext } from 'ava';
-import { encode, decode, toHexChar } from './utils';
+import { toHexChar } from './utils';
 import { isFile, Mode } from './index';
 
 test('toHexChar 0', testToHexChar, 0, '0');

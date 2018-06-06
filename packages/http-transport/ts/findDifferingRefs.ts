@@ -1,4 +1,4 @@
-import { Ref, HasObject, Hash, RemoteLocalRef } from './types';
+import { Ref, HasObject, RemoteLocalRef } from './types';
 
 export default async function findDifferingRefs(localRefs : Ref[], remoteRefs : RemoteLocalRef[], hasObject : HasObject){
   const localRefHashes = new Map(localRefs.map(r => [r.name, r.hash] as [string, string]));

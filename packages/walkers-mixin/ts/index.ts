@@ -1,5 +1,5 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitObject, TreeObject, CommitBody } from '@es-git/object-mixin';
+import { Type, Mode, Constructor, Hash, isFile } from '@es-git/core';
+import { IObjectRepo, CommitBody } from '@es-git/object-mixin';
 
 export type HashAndCommitBody = {
   readonly hash : Hash

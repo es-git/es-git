@@ -1,7 +1,6 @@
 import {
   concat,
   encode,
-  Hash,
   sha1
 } from '@es-git/core'
 

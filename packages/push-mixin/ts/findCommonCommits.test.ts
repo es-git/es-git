@@ -1,7 +1,7 @@
 import test from 'ava';
 import { parse } from '@es-git/ascii-graph-walker';
 
-import findCommonCommits, { HashAndCommit } from './findCommonCommits';
+import findCommonCommits from './findCommonCommits';
 
 test('No Remote', async t => {
   const walk = parse`

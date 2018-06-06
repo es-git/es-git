@@ -1,4 +1,4 @@
-import { Type, Mode, Constructor, IRawRepo, Hash } from '@es-git/core';
+import { Constructor, IRawRepo, Hash } from '@es-git/core';
 import * as pako from 'pako';
 
 export default function zlibMixin<T extends Constructor<IRawRepo>>(repo : T) : T {

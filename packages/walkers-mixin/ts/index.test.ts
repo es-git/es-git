@@ -1,7 +1,7 @@
 import test from 'ava';
 import * as sinon from 'sinon';
 import { Type, Mode, Hash } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitBody, TreeBody } from '@es-git/object-mixin';
+import { GitObject, CommitBody, TreeBody } from '@es-git/object-mixin';
 
 import walkersMixin from './index';
 

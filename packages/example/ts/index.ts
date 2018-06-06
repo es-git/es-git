@@ -8,7 +8,7 @@ import checkout from '@es-git/checkout-mixin';
 import commit from '@es-git/commit-mixin';
 import pathToObject from '@es-git/path-to-object-mixin';
 import fetchMixin from '@es-git/fetch-mixin';
-import pushMixin, { Fetch } from '@es-git/push-mixin';
+import pushMixin from '@es-git/push-mixin';
 import nodeFetch, { Request, RequestInit, Response } from 'node-fetch';
 
 if (typeof btoa === 'undefined') {

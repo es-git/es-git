@@ -1,4 +1,4 @@
-import { Type, Mode, Constructor, IRawRepo, Hash } from '@es-git/core';
+import { Constructor, Hash } from '@es-git/core';
 import { IObjectRepo, GitObject } from '@es-git/object-mixin';
 
 export default function mixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IObjectRepo> & T {

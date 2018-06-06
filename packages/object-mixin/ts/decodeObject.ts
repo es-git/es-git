@@ -1,6 +1,5 @@
 import {
   Type,
-  Mode,
   decode,
   unpackHash,
   fromDec,
@@ -14,11 +13,8 @@ import {
   CommitObject,
   TagObject,
   TreeBody,
-  TagBody,
   CommitBody,
-  ModeHash,
-  Person,
-  SecondsWithOffset
+  Person
 } from './index';
 
 export default function decodeObject(buffer : Uint8Array) : GitObject {

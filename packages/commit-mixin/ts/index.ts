@@ -1,5 +1,5 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile, encode } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitObject, TreeObject, BlobObject, Person, ModeHash } from '@es-git/object-mixin';
+import { Type, Mode, Constructor, IRawRepo, Hash, encode } from '@es-git/core';
+import { IObjectRepo, Person, ModeHash } from '@es-git/object-mixin';
 
 export type Folder = {
   readonly files? : {

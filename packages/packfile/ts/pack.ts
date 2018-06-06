@@ -1,12 +1,10 @@
 import {
-  concat,
   decode
 } from '@es-git/core';
 
 import composePackfile from './compose-packfile';
 import {
   Type,
-  Entry,
   NormalEntry,
   RawObject
 } from './types';
@@ -73,6 +71,3 @@ async function* sortByType(entries : AsyncIterableIterator<NormalEntry>) {
   yield* others;
 }
 
-function byType(a : NormalEntry, b : NormalEntry) {
-  return a.type - b.type;
-}

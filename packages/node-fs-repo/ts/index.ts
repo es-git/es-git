@@ -1,7 +1,7 @@
 import { promisify } from 'util';
 import * as fsCallback from 'fs';
 import { join, dirname } from 'path';
-import { IRawRepo, Type, Hash } from '@es-git/core';
+import { IRawRepo, Hash } from '@es-git/core';
 
 const fs = {
   writeFile: promisify(fsCallback.writeFile),

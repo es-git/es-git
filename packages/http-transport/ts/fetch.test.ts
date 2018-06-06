@@ -1,10 +1,7 @@
 import test from 'ava';
-import nodeFetch, { Request, Response, RequestInit } from 'node-fetch';
 import * as fs from 'fs';
-import { concat } from '@es-git/core';
 
-import fetch, { Fetch, FetchRequest, RawObject } from './fetch';
-import streamToAsyncIterator from './utils/streamToAsyncIterator';
+import fetch, { Fetch } from './fetch';
 import { Ref } from './types';
 
 test('fetch refs', async t => {
@@ -142,7 +139,7 @@ function fakeFetch(paths : string[]) : Fetch {
     text: () => new Promise<string>(res => fs.readFile(paths[0], 'utf8', (err, val) => res(val))),
     body: fs.createReadStream(paths[1])
   };
-  return async (url : string, init? : RequestInit) => {
+  return async () => {
     return response;
   }
 }
@@ -155,20 +152,5 @@ async function toArray<T>(stream : AsyncIterableIterator<T>){
   return array;
 }
 
-function save(paths : string[]){
-  return async (r : NodeJS.ReadableStream) =>
-    new Promise<void>((res, rej) => r.pipe(fs.createWriteStream(paths.shift() as string)).on('finish', res).on('error', rej));
-}
 
-function fetchify(fetch : (url: string | Request, init?: RequestInit) => Promise<Response>, onResponse : (stream : NodeJS.ReadableStream) => Promise<void>){
-  return async (url: string | Request, init?: RequestInit) => {
-    if(init && init.body){
-      init.body = Buffer.from(init.body as any)
-    }
-    const response = await fetch(url, init);
-    console.log(url);
-    const res = await onResponse(response.clone().body);
-    console.log('done', res);
-    return response;
-  };
-}
+

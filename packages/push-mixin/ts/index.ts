@@ -1,8 +1,7 @@
-import { Type, Mode, Constructor, IRawRepo, Hash, isFile } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitObject, TreeObject } from '@es-git/object-mixin';
-import { IWalkersRepo, withFeedback } from '@es-git/walkers-mixin';
-import { lsRemote, push, Fetch, Command, Auth, Progress, Ref } from '@es-git/http-transport';
-import findCommonCommits from './findCommonCommits';
+import { Constructor, IRawRepo } from '@es-git/core';
+import { IObjectRepo } from '@es-git/object-mixin';
+import { IWalkersRepo } from '@es-git/walkers-mixin';
+import { lsRemote, push, Fetch, Command, Auth, Progress } from '@es-git/http-transport';
 import getObjectsToPush from './getObjectsToPush';
 
 export { Fetch, Auth };

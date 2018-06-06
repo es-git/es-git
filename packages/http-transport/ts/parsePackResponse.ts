@@ -1,5 +1,4 @@
-import { ClientCaps } from './types';
-import { AsyncBuffer, Buffer, decode, NEWLINE, fromHex, concat } from '@es-git/core';
+import { AsyncBuffer, decode, fromHex, concat } from '@es-git/core';
 
 export interface Response {
   readonly acks : string[]
@@ -68,7 +67,7 @@ const parseLine = switchParse<Token>({
     type: 'ack',
     hash: decode(await buffer.next(40))
   }),
-  'NAK ': async buffer => ({
+  'NAK ': async () => ({
     type: 'nak'
   }),
   'shallow ': async buffer => ({
