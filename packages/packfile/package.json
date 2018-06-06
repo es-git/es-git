@@ -1,6 +1,6 @@
 {
   "name": "@es-git/packfile",
-  "version": "0.8.3",
+  "version": "0.9.0",
   "description": "",
   "main": "js/index.js",
   "types": "es/index.d.ts",
@@ -39,7 +39,7 @@
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
-    "@es-git/core": "^0.8.3",
+    "@es-git/core": "^0.9.0",
     "pako": "^1.0.5"
   }
 }
