@@ -13,6 +13,7 @@
     "inlineSourceMap": false,
     "inlineSources": true,
     "declaration": true,
+    "declarationMap": true,
     "types": [
         "node"
     ],
