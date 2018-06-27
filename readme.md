@@ -4,7 +4,7 @@
 
 ## Example
 
-[**DEMOS**](https://es-git-examples.mariusgundersen.net/)
+[**DEMOS**](https://es-git-examples.mariusgundersen.net/) (source: [packages/example](packages/example))
 
 This basic example shows how to do low-level manipulation of an in-memory repository
 
