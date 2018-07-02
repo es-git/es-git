@@ -17,7 +17,7 @@ In addition to exporting an implementation of `IRawRepo` this package also expor
 ```ts
 import Repo, {init} from '@es-git/idb-repo';
 
-const db = init('my-repository');
+const db = await init('my-repository');
 
 const repo = new Repo(db);
 ```
