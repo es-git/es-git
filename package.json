@@ -2,7 +2,6 @@
   "private": true,
   "scripts": {
     "bootstrap": "lerna bootstrap --hoist",
-    "version": "lerna version",
     "lerna": "lerna",
     "test": "lerna run test --stream",
     "clean": "lerna run clean",
