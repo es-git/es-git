@@ -1,17 +1,6 @@
-import { promisify } from 'util';
-import * as fsCallback from 'fs';
-import { join, dirname } from 'path';
-import { IRawRepo, Hash } from '@es-git/core';
-
-const fs = {
-  writeFile: promisify(fsCallback.writeFile),
-  readFile: promisify(fsCallback.readFile),
-  exists: promisify(fsCallback.exists),
-  readDir: promisify(fsCallback.readdir),
-  unlink: promisify(fsCallback.unlink),
-  stat: promisify(fsCallback.stat),
-  mkdir: promisify(fsCallback.mkdir)
-}
+import { Hash, IRawRepo } from '@es-git/core';
+import { promises as fs } from 'fs';
+import { dirname, join } from 'path';
 
 export default class NodeFsRepo implements IRawRepo {
   readonly path: string
@@ -47,7 +36,7 @@ export default class NodeFsRepo implements IRawRepo {
       const absolutePath = join(this.path, path);
       const stat = await fs.stat(absolutePath);
       if(stat.isDirectory()){
-        const files : string[] = await fs.readDir(absolutePath);
+        const files : string[] = await fs.readdir(absolutePath);
         queue.push(...files.map(file => join(path, file)));
       }else{
         refs.push(path);

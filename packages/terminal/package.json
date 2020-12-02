@@ -22,6 +22,6 @@
   "author": "",
   "license": "MIT",
   "peerDependencies": {
-    "babel-runtime": "^6.22.0"
+    "@babel/runtime": "^7.12.5"
   }
 }

@@ -21,22 +21,8 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "ava": {
-    "files": [
-      "es/**/*.test.js"
-    ],
-    "source": [
-      "es/**/*.js"
-    ],
-    "require": [
-      "babel-register"
-    ],
-    "babel": {
-      "extends": "../../.babelrc"
-    }
-  },
   "peerDependencies": {
-    "babel-runtime": "^6.22.0"
+    "@babel/runtime": "^7.12.5"
   },
   "dependencies": {
     "@es-git/core": "^0.9.0",

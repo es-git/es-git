@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as sinon from 'sinon';
 import lsRemote from './lsRemote';
 
@@ -16,7 +16,7 @@ test('error response', async () => {
 test('lsRemote', async () => {
   const fetch = sinon.stub();
   fetch.resolves({
-    text: () => new Promise(res => fs.readFile(__dirname+'/../samples/lsremote.txt', 'utf8', (err, val) => res(val))),
+    text: () => fs.readFile(__dirname+'/../samples/lsremote.txt', 'utf8'),
     status: 200,
     statusText: 'OK'
   });

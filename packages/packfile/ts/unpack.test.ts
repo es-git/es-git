@@ -1,11 +1,9 @@
-import * as fs from 'fs';
-import { promisify } from 'util';
-
-import unpack from './unpack';
+import { promises as fs } from 'fs';
 import pipe from './pipe';
+import unpack from './unpack';
 
 test('unpack sample1', async () => {
-  const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample1.pack');
+  const pack = await fs.readFile(__dirname + '/../samples/sample1.pack');
   const entries = await pipe(stream(pack))
     .pipe(unpack)
     .then(collect);
@@ -15,7 +13,7 @@ test('unpack sample1', async () => {
 });
 
 test('unpack sample2', async () => {
-  const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample2.pack');
+  const pack = await fs.readFile(__dirname + '/../samples/sample2.pack');
   const entries = await pipe(stream(pack))
     .pipe(unpack)
     .then(collect);
