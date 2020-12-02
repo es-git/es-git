@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "bootstrap": "lerna bootstrap",
+    "bootstrap": "lerna bootstrap --hoist",
+    "link": "lerna link",
     "lerna": "lerna",
     "test": "lerna run test",
     "clean": "lerna run clean",
@@ -10,7 +11,7 @@
     "tsc": "lerna run tsc",
     "watch": "lerna run watch"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/node": "^8.10.18",
     "@types/pako": "^1.0.0",
     "@types/sinon": "^2.3.7",
@@ -21,7 +22,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-es2016": "^6.24.1",
     "babel-preset-es2017": "^6.24.1",
-    "lerna": "^2.11.0",
+    "lerna": "^3.22.0",
     "sinon": "^2.4.1",
     "typescript": "^2.9.1"
   }
