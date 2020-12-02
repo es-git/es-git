@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "clean": "rimraf ./es ./js",
-    "compile": "NODE_ENV=production webpack --progress --colors",
+    "compile":"",
+    "build": "NODE_ENV=production webpack --progress --colors",
     "watch": "webpack --watch",
     "dev": "npm run watch & npm start",
     "docker": "docker build -t mariusgundersen/es-git-examples .",
