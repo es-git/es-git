@@ -7,12 +7,12 @@
   "module": "es/index.js",
   "scripts": {
     "clean": "rm -rf ./es ./js",
-    "tsc": "../../node_modules/.bin/tsc",
-    "babel": "../../node_modules/.bin/babel --source-maps -d js es",
+    "tsc": "tsc",
+    "babel": "babel --source-maps -d js es",
     "compile": "npm run tsc && npm run babel",
-    "test": "../../node_modules/.bin/ava",
-    "watch+test": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/ava -w",
-    "watch": "../../node_modules/.bin/tsc -w & ../../node_modules/.bin/babel --source-maps -w -d js es",
+    "test": "ava",
+    "watch+test": "tsc -w & ava -w",
+    "watch": "tsc -w & babel --source-maps -w -d js es",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
   },
   "publishConfig": {
