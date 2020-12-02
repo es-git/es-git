@@ -1,9 +1,8 @@
-import test from 'ava';
 import * as fs from 'fs';
 
 import DigestableAsyncBuffer from './DigestableAsyncBuffer';
 
-test('digest async buffer', async t => {
+test('digest async buffer', async () => {
   const pack = fs.readFileSync(__dirname + '/../samples/sample2.pack');
   const buffer = new DigestableAsyncBuffer(gen(toUint8Array(pack)));
   const length = 277;
@@ -18,7 +17,7 @@ test('digest async buffer', async t => {
   await buffer.next();
   await buffer.next();
   await buffer.next(length - buffer.pos);
-  t.is(buffer.digest(), '39f21cd1d568778a963bbbe0040445c627ed52cd');
+  expect(buffer.digest()).toBe('39f21cd1d568778a963bbbe0040445c627ed52cd');
 });
 
 async function* gen<T>(item : T) : AsyncIterableIterator<T> {

@@ -1,31 +1,29 @@
-import test from 'ava';
-
 import AsyncBuffer from './AsyncBuffer';
 
-test('next()', async t => {
+test('next()', async () => {
   const buffer = new AsyncBuffer(generate());
-  t.is(await buffer.next(), 1);
-  t.is(await buffer.next(), 2);
-  t.is(await buffer.next(), 3);
-  t.is(await buffer.next(), 4);
-  t.is(await buffer.next(), 5);
+  expect(await buffer.next()).toBe(1);
+  expect(await buffer.next()).toBe(2);
+  expect(await buffer.next()).toBe(3);
+  expect(await buffer.next()).toBe(4);
+  expect(await buffer.next()).toBe(5);
 });
 
-test('next(1)', async t => {
+test('next(1)', async () => {
   const buffer = new AsyncBuffer(generate());
-  t.is((await buffer.next(1))[0], 1);
-  t.is((await buffer.next(1))[0], 2);
-  t.is((await buffer.next(1))[0], 3);
-  t.is((await buffer.next(1))[0], 4);
-  t.is((await buffer.next(1))[0], 5);
+  expect((await buffer.next(1))[0]).toBe(1);
+  expect((await buffer.next(1))[0]).toBe(2);
+  expect((await buffer.next(1))[0]).toBe(3);
+  expect((await buffer.next(1))[0]).toBe(4);
+  expect((await buffer.next(1))[0]).toBe(5);
 });
 
-test('next(12)', async t => {
+test('next(12)', async () => {
   const buffer = new AsyncBuffer(generate());
   const result1 = await buffer.next(12);
   const result2 = await buffer.next(12);
-  t.is(result1.join(','), '1,2,3,4,5,1,2,3,4,5,1,2');
-  t.is(buffer.pos, 24);
+  expect(result1.join(',')).toBe('1,2,3,4,5,1,2,3,4,5,1,2');
+  expect(buffer.pos).toBe(24);
   await buffer.next(6);
 });
 

@@ -1,27 +1,25 @@
-import test from 'ava';
-
 import walk, { toRows, followPath, findStarts, parse } from './index';
 
-test('start walking', t => {
+test('start walking', () => {
   const walker = walk`
     a---(b)
   `;
 
-  t.is(walker.next().value, 'b');
+  expect(walker.next().value).toBe('b');
 });
 
-test('start walking two entries', t => {
+test('start walking two entries', () => {
   const walker = walk`
       --(c)
      /     \
     a-------(b)
   `;;
 
-  t.is(walker.next().value, 'c');
-  t.is(walker.next().value, 'b');
+  expect(walker.next().value).toBe('c');
+  expect(walker.next().value).toBe('b');
 });
 
-test('followPath only o', t => {
+test('followPath only o', () => {
   const diagram = toRows`
   o-
     \
@@ -31,13 +29,13 @@ test('followPath only o', t => {
   `;
 
   const walk = followPath(diagram, 3, 9, '-');
-  t.deepEqual(walk.next().value, {row: 1, col: 2, hash: 'o'});
-  t.deepEqual(walk.next().value, {row: 3, col: 2, hash: 'o'});
-  t.deepEqual(walk.next().value, {row: 5, col: 5, hash: 'o'});
-  t.true(walk.next().done);
+  expect(walk.next().value).toEqual({row: 1, col: 2, hash: 'o'});
+  expect(walk.next().value).toEqual({row: 3, col: 2, hash: 'o'});
+  expect(walk.next().value).toEqual({row: 5, col: 5, hash: 'o'});
+  expect(walk.next().done).toBe(true);
 });
 
-test('followPath hex', t => {
+test('followPath hex', () => {
   const diagram = toRows`
   aaa-
       \
@@ -47,13 +45,13 @@ test('followPath hex', t => {
   `;
 
   const walk = followPath(diagram, 3, 9, '-');
-  t.deepEqual(walk.next().value, {row: 1, col: 2, hash: 'aaa'});
-  t.deepEqual(walk.next().value, {row: 3, col: 2, hash: 'F1C'});
-  t.deepEqual(walk.next().value, {row: 5, col: 5, hash: 'D'});
-  t.true(walk.next().done);
+  expect(walk.next().value).toEqual({row: 1, col: 2, hash: 'aaa'});
+  expect(walk.next().value).toEqual({row: 3, col: 2, hash: 'F1C'});
+  expect(walk.next().value).toEqual({row: 5, col: 5, hash: 'D'});
+  expect(walk.next().done).toBe(true);
 });
 
-test('followPath merge', t => {
+test('followPath merge', () => {
   const diagram = toRows`
        --
       /  \
@@ -61,12 +59,12 @@ test('followPath merge', t => {
   `;
 
   const walk = followPath(diagram, 3, 11, '-');
-  t.deepEqual(walk.next().value, {row: 3, col: 2, hash: 'F1C'});
-  t.deepEqual(walk.next().value, {row: 3, col: 2, hash: 'F1C'});
-  t.true(walk.next().done);
+  expect(walk.next().value).toEqual({row: 3, col: 2, hash: 'F1C'});
+  expect(walk.next().value).toEqual({row: 3, col: 2, hash: 'F1C'});
+  expect(walk.next().done).toBe(true);
 });
 
-test('followPath converge', t => {
+test('followPath converge', () => {
   const diagram = toRows`
        --o
       /
@@ -74,121 +72,121 @@ test('followPath converge', t => {
   `;
 
   const walk = followPath(diagram, 3, 9, '-');
-  t.deepEqual(walk.next().value, {row: 3, col: 2, hash: 'F1C'});
-  t.true(walk.next().done);
+  expect(walk.next().value).toEqual({row: 3, col: 2, hash: 'F1C'});
+  expect(walk.next().done).toBe(true);
 });
 
-test('walk two commits', t => {
+test('walk two commits', () => {
   const walker = walk`
     a---(b)
   `;
 
-  t.is(walker.next().value, 'b');
-  t.is(walker.next().value, 'a');
-  t.true(walker.next().done);
+  expect(walker.next().value).toBe('b');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().done).toBe(true);
 });
 
-test('walk three commits', t => {
+test('walk three commits', () => {
   const walker = walk`
     a--o--(b)
   `;
 
-  t.is(walker.next().value, 'b');
-  t.is(walker.next().value, '1a7');
-  t.is(walker.next().value, 'a');
-  t.true(walker.next().done);
+  expect(walker.next().value).toBe('b');
+  expect(walker.next().value).toBe('1a7');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().done).toBe(true);
 });
 
-test('find start', t => {
+test('find start', () => {
   const result = findStarts(toRows`
   a--o--(beef)
   `);
 
-  t.deepEqual(result.next().value, {row: 1, col: 9, hash: 'beef'});
-  t.true(result.next().done);
+  expect(result.next().value).toEqual({row: 1, col: 9, hash: 'beef'});
+  expect(result.next().done).toBe(true);
 });
 
-test('find start []', t => {
+test('find start []', () => {
   const result = findStarts(toRows`
   a--o--[beef]
   `, '[*]');
 
-  t.deepEqual(result.next().value, {row: 1, col: 9, hash: 'beef'});
-  t.true(result.next().done);
+  expect(result.next().value).toEqual({row: 1, col: 9, hash: 'beef'});
+  expect(result.next().done).toBe(true);
 });
 
-test('find start [beef]', t => {
+test('find start [beef]', () => {
   const result = findStarts(toRows`
   [a]--o--[beef]--[b]
   `, '[beef]');
 
-  t.deepEqual(result.next().value, {row: 1, col: 11, hash: 'beef'});
-  t.true(result.next().done);
+  expect(result.next().value).toEqual({row: 1, col: 11, hash: 'beef'});
+  expect(result.next().done).toBe(true);
 });
 
-test('find start [] twice on same row', t => {
+test('find start [] twice on same row', () => {
   const result = findStarts(toRows`
   a--o--[beef]--[dead]
   `, '[*]');
 
-  t.deepEqual(result.next().value, {row: 1, col: 9, hash: 'beef'});
-  t.deepEqual(result.next().value, {row: 1, col: 17, hash: 'dead'});
-  t.true(result.next().done);
+  expect(result.next().value).toEqual({row: 1, col: 9, hash: 'beef'});
+  expect(result.next().value).toEqual({row: 1, col: 17, hash: 'dead'});
+  expect(result.next().done).toBe(true);
 });
 
-test('walkSync', t => {
+test('walkSync', () => {
   const walker = walk`
     a--o--(b)
   `;
 
-  t.is(walker.next().value, 'b');
-  t.is(walker.next().value, '1a7');
-  t.is(walker.next().value, 'a');
-  t.true(walker.next().done);
+  expect(walker.next().value).toBe('b');
+  expect(walker.next().value).toBe('1a7');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().done).toBe(true);
 });
 
-test('walk [] and ()', async t => {
+test('walk [] and ()', async () => {
   const walk = parse`a--o--[b]--(c)`;
   const walkerA = walk('[*]');
   const walkerB = walk('(*)');
 
-  t.deepEqual((await walkerA.next()).value, {hash: 'b', commit: {parents: ['0a3']}});
-  t.deepEqual((await walkerA.next()).value, {hash: '0a3', commit: {parents: ['a']}});
-  t.deepEqual((await walkerA.next()).value, {hash: 'a', commit: {parents: []}});
-  t.true((await walkerA.next()).done);
+  expect((await walkerA.next()).value).toEqual({hash: 'b', commit: {parents: ['0a3']}});
+  expect((await walkerA.next()).value).toEqual({hash: '0a3', commit: {parents: ['a']}});
+  expect((await walkerA.next()).value).toEqual({hash: 'a', commit: {parents: []}});
+  expect((await walkerA.next()).done).toBe(true);
 
-  t.deepEqual((await walkerB.next()).value, {hash: 'c', commit: {parents: ['b']}});
-  t.deepEqual((await walkerB.next()).value, {hash: 'b', commit: {parents: ['0a3']}});
-  t.deepEqual((await walkerB.next()).value, {hash: '0a3', commit: {parents: ['a']}});
-  t.deepEqual((await walkerB.next()).value, {hash: 'a', commit: {parents: []}});
-  t.true((await walkerB.next()).done);
+  expect((await walkerB.next()).value).toEqual({hash: 'c', commit: {parents: ['b']}});
+  expect((await walkerB.next()).value).toEqual({hash: 'b', commit: {parents: ['0a3']}});
+  expect((await walkerB.next()).value).toEqual({hash: '0a3', commit: {parents: ['a']}});
+  expect((await walkerB.next()).value).toEqual({hash: 'a', commit: {parents: []}});
+  expect((await walkerB.next()).done).toBe(true);
 });
 
-test('walk merge', t => {
+test('walk merge', () => {
   const walker = walk`
     a--o--(b)
      \   /
       -o-
   `;
 
-  t.is(walker.next().value, 'b');
-  t.is(walker.next().value, '1a7');
-  t.is(walker.next().value, '3a7');
-  t.is(walker.next().value, 'a');
-  t.is(walker.next().value, 'a');
-  t.true(walker.next().done);
+  expect(walker.next().value).toBe('b');
+  expect(walker.next().value).toBe('1a7');
+  expect(walker.next().value).toBe('3a7');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().done).toBe(true);
 });
 
-test('walk cancel', t => {
+test('walk cancel', () => {
   const walker = walk`
     a--o--(b)
 
     c--o--(d)
   `;
 
-  t.is(walker.next().value, 'b');
-  t.is(walker.next().value, 'd');
-  t.is(walker.next(false).value, '1a7');
-  t.is(walker.next().value, 'a');
-  t.true(walker.next().done);
+  expect(walker.next().value).toBe('b');
+  expect(walker.next().value).toBe('d');
+  expect(walker.next(false).value).toBe('1a7');
+  expect(walker.next().value).toBe('a');
+  expect(walker.next().done).toBe(true);
 });

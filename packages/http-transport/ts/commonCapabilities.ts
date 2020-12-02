@@ -1,6 +1,6 @@
 // https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt
 
-import { ServerCaps, ClientCaps, EditableClientCaps } from './types';
+import { ClientCaps, EditableClientCaps, ServerCaps } from './types';
 
 export default function commonCapabilities(server : ServerCaps) : ClientCaps {
   const client : Partial<EditableClientCaps> = {};
@@ -45,7 +45,7 @@ export default function commonCapabilities(server : ServerCaps) : ClientCaps {
 
   return client as ClientCaps;
 
-  function set(feature : keyof ClientCaps, value : string | boolean = true){
+  function set<Key extends keyof ClientCaps>(feature : Key, value : ClientCaps[Key] = (true as (ClientCaps[Key] extends boolean ? ClientCaps[Key] : never))){
     if(server.has(feature)){
       client[feature] = value;
       return true;

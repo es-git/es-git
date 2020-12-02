@@ -1,21 +1,16 @@
 import * as http from 'http';
 import * as https from 'https';
 
-import { URL } from 'url';
 
-export default async function proxy(req : http.ServerRequest, res : http.ServerResponse) {
-  if(!req.url) throw new Error('no url!');
-
-  const url = new URL(`https://${req.url.substr(1)}`);
-
+export default async function proxy(req : http.ClientRequest, res : http.ServerResponse) {
   const request : https.RequestOptions = {
     method: req.method,
-    protocol: url.protocol,
-    host: url.host,
-    path: url.pathname+url.search,
+    protocol: 'https',
+    host: req.host,
+    path: req.path,
     headers: {
-      ...req.headers,
-      host: url.host
+      ...req.getHeaders(),
+      host: req.host
     }
   };
 

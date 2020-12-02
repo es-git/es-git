@@ -1,10 +1,11 @@
-import test from 'ava';
 import * as fs from 'fs';
-
 import fetch, { Fetch } from './fetch';
 import { Ref } from './types';
 
-test('fetch refs', async t => {
+
+const log = () => {};//console.log;
+
+test('fetch refs', async () => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
     {
@@ -23,12 +24,12 @@ test('fetch refs', async t => {
     localRefs,
     refspec: 'refs/heads/fetch-test:refs/remotes/origin/fetch-test',
     hasObject: () => Promise.resolve(false)
-  }, s => console.log(s));
+  }, log);
 
-  t.snapshot(await toArray(result.objects));
-  t.deepEqual(await result.shallow, []);
-  t.deepEqual(await result.unshallow, []);
-  t.deepEqual(result.refs, [
+  expect(await toArray(result.objects)).toMatchSnapshot();
+  expect(await result.shallow).toEqual([]);
+  expect(await result.unshallow).toEqual([]);
+  expect(result.refs).toEqual([
     {
       oldHash: '04859931d7cbee5dff2f0b5b95b9e2693a5241d1',
       hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
@@ -37,7 +38,7 @@ test('fetch refs', async t => {
   ]);
 });
 
-test('fetch shallow refs', async t => {
+test('fetch shallow refs', async () => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs : Ref[] = [];
 
@@ -52,22 +53,22 @@ test('fetch shallow refs', async t => {
     refspec: 'refs/heads/fetch-test:refs/remotes/origin/fetch-test',
     hasObject: () => Promise.resolve(false),
     depth: 1
-  }, s => console.log(s));
-  t.snapshot(await toArray(result.objects));
-  t.deepEqual(result.refs, [
+  }, log);
+  expect(await toArray(result.objects)).toMatchSnapshot();
+  expect(result.refs).toEqual([
     {
       oldHash: undefined,
       hash: '3fb4a14c56fbe289d336b3a1cae44518fe736f50',
       name: 'refs/remotes/origin/fetch-test'
     }
   ]);
-  t.deepEqual(await result.shallow, [
+  expect(await result.shallow).toEqual([
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
   ]);
-  t.deepEqual(await result.unshallow, []);
+  expect(await result.unshallow).toEqual([]);
 });
 
-test('fetch unshallow refs', async t => {
+test('fetch unshallow refs', async () => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
     {
@@ -90,16 +91,16 @@ test('fetch unshallow refs', async t => {
     shallows: [
       '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
     ]
-  }, s => console.log(s));
-  t.snapshot(await toArray(result.objects));
-  t.deepEqual(result.refs, []);
-  t.deepEqual(await result.shallow, []);
-  t.deepEqual(await result.unshallow, [
+  }, log);
+  expect(await toArray(result.objects)).toMatchSnapshot();
+  expect(result.refs).toEqual([]);
+  expect(await result.shallow).toEqual([]);
+  expect(await result.unshallow).toEqual([
     '3fb4a14c56fbe289d336b3a1cae44518fe736f50'
   ]);
 });
 
-test('fetch sha1 refs', async t => {
+test('fetch sha1 refs', async () => {
   const url = 'https://github.com/es-git/test-pull.git';
   const localRefs = [
     {
@@ -119,17 +120,17 @@ test('fetch sha1 refs', async t => {
     refspec: 'a8cf377bea61e300d3d7ab259340358187f103a9',
     hasObject: () => Promise.resolve(false),
     depth: 1
-  }, s => console.log(s));
-  t.snapshot(await toArray(result.objects));
-  t.deepEqual(result.refs, [{
+  }, log);
+  expect(await toArray(result.objects)).toMatchSnapshot();
+  expect(result.refs).toEqual([{
     name: undefined,
     oldHash: undefined,
     hash: 'a8cf377bea61e300d3d7ab259340358187f103a9'
   }]);
-  t.deepEqual(await result.shallow, [
+  expect(await result.shallow).toEqual([
     'a8cf377bea61e300d3d7ab259340358187f103a9'
   ]);
-  t.deepEqual(await result.unshallow, []);
+  expect(await result.unshallow).toEqual([]);
 });
 
 function fakeFetch(paths : string[]) : Fetch {

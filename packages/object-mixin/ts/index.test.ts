@@ -1,30 +1,27 @@
-import test from 'ava';
-import { IRawRepo, Type, Mode } from '@es-git/core';
-
+import { IRawRepo, Mode, Type } from '@es-git/core';
 import objectMixin, {
   GitObject
 } from './index';
 
-test('save and load blob', async t => {
+
+test('save and load blob', async () => {
   const objectRepo = new ObjectRepo();
   const hash = await objectRepo.saveObject({
     type: Type.blob,
     body: new Uint8Array(0)
   });
-  t.is(hash, 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391');
+  expect(hash).toBe('e69de29bb2d1d6434b8b29ae775ad8c2e48c5391');
   const object = await objectRepo.loadObject(hash);
   if(object == null){
-    t.fail('object is null');
-    return;
+    fail('object is null');
   }
   if(object.type != Type.blob){
-    t.fail('type is ' + object.type);
-    return;
+    fail('type is ' + object.type);
   }
-  t.is(object.body.length, 0);
+  expect(object.body.length).toBe(0);
 });
 
-test('save and load tree', async t => {
+test('save and load tree', async () => {
   const objectRepo = new ObjectRepo();
   const object : GitObject = {
     type: Type.tree,
@@ -36,20 +33,18 @@ test('save and load tree', async t => {
     }
   };
   const hash = await objectRepo.saveObject(object);
-  t.is(hash, 'df2b8fc99e1c1d4dbc0a854d9f72157f1d6ea078');
+  expect(hash).toBe('df2b8fc99e1c1d4dbc0a854d9f72157f1d6ea078');
   const result = await objectRepo.loadObject(hash);
   if(result == null){
-    t.fail('object is null');
-    return;
+    fail('object is null');
   }
   if(result.type != Type.tree){
-    t.fail('type is ' + result.type);
-    return;
+    fail('type is ' + result.type);
   }
-  t.deepEqual(result, object);
+  expect(result).toEqual(object);
 });
 
-test('save and load commit', async t => {
+test('save and load commit', async () => {
   const objectRepo = new ObjectRepo();
   const object : GitObject = {
     type: Type.commit,
@@ -76,20 +71,18 @@ test('save and load commit', async t => {
     }
   };
   const hash = await objectRepo.saveObject(object);
-  t.is(hash, '1a2ee41d9600863b43e7be9f9b69ccdd0436f3bd');
+  expect(hash).toBe('1a2ee41d9600863b43e7be9f9b69ccdd0436f3bd');
   const result = await objectRepo.loadObject(hash);
   if(result == null){
-    t.fail('object is null');
-    return;
+    fail('object is null');
   }
   if(result.type != Type.commit){
-    t.fail('type is ' + result.type);
-    return;
+    fail('type is ' + result.type);
   }
-  t.deepEqual(result, object);
+  expect(result).toEqual(object);
 });
 
-test('save and load tag', async t => {
+test('save and load tag', async () => {
   const objectRepo = new ObjectRepo();
   const object : GitObject = {
     type: Type.tag,
@@ -109,17 +102,15 @@ test('save and load tag', async t => {
     }
   };
   const hash = await objectRepo.saveObject(object);
-  t.is(hash, '68de69ef5c1be77fbf31a39d251d277295174897');
+  expect(hash).toBe('68de69ef5c1be77fbf31a39d251d277295174897');
   const result = await objectRepo.loadObject(hash);
   if(result == null){
-    t.fail('object is null');
-    return;
+    fail('object is null');
   }
   if(result.type != Type.tag){
-    t.fail('type is ' + result.type);
-    return;
+    fail('type is ' + result.type);
   }
-  t.deepEqual(result, object);
+  expect(result).toEqual(object);
 });
 
 const ObjectRepo = objectMixin(class Repo implements IRawRepo {

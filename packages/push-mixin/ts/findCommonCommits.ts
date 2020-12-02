@@ -9,7 +9,7 @@ export interface HashAndCommit<T extends CommitWithParents> {
   readonly commit : T
 }
 
-export default async function findCommonCommits<T extends CommitWithParents>(localWalk : AsyncIterableIterator<HashAndCommit<T>>, remoteWalk : AsyncIterableIterator<HashAndCommit<T>>){
+export default async function findCommonCommits<T extends CommitWithParents>(localWalk : AsyncGenerator<HashAndCommit<T>>, remoteWalk : AsyncGenerator<HashAndCommit<T>>){
   const localCommits = new Map<string, HashAndCommit<T>>();
   const commonCommits = new Map<string, HashAndCommit<T>>();
   const remoteCommits = new Set<string>();

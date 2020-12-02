@@ -1,61 +1,60 @@
-import test from 'ava';
 import { parse } from '@es-git/ascii-graph-walker';
-
 import findCommonCommits from './findCommonCommits';
 
-test('No Remote', async t => {
+
+test('No Remote', async () => {
   const walk = parse`
     a--b--(c)
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), []);
-  t.is(local.count, 3);
-  t.is(remote.count, 0);
+  expect(result.map(c => c.hash)).toEqual([]);
+  expect(local.count).toBe(3);
+  expect(remote.count).toBe(0);
 });
 
-test('No Local', async t => {
+test('No Local', async () => {
   const walk = parse`
     a--b--[c]
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), []);
-  t.is(local.count, 0);
-  t.is(remote.count, 0);
+  expect(result.map(c => c.hash)).toEqual([]);
+  expect(local.count).toBe(0);
+  expect(remote.count).toBe(0);
 });
 
-test('Remote = Local', async t => {
+test('Remote = Local', async () => {
   const walk = parse`
     a--b--(c)
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('(*)'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'c'
   ]);
-  t.is(local.count, 1);
-  t.is(remote.count, 1);
+  expect(local.count).toBe(1);
+  expect(remote.count).toBe(1);
 });
 
-test('Local ahead of Remote', async t => {
+test('Local ahead of Remote', async () => {
   const walk = parse`
     o--o--o--o--o--[a]--o--o--(b)
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a'
   ]);
-  t.is(local.count, 4);
-  t.is(remote.count, 4);
+  expect(local.count).toBe(4);
+  expect(remote.count).toBe(4);
 });
 
-test('Local ahead of Remote1, Remote2 unrelated', async t => {
+test('Local ahead of Remote1, Remote2 unrelated', async () => {
   const walk = parse`
     o--o--o--o--o--[a]--o--o--(b)
 
@@ -64,42 +63,42 @@ test('Local ahead of Remote1, Remote2 unrelated', async t => {
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a'
   ]);
-  t.is(local.count, 4);
-  t.is(remote.count, 4);
+  expect(local.count).toBe(4);
+  expect(remote.count).toBe(4);
 });
 
-test('Remote ahead of Local', async t => {
+test('Remote ahead of Local', async () => {
   const walk = parse`
     o--o--o--o--o--(a)--o--o--[b]
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a',
   ]);
-  t.is(local.count, 4);
-  t.is(remote.count, 4);
+  expect(local.count).toBe(4);
+  expect(remote.count).toBe(4);
 });
 
-test('Remote ahead of Local short history', async t => {
+test('Remote ahead of Local short history', async () => {
   const walk = parse`
     o--o--(a)--o--o--[b]
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a',
   ]);
-  t.is(local.count, 3);
-  t.is(remote.count, 4);
+  expect(local.count).toBe(3);
+  expect(remote.count).toBe(4);
 });
 
-test('Local longer than remote', async t => {
+test('Local longer than remote', async () => {
   const walk = parse`
     o--o--o--o--o--a--o--o--[b]
                     \
@@ -108,14 +107,14 @@ test('Local longer than remote', async t => {
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a'
   ]);
-  t.is(local.count, 6);
-  t.is(remote.count, 6);
+  expect(local.count).toBe(6);
+  expect(remote.count).toBe(6);
 });
 
-test('Remote longer than local', async t => {
+test('Remote longer than local', async () => {
   const walk = parse`
     o--o--o--o--o--a--o--o--o--o--[b]
                     \
@@ -124,14 +123,14 @@ test('Remote longer than local', async t => {
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a'
   ]);
-  t.is(local.count, 6);
-  t.is(remote.count, 6);
+  expect(local.count).toBe(6);
+  expect(remote.count).toBe(6);
 });
 
-test('Remote closest to merge', async t => {
+test('Remote closest to merge', async () => {
   const walk = parse`
                      5--4--2
                     /       \
@@ -140,13 +139,13 @@ test('Remote closest to merge', async t => {
   const local = walk('(*)');
   const remote = walk('[*]');
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a',
     'b'
   ]);
 });
 
-test('Local closest to merge', async t => {
+test('Local closest to merge', async () => {
   const walk = parse`
                      ------2---
                     /          \
@@ -155,25 +154,25 @@ test('Local closest to merge', async t => {
   const local = walk('(*)');
   const remote = walk('[*]');
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'a',
     'b',
   ]);
 });
 
-test('2 locals should not walk the same path twice', async t => {
+test('2 locals should not walk the same path twice', async () => {
   const walk = parse`
     o--o--o--o--(b)--(c)
   `;
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), []);
-  t.is(local.count, 7);
-  t.is(remote.count, 0);
+  expect(result.map(c => c.hash)).toEqual([]);
+  expect(local.count).toBe(7);
+  expect(remote.count).toBe(0);
 });
 
-test('2 remotes should not walk the same path twice', async t => {
+test('2 remotes should not walk the same path twice', async () => {
   const walk = parse`
     o--o--o--o--o--o--o--o--(a)
 
@@ -182,12 +181,12 @@ test('2 remotes should not walk the same path twice', async t => {
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), []);
-  t.is(local.count, 9);
-  t.is(remote.count, 7);
+  expect(result.map(c => c.hash)).toEqual([]);
+  expect(local.count).toBe(9);
+  expect(remote.count).toBe(7);
 });
 
-test('2 local and 2 remote', async t => {
+test('2 local and 2 remote', async () => {
   const walk = parse`
                       o--o--o--o--(a)
                      /
@@ -196,22 +195,25 @@ test('2 local and 2 remote', async t => {
   const local = count(walk('(*)'));
   const remote = count(walk('[*]'));
   const result = await findCommonCommits(local, remote);
-  t.deepEqual(result.map(c => c.hash), [
+  expect(result.map(c => c.hash)).toEqual([
     'd',
     'b',
   ]);
-  t.is(local.count, 8);
-  t.is(remote.count, 8);
+  expect(local.count).toBe(8);
+  expect(remote.count).toBe(8);
 });
 
-function count<T>(iterable : AsyncIterableIterator<T>){
-  return {
-    ...iterable,
-    count: 0,
-    async next(value? : any){
-      const result = await iterable.next(value);
-      this.count += result.done ? 0 : 1;
-      return result;
-    }
+function count<T>(iterator : AsyncGenerator<T>) : AsyncGenerator<T> & {count: number} {
+  const oldNext = iterator.next;
+
+  const newIterator = iterator as AsyncGenerator<T> & { count: number; };
+
+  newIterator.count = 0;
+  newIterator.next = async (value?: any) => {
+    const result = await oldNext.call(newIterator, value);
+    newIterator.count += result.done ? 0 : 1;
+    return result;
   }
+
+  return newIterator;
 }

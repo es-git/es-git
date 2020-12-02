@@ -1,12 +1,11 @@
-import test from 'ava';
+import { encode, Hash, IRawRepo, Mode, Type } from '@es-git/core';
+import { CommitBody, GitObject, IObjectRepo } from '@es-git/object-mixin';
+import { HashAndCommitBody, HashModePath, IWalkersRepo } from '@es-git/walkers-mixin';
 import * as sinon from 'sinon';
-import { IRawRepo, Type, Mode, Hash, encode } from '@es-git/core';
-import { IObjectRepo, GitObject, CommitBody } from '@es-git/object-mixin';
-import { IWalkersRepo, HashModePath, HashAndCommitBody } from '@es-git/walkers-mixin';
-
 import checkoutMixin from './index';
 
-test('checkout commit', async t => {
+
+test('checkout commit', async () => {
   const load = sinon.stub();
   const walkTreeStub = sinon.stub();
   const repo = new CheckoutRepo({load, walkTreeStub});
@@ -21,15 +20,15 @@ test('checkout commit', async t => {
   load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkoutCommit('commitHash');
-  if(!result) return t.fail();
+  if(!result) fail();
   const file1 = result.files['file.txt'];
-  if(!file1) return t.fail();
-  t.is(file1.hash, 'file1Hash');
-  t.is(file1.text, 'test');
-  t.false(file1.isExecutable);
+  if(!file1) fail();
+  expect(file1.hash).toBe('file1Hash');
+  expect(file1.text).toBe('test');
+  expect(file1.isExecutable).toBe(false);
 });
 
-test('checkout subtree', async t => {
+test('checkout subtree', async () => {
   const load = sinon.stub();
   const walkTreeStub = sinon.stub();
   const repo = new CheckoutRepo({load, walkTreeStub});
@@ -49,16 +48,16 @@ test('checkout subtree', async t => {
   load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkoutCommit('commitHash');
-  if(!result) return t.fail();
-  t.is(result.folders['folder'].hash, 'folder1hash');
+  if(!result) fail();
+  expect(result.folders['folder'].hash).toBe('folder1hash');
   const file1 = result.folders['folder'].files['file.txt'];
-  if(!file1) return t.fail();
-  t.is(file1.hash, 'file1Hash');
-  t.is(file1.text, 'test');
-  t.false(file1.isExecutable);
+  if(!file1) fail();
+  expect(file1.hash).toBe('file1Hash');
+  expect(file1.text).toBe('test');
+  expect(file1.isExecutable).toBe(false);
 });
 
-test('checkout branch', async t => {
+test('checkout branch', async () => {
   const load = sinon.stub();
   const walkTreeStub = sinon.stub();
   const getRefStub = sinon.stub();
@@ -75,11 +74,11 @@ test('checkout branch', async t => {
   load.withArgs('file1Hash').resolves({type: Type.blob, body: encode('test')});
 
   const result = await repo.checkout('branch');
-  if(!result) return t.fail();
+  if(!result) fail();
   const file1 = result.files['file.txt'];
-  if(!file1) return t.fail();
-  t.is(file1.text, 'test');
-  t.true(file1.isExecutable);
+  if(!file1) fail();
+  expect(file1.text).toBe('test');
+  expect(file1.isExecutable).toBe(true);
 });
 
 const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObjectRepo, IRawRepo {
@@ -100,14 +99,14 @@ const CheckoutRepo = checkoutMixin(class TestRepo implements IWalkersRepo, IObje
     return this.load(hash);
   }
 
-  async *walkCommits(hash : Hash) : AsyncIterableIterator<HashAndCommitBody> {
+  async *walkCommits(hash : Hash) : AsyncGenerator<HashAndCommitBody, void, boolean | undefined> {
   }
 
-  async *walkTree(hash : Hash) : AsyncIterableIterator<HashModePath> {
+  async *walkTree(hash : Hash) : AsyncGenerator<HashModePath> {
     yield* this.walkTreeStub(hash);
   }
 
-  listFiles(hash: Hash): AsyncIterableIterator<HashModePath> {
+  listFiles(hash: Hash): AsyncGenerator<HashModePath> {
     throw new Error("Method not implemented.");
   }
   listRefs(): Promise<string[]> {

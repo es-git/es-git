@@ -1,7 +1,5 @@
-import test from 'ava';
-
 import { isBlob, Mode } from './index';
 
-test('blob is blob', t => {
-  t.true(isBlob(Mode.blob));
+test('blob is blob', () => {
+  expect(isBlob(Mode.blob)).toBe(true);
 })

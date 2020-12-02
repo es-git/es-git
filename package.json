@@ -4,7 +4,7 @@
     "bootstrap": "lerna bootstrap --hoist",
     "link": "lerna link",
     "lerna": "lerna",
-    "test": "lerna run test",
+    "test": "lerna run test --stream",
     "clean": "lerna run clean",
     "babel": "lerna run babel",
     "compile": "lerna run compile",
@@ -12,18 +12,20 @@
     "watch": "lerna run watch"
   },
   "devDependencies": {
-    "@types/node": "^8.10.18",
-    "@types/pako": "^1.0.0",
+    "@babel/cli": "^7.12.8",
+    "@babel/core": "^7.12.9",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/preset-env": "^7.12.7",
+    "@types/jest": "^26.0.16",
+    "@types/node": "^12.14.1",
+    "@types/pako": "^1.0.1",
     "@types/sinon": "^2.3.7",
     "@types/sinon-stub-promise": "^1.1.0",
-    "ava": "^0.25.0",
-    "babel-cli": "^6.24.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-es2016": "^6.24.1",
-    "babel-preset-es2017": "^6.24.1",
+    "jest": "^26.6.3",
     "lerna": "^3.22.0",
+    "rimraf": "^3.0.2",
     "sinon": "^2.4.1",
-    "typescript": "^2.9.1"
+    "ts-jest": "^26.4.4",
+    "typescript": "^4.1.0"
   }
 }

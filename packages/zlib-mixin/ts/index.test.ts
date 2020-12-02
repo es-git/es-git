@@ -1,9 +1,8 @@
-import test from 'ava';
 import { IRawRepo } from '@es-git/core';
-
 import zlibMixin from './index';
 
-test('save and load tag', async t => {
+
+test('save and load tag', async () => {
   const compresedRepo = new CompressedRepo();
   const hash = '1234';
   const expected = 'testing some text';
@@ -11,11 +10,10 @@ test('save and load tag', async t => {
   await compresedRepo.saveRaw(hash, object);
   const result = await compresedRepo.loadRaw(hash);
   if(result === undefined){
-    t.fail('result is undefined');
-    return
+    fail('result is undefined');
   }
   const actual = String.fromCharCode(...result);
-  t.is(actual, expected);
+  expect(actual).toBe(expected);
 });
 
 const CompressedRepo = zlibMixin(class Repo implements IRawRepo {

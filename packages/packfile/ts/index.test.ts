@@ -1,10 +1,9 @@
-import test from 'ava';
 import { pack, unpack, RawObject } from './index';
 
 import { encode, decode } from '@es-git/core';
 import pipe from './pipe';
 
-test('pack-unpack', async t => {
+test('pack-unpack', async () => {
 
   const blobs = [
     'blob 4\0test',
@@ -15,10 +14,10 @@ test('pack-unpack', async t => {
                 .pipe(x => pack(x, 2))
                 .pipe(unpack)
                 .then(collect);
-  t.deepEqual([
+  expect([
     'commit 7\0testing',
     'blob 4\0test'
-  ], await result);
+  ]).toEqual(await result);
 });
 
 async function* prepare(blobs : string[]){

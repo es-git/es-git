@@ -1,20 +1,19 @@
-import test from 'ava';
-import * as sinon from 'sinon';
 import * as fs from 'fs';
-
+import * as sinon from 'sinon';
 import lsRemote from './lsRemote';
 
-test('error response', async t => {
+
+test('error response', async () => {
   const fetch = sinon.stub();
   fetch.resolves({
     text: () => Promise.resolve('Repo not found'),
     status: 401,
     statusText: 'Unauthorized'
   });
-  await t.throws(lsRemote('https://github.com/my/repo.git', fetch), 'ls-remote failed with 401 Unauthorized\nRepo not found');
+  await expect(lsRemote('https://github.com/my/repo.git', fetch)).rejects.toThrowError('ls-remote failed with 401 Unauthorized\nRepo not found');
 });
 
-test(async t => {
+test('lsRemote', async () => {
   const fetch = sinon.stub();
   fetch.resolves({
     text: () => new Promise(res => fs.readFile(__dirname+'/../samples/lsremote.txt', 'utf8', (err, val) => res(val))),
@@ -22,6 +21,6 @@ test(async t => {
     statusText: 'OK'
   });
   const result = await lsRemote('https://github.com/my/repo.git', fetch);
-  t.is(fetch.firstCall.args[0], 'https://github.com/my/repo.git/info/refs?service=git-upload-pack');
-  t.snapshot(result);
+  expect(fetch.firstCall.args[0]).toBe('https://github.com/my/repo.git/info/refs?service=git-upload-pack');
+  expect(result).toMatchSnapshot();
 });

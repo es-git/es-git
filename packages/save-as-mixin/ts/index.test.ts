@@ -1,28 +1,27 @@
-import test from 'ava';
 import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
 import { IObjectRepo, GitObject, textToBlob } from '@es-git/object-mixin';
 
 import saveAsMixin from './index';
 
-test('save blob', async t => {
+test('save blob', async () => {
   const save = sinon.spy();
   const objectRepo = new SaveAsRepo({save});
   const blob = new Uint8Array(0);
   const result = await objectRepo.saveBlob(blob);
-  t.true(save.calledOnce);
-  t.deepEqual(save.args[0][0], {
+  expect(save.calledOnce).toBe(true);
+  expect(save.args[0][0]).toEqual({
     type: Type.blob,
     body: blob
   });
 });
 
-test('save text', async t => {
+test('save text', async () => {
   const save = sinon.spy();
   const objectRepo = new SaveAsRepo({save});
   const result = await objectRepo.saveText('hello');
-  t.true(save.calledOnce);
-  t.deepEqual(save.args[0][0], {
+  expect(save.calledOnce).toBe(true);
+  expect(save.args[0][0]).toEqual({
     type: Type.blob,
     body: textToBlob('hello')
   });

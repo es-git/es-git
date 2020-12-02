@@ -1,28 +1,27 @@
-import test from 'ava';
 import * as fs from 'fs';
 import { promisify } from 'util';
 
 import unpack from './unpack';
 import pipe from './pipe';
 
-test('unpack sample1', async t => {
+test('unpack sample1', async () => {
   const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample1.pack');
   const entries = await pipe(stream(pack))
     .pipe(unpack)
     .then(collect);
 
-  t.snapshot(entries);
-  t.is(entries.length, 2651);
+  expect(entries).toMatchSnapshot();
+  expect(entries.length).toBe(2651);
 });
 
-test('unpack sample2', async t => {
+test('unpack sample2', async () => {
   const pack = await promisify(fs.readFile)(__dirname + '/../samples/sample2.pack');
   const entries = await pipe(stream(pack))
     .pipe(unpack)
     .then(collect);
 
-  t.snapshot(entries);
-  t.is(entries.length, 3);
+  expect(entries).toMatchSnapshot();
+  expect(entries.length).toBe(3);
 });
 
 async function* stream(item : Buffer) : AsyncIterableIterator<Uint8Array> {

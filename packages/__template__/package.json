@@ -7,11 +7,11 @@
   "types": "es/index.d.ts",
   "module": "es/index.js",
   "scripts": {
-    "clean": "rm -rf ./es ./js",
+    "clean": "rimraf ./es ./js",
     "tsc": "tsc",
-    "babel": "babel --source-maps -d js es",
+    "babel": "babel --root-mode upward --source-maps -d js es",
     "compile": "npm run tsc && npm run babel",
-    "test": "ava",
+    "test": "jest",
     "watch+test": "tsc -w & ava -w",
     "watch": "tsc -w & babel --source-maps -w -d js es",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
@@ -22,20 +22,6 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "ava": {
-    "files": [
-      "es/*.test.js"
-    ],
-    "source": [
-      "es/*.js"
-    ],
-    "require": [
-      "babel-register"
-    ],
-    "babel": {
-      "extends": "../../.babelrc"
-    }
-  },
   "peerDependencies": {
     "babel-runtime": "^6.22.0"
   },

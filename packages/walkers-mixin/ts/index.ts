@@ -1,5 +1,7 @@
-import { Type, Mode, Constructor, Hash, isFile } from '@es-git/core';
-import { IObjectRepo, CommitBody } from '@es-git/object-mixin';
+import { Constructor, Hash, isFile, Mode, Type } from '@es-git/core';
+import { CommitBody, IObjectRepo } from '@es-git/object-mixin';
+
+export { default as withFeedback } from './withFeedback';
 
 export type HashAndCommitBody = {
   readonly hash : Hash
@@ -13,9 +15,9 @@ export type HashModePath = {
 }
 
 export interface IWalkersRepo {
-  walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitBody>
-  walkTree(hash : Hash) : AsyncIterableIterator<HashModePath>
-  listFiles(hash : Hash) : AsyncIterableIterator<HashModePath>
+  walkCommits(...hash : Hash[]) : AsyncGenerator<HashAndCommitBody, void, boolean | undefined>
+  walkTree(hash : Hash) : AsyncGenerator<HashModePath>
+  listFiles(hash : Hash) : AsyncGenerator<HashModePath>
 }
 
 export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : T) : Constructor<IWalkersRepo> & T {
@@ -24,7 +26,7 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
       super(...args);
     }
 
-    async *walkCommits(...hash : Hash[]) : AsyncIterableIterator<HashAndCommitBody> {
+    async *walkCommits(...hash : Hash[]) : AsyncGenerator<HashAndCommitBody, void, boolean | undefined> {
       const queue = hash;
       const visited = new Set<Hash>(queue);
       while(queue.length > 0){
@@ -43,7 +45,7 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
       }
     }
 
-    async *walkTree(hash : Hash, parentPath: string[] = []) : AsyncIterableIterator<HashModePath> {
+    async *walkTree(hash : Hash, parentPath: string[] = []) : AsyncGenerator<HashModePath> {
       const object = await super.loadObject(hash);
       if(!object) throw new Error(`Could not find object ${hash}`);
       if(object.type === Type.tree){
@@ -67,14 +69,3 @@ export default function walkersMixin<T extends Constructor<IObjectRepo>>(repo : 
   }
 }
 
-export function withFeedback<TOut, TIn>(iterator : AsyncIterableIterator<TOut>, feedback : TIn) : AsyncIterableIterator<TOut> & { continue : TIn} {
-  return {
-    ...iterator,
-    next() {
-      const result = iterator.next(this.continue);
-      this.continue = feedback;
-      return result;
-    },
-    continue: feedback
-  };
-}

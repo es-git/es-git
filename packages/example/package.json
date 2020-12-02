@@ -5,7 +5,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "clean": "rm -rf ./es ./js",
+    "clean": "rimraf ./es ./js",
     "compile": "NODE_ENV=production webpack --progress --colors",
     "watch": "webpack --watch",
     "dev": "npm run watch & npm start",
@@ -18,20 +18,6 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "ava": {
-    "files": [
-      "es/*.test.js"
-    ],
-    "source": [
-      "es/*.js"
-    ],
-    "require": [
-      "babel-register"
-    ],
-    "babel": {
-      "extends": "../../.babelrc"
-    }
-  },
   "peerDependencies": {
     "babel-runtime": "^6.22.0"
   },

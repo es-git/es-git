@@ -1,11 +1,10 @@
-import test from 'ava';
 import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
 import { GitObject } from '@es-git/object-mixin';
 
 import readCombinerMixin from './index';
 
-test('load', async t => {
+test('load', async () => {
   const load = sinon.stub();
   const {promise, resolve} = defer();
   load.returns(promise);
@@ -18,10 +17,10 @@ test('load', async t => {
     Promise.resolve(true)
   ]);
   resolve({type: Type.blob, body: new Uint8Array(0)});
-  t.true(await race);
+  expect(await race).toBe(true);
 });
 
-test('loadObject of super called only once', async t => {
+test('loadObject of super called only once', async () => {
   const load = sinon.stub();
   const {promise, resolve} = defer();
   load.returns(promise);
@@ -31,7 +30,7 @@ test('loadObject of super called only once', async t => {
   const result3 = objectRepo.loadObject('object');
   const result4 = objectRepo.loadObject('object');
   resolve({type: Type.blob, body: new Uint8Array(0)});
-  t.true(load.calledOnce);
+  expect(load.calledOnce).toBe(true);
 });
 
 const ReadCombinerRepo = readCombinerMixin(class TestRepo {

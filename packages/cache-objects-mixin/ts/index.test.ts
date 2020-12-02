@@ -1,11 +1,10 @@
-import test from 'ava';
 import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
 import { GitObject } from '@es-git/object-mixin';
 
 import cacheObjectsMixin from './index';
 
-test('save and load', async t => {
+test('save and load', async () => {
   const objectRepo = new CacheObjectsRepo({});
   const object : GitObject = {
     type: Type.blob,
@@ -13,10 +12,10 @@ test('save and load', async t => {
   };
   const hash = await objectRepo.saveObject(object);
   const result = await objectRepo.loadObject(hash);
-  t.is(result, object);
+  expect(result).toBe(object);
 });
 
-test('second save returns value from cache', async t => {
+test('second save returns value from cache', async () => {
   const objectRepo = new CacheObjectsRepo({});
   const object : GitObject = {
     type: Type.blob,
@@ -24,14 +23,14 @@ test('second save returns value from cache', async t => {
   };
   const hash1 = await objectRepo.saveObject(object);
   const hash2 = await objectRepo.saveObject(object);
-  t.is(hash1, hash2);
+  expect(hash1).toBe(hash2);
 });
 
-test('load without save goes to source', async t => {
+test('load without save goes to source', async () => {
   const load = sinon.spy();
   const objectRepo = new CacheObjectsRepo({}, {load});
   const result = await objectRepo.loadObject('object');
-  t.true(load.calledOnce);
+  expect(load.calledOnce).toBe(true);
 });
 
 const CacheObjectsRepo = cacheObjectsMixin(class TestRepo {

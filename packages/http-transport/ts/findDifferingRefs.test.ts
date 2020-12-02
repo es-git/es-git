@@ -1,9 +1,8 @@
-import test from 'ava';
 import * as sinon from 'sinon';
 
 import findDifferingRefs from './findDifferingRefs';
 
-test('nothing locally', async t => {
+test('nothing locally', async () => {
   const hasObject = sinon.stub().resolves(false);
   const remoteRefs = [
     {remote:'/refs/heads/a', local:'/refs/remotes/origin/a', hash:'aaa'},
@@ -12,15 +11,15 @@ test('nothing locally', async t => {
   ];
   const result = await findDifferingRefs([], remoteRefs, hasObject);
 
-  t.deepEqual(result, [
+  expect(result).toEqual([
     {name:'/refs/remotes/origin/a', remoteHash:'aaa', localHash:undefined, hasRemote: false},
     {name:'/refs/remotes/origin/b', remoteHash:'bbb', localHash:undefined, hasRemote: false},
     {name:'/refs/remotes/origin/c', remoteHash:'ccc', localHash:undefined, hasRemote: false}
   ]);
-  t.true(hasObject.calledThrice);
+  expect(hasObject.calledThrice).toBe(true);
 });
 
-test('exactly the same locally and remotly', async t => {
+test('exactly the same locally and remotly', async () => {
   const hasObject = sinon.stub().resolves(false);
   const localRefs = [
     {name:'/refs/remotes/origin/a', hash:'aaa'},
@@ -34,11 +33,11 @@ test('exactly the same locally and remotly', async t => {
   ];
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
-  t.deepEqual(result, []);
-  t.true(hasObject.notCalled);
+  expect(result).toEqual([]);
+  expect(hasObject.notCalled).toBe(true);
 });
 
-test('local ahead of remote', async t => {
+test('local ahead of remote', async () => {
   const hasObject = sinon.stub().resolves(true);
   const localRefs = [
     {name:'/refs/remotes/origin/a', hash:'aaa'},
@@ -52,15 +51,15 @@ test('local ahead of remote', async t => {
   ];
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
-  t.deepEqual(result, [
+  expect(result).toEqual([
     {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: true},
     {name:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: true},
     {name:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: true}
   ]);
-  t.true(hasObject.calledThrice);
+  expect(hasObject.calledThrice).toBe(true);
 });
 
-test('remote ahead of local', async t => {
+test('remote ahead of local', async () => {
   const hasObject = sinon.stub().resolves(false);
   const localRefs = [
     {name:'/refs/remotes/origin/a', hash:'aaa'},
@@ -74,15 +73,15 @@ test('remote ahead of local', async t => {
   ];
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
-  t.deepEqual(result, [
+  expect(result).toEqual([
     {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false},
     {name:'/refs/remotes/origin/b', localHash:'bbb', remoteHash:'eee', hasRemote: false},
     {name:'/refs/remotes/origin/c', localHash:'ccc', remoteHash:'fff', hasRemote: false}
   ]);
-  t.true(hasObject.calledThrice);
+  expect(hasObject.calledThrice).toBe(true);
 });
 
-test('more local than remote', async t => {
+test('more local than remote', async () => {
   const hasObject = sinon.stub().resolves(false);
   const localRefs = [
     {name:'/refs/remotes/origin/a', hash:'aaa'},
@@ -94,8 +93,8 @@ test('more local than remote', async t => {
   ];
   const result = await findDifferingRefs(localRefs, remoteRefs, hasObject);
 
-  t.deepEqual(result, [
+  expect(result).toEqual([
     {name:'/refs/remotes/origin/a', localHash:'aaa', remoteHash:'ddd', hasRemote: false}
   ]);
-  t.true(hasObject.calledOnce);
+  expect(hasObject.calledOnce).toBe(true);
 });

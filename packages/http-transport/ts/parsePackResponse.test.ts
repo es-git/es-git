@@ -1,11 +1,10 @@
-import test from 'ava';
 import parsePackResponse from './parsePackResponse';
 import streamToAsyncIterator from './utils/streamToAsyncIterator';
 import * as fs from 'fs';
 
 const sampleFile = __dirname + '/../samples/fetchResponse.txt';
 
-test('parse side-band-64', async t => {
+test('parse side-band-64', async () => {
   const expectedTypes = [
     'nak',
     'progress',
@@ -27,6 +26,6 @@ test('parse side-band-64', async t => {
       actualProgress += result.message;
     }
   }
-  t.deepEqual(actualTypes, expectedTypes);
-  t.snapshot(actualProgress);
+  expect(actualTypes).toEqual(expectedTypes);
+  expect(actualProgress).toMatchSnapshot();
 });

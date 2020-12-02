@@ -1,11 +1,10 @@
-import test from 'ava';
+import { Hash, Mode, Type } from '@es-git/core';
+import { CommitBody, GitObject, TreeBody } from '@es-git/object-mixin';
 import * as sinon from 'sinon';
-import { Type, Mode, Hash } from '@es-git/core';
-import { GitObject, CommitBody, TreeBody } from '@es-git/object-mixin';
-
 import walkersMixin from './index';
 
-test('walk commits', async t => {
+
+test('walk commits', async () => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   load.withArgs('commit5').resolves({type: Type.commit, body: makeCommit('commit5', 'commit4')});
@@ -16,15 +15,15 @@ test('walk commits', async t => {
   load.withArgs('commit0').resolves({type: Type.commit, body: makeCommit('commit0')});
   let commit = 5;
   for await(const result of repo.walkCommits('commit5')){
-    if(!result) return t.fail();
-    t.is(result.hash, `commit${commit}`);
-    t.is(result.commit.message, `commit${commit}`);
+    if(!result) fail();
+    expect(result.hash).toBe(`commit${commit}`);
+    expect(result.commit.message).toBe(`commit${commit}`);
     commit--;
   }
-  t.is(load.callCount, 6);
+  expect(load.callCount).toBe(6);
 });
 
-test('walk merge commit', async t => {
+test('walk merge commit', async () => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   load.withArgs('commit5').resolves({type: Type.commit, body: makeCommit('commit5', 'commit4')});
@@ -34,13 +33,13 @@ test('walk merge commit', async t => {
   load.withArgs('commit1').resolves({type: Type.commit, body: makeCommit('commit1', 'commit0')});
   load.withArgs('commit0').resolves({type: Type.commit, body: makeCommit('commit0')});
   for await(const result of repo.walkCommits('commit5')){
-    if(!result) return t.fail();
-    t.is(result.hash, result.commit.message);
+    if(!result) fail();
+    expect(result.hash).toBe(result.commit.message);
   }
-  t.is(load.callCount, 6);
+  expect(load.callCount).toBe(6);
 });
 
-test('walk tree', async t => {
+test('walk tree', async () => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   const folder = makeFolder(
@@ -53,11 +52,11 @@ test('walk tree', async t => {
   load.callsFake(hash => ({type: Type.tree, body: folder[hash]}));
   const results = [];
   for await(const result of repo.walkTree('rootHash')){
-    if(!result) return t.fail();
+    if(!result) fail();
     results.push(result);
   }
-  t.is(load.callCount, 4);
-  t.deepEqual(results, [
+  expect(load.callCount).toBe(4);
+  expect(results).toEqual([
     {
       hash: '/file.txt',
       mode: 33188,
@@ -97,7 +96,7 @@ test('walk tree', async t => {
 });
 
 
-test('list files', async t => {
+test('list files', async () => {
   const load = sinon.stub();
   const repo = new WalkersRepo({load});
   const folder = makeFolder(
@@ -110,11 +109,11 @@ test('list files', async t => {
   load.callsFake(hash => ({type: Type.tree, body: folder[hash]}));
   const results = [];
   for await(const result of repo.listFiles('rootHash')){
-    if(!result) return t.fail();
+    if(!result) fail();
     results.push(result);
   }
-  t.is(load.callCount, 4);
-  t.deepEqual(results, [
+  expect(load.callCount).toBe(4);
+  expect(results).toEqual([
     {
       hash: '/file.txt',
       mode: 33188,

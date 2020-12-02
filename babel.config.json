@@ -1,0 +1,8 @@
+{
+  "presets": [["@babel/preset-env", { "spec": true, "modules": "commonjs" }]],
+  "plugins":[
+    ["@babel/plugin-transform-runtime", {
+      "regenerator": true
+    }]
+  ]
+}

@@ -1,5 +1,1 @@
-import test from 'ava';
-
-test('blob is blob', t => {
-  t.pass();
-})
+test('blob is blob', () => {})

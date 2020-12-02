@@ -1,23 +1,21 @@
-import test from 'ava';
-
 import mix, { Constructor } from './index';
 
-test('mix', t => {
+test('mix', () => {
   const Result = mix(class B {
     test(){
       return 'test';
     }
-  }).with(b => class M extends b {
+  }).with(b => (class M extends b {
     test(){
       return `${super.test()} enhanced`;
     }
-  });
+  }));
 
   const result = new Result();
-  t.is(result.test(), 'test enhanced');
+  expect(result.test()).toBe('test enhanced');
 });
 
-test('mix with parameter', t => {
+test('mix with parameter', () => {
   const Result = mix(class B {
     test(){
       return 'test';
@@ -25,7 +23,7 @@ test('mix with parameter', t => {
   }).with(paramMixin, 'param');
 
   const result = new Result();
-  t.is(result.test(), 'test enhanced with param');
+  expect(result.test()).toBe('test enhanced with param');
 });
 
 function paramMixin(b : Constructor<any>, p : string){

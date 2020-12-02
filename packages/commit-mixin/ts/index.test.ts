@@ -1,11 +1,10 @@
-import test from 'ava';
 import * as sinon from 'sinon';
 import { IRawRepo, Type } from '@es-git/core';
 import { IObjectRepo, GitObject, CommitObject, Person } from '@es-git/object-mixin';
 
 import commitMixin, {Folder} from './index';
 
-test('commit', async t => {
+test('commit', async () => {
   const saveObjectStub = sinon.stub();
   const setRefStub = sinon.stub();
   const getRefStub = sinon.stub();
@@ -40,8 +39,8 @@ test('commit', async t => {
   };
 
   const result = await repo.commit('refs/heads/master', tree, 'message', author);
-  t.is(result, 'dummyHash');
-  t.deepEqual<CommitObject>(saveObjectStub.lastCall.args[0], {
+  expect(result).toBe('dummyHash');
+  expect(saveObjectStub.lastCall.args[0]).toEqual({
     type: Type.commit,
     body: {
       author,

@@ -1,15 +1,16 @@
-import test from 'ava';
 import * as fs from 'fs';
 
 import parseRefsResponse from './parseRefsResponse';
 
-test('wrong service', async t => {
+test('wrong service', async () => {
   const response = await new Promise<string>(res => fs.readFile(__dirname+'/../samples/lsremote.txt', 'utf8', (err, val) => res(val)));
-  t.throws(() => [...parseRefsResponse(response, 'blablabla')], 'unknown response "# service=git-upload-pack", expected "# service=blablabla"');
+  expect(() => [...parseRefsResponse(response, 'blablabla')]).toThrowError(
+    'unknown response "# service=git-upload-pack", expected "# service=blablabla"'
+  );
 });
 
-test(async t => {
+test('', async () => {
   const response = await new Promise<string>(res => fs.readFile(__dirname+'/../samples/lsremote.txt', 'utf8', (err, val) => res(val)));
   const result = [...parseRefsResponse(response, 'git-upload-pack')];
-  t.snapshot(result);
+  expect(result).toMatchSnapshot();
 });

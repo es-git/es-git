@@ -20,7 +20,7 @@ export function toRows(template : TemplateStringsArray){
 
 export function parse(template : TemplateStringsArray){
   const rows = toRows(template);
-  return async function* walk<T>(start='()'){
+  return async function* walk(start='(*)'){
     const queue = [...findStarts(rows, start)];
     for(const {hash, row, col} of queue){
       const parents = [...followPath(rows, row, col, '-')].map(hexify);

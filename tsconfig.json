@@ -6,7 +6,7 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noFallthroughCasesInSwitch": true,
-    "target": "es2017",
+    "target": "es2018",
     "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,
@@ -14,11 +14,14 @@
     "inlineSources": true,
     "declaration": true,
     "declarationMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "types": [
-        "node"
+      "node",
+      "jest"
     ],
     "lib": [
-      "esnext",
+      "es2019",
       "dom"
     ]
   },

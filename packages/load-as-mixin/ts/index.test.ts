@@ -1,28 +1,27 @@
-import test from 'ava';
-import * as sinon from 'sinon';
 import { Type } from '@es-git/core';
-import { IObjectRepo, GitObject, textToBlob } from '@es-git/object-mixin';
-
+import { GitObject, IObjectRepo, textToBlob } from '@es-git/object-mixin';
+import * as sinon from 'sinon';
 import loadAsMixin from './index';
 
-test('load undefined', async t => {
+
+test('load undefined', async () => {
   const load = sinon.stub();
   load.resolves(undefined);
   const objectRepo = new LoadAsRepo({load});
-  await t.throws(objectRepo.loadBlob('blabla'));
+  await expect(objectRepo.loadBlob('blabla')).rejects.toThrowError();
 });
 
-test('load wrong type', async t => {
+test('load wrong type', async () => {
   const load = sinon.stub();
   load.resolves({
     type: Type.blob,
     body: new Uint8Array(0)
   });
   const objectRepo = new LoadAsRepo({load});
-  await t.throws(objectRepo.loadCommit('blabla'));
+  await expect(objectRepo.loadCommit('blabla')).rejects.toThrowError();
 });
 
-test('load expected type', async t => {
+test('load expected type', async () => {
   const load = sinon.stub();
   load.resolves({
     type: Type.blob,
@@ -30,10 +29,10 @@ test('load expected type', async t => {
   });
   const objectRepo = new LoadAsRepo({load});
   const result = await objectRepo.loadBlob('blabla');
-  t.deepEqual(result, textToBlob('text'));
+  expect(result).toEqual(textToBlob('text'));
 });
 
-test('load text', async t => {
+test('load text', async () => {
   const load = sinon.stub();
   load.resolves({
     type: Type.blob,
@@ -41,7 +40,7 @@ test('load text', async t => {
   });
   const objectRepo = new LoadAsRepo({load});
   const result = await objectRepo.loadText('blabla');
-  t.is(result, 'this is text');
+  expect(result).toBe('this is text');
 });
 
 const LoadAsRepo = loadAsMixin(class TestRepo implements IObjectRepo {

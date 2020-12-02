@@ -9,11 +9,11 @@
     "text-encoding": "./es/text-encoding.browser.js"
   },
   "scripts": {
-    "clean": "rm -rf ./es ./js",
+    "clean": "rimraf ./es ./js",
     "tsc": "tsc",
-    "babel": "babel --source-maps -d js es",
+    "babel": "babel --root-mode upward --source-maps -d js es",
     "compile": "npm run tsc && npm run babel",
-    "test": "ava",
+    "test": "jest",
     "watch+test": "tsc -w & ava -w",
     "watch": "tsc -w & babel --source-maps -w -d js es",
     "prepublishOnly": "npm run clean && npm run compile && npm test"
@@ -24,25 +24,14 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "ava": {
-    "files": [
-      "es/*.test.js"
-    ],
-    "source": [
-      "es/*.js"
-    ],
-    "require": [
-      "babel-register"
-    ],
-    "babel": {
-      "extends": "../../.babelrc"
-    }
-  },
   "peerDependencies": {
     "babel-runtime": "^6.22.0"
   },
   "dependencies": {
     "@es-git/mix": "^0.9.0",
-    "text-encoding": "^0.6.4"
+    "text-encoding-utf-8": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/text-encoding-utf-8": "^1.0.1"
   }
 }

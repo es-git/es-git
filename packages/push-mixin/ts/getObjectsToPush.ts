@@ -1,13 +1,13 @@
 import { Hash } from '@es-git/core';
-import { withFeedback, HashAndCommitBody, HashModePath } from '@es-git/walkers-mixin';
 import { Progress } from '@es-git/http-transport';
-
+import { HashAndCommitBody, HashModePath, withFeedback } from '@es-git/walkers-mixin';
 import findCommonCommits from './findCommonCommits';
+
 
 export interface Funcs {
   loadRaw(hash: Hash): Promise<Uint8Array | undefined>;
-  walkCommits(...hash: Hash[]): AsyncIterableIterator<HashAndCommitBody>;
-  walkTree(hash: Hash): AsyncIterableIterator<HashModePath>;
+  walkCommits(...hash: Hash[]): AsyncGenerator<HashAndCommitBody, void, boolean | undefined>;
+  walkTree(hash: Hash): AsyncGenerator<HashModePath>;
   readonly progress : Progress
 }
 

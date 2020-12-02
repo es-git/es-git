@@ -1,7 +1,7 @@
-import { TextEncoder, TextDecoder } from 'text-encoding';
+import { TextDecoder, TextEncoder } from 'text-encoding-utf-8';
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
+const encoder = new TextEncoder('utf-8');
+const decoder = new TextDecoder('utf-8');
 
 export const NEWLINE = '\n'.charCodeAt(0);
 
