@@ -1,21 +1,15 @@
 import {
-  Type,
-  Mode,
-  NEWLINE,
-  encode,
-  concat,
-  flatten,
-  packHash
+  concat, encode,
+  flatten, Mode,
+  packHash, Type
 } from '@es-git/core';
-
 import {
-  GitObject,
-  TreeBody,
-  TagBody,
-  CommitBody,
+  CommitBody, GitObject,
   Person,
-  SecondsWithOffset
+  SecondsWithOffset, TagBody, TreeBody
 } from './index';
+import joinWithNewline from './joinWithNewline';
+
 
 export default function encodeObject(object : GitObject) : Uint8Array {
   const bytes = getBytes(object);
@@ -118,20 +112,4 @@ function isSecondsWithOffset(value : Date | SecondsWithOffset) : value is Second
   return (value as any).seconds;
 }
 
-function joinWithNewline(...values : (string | Uint8Array)[]){
-  const sum = values.reduce((sum, x) => sum + x.length, 0);
-  const result = new Uint8Array(values.length-1 + sum);
-  let offset = 0;
-  for (const arr of values) {
-    if(offset > 0){
-      result.set([NEWLINE], offset++);
-    }
-    if(typeof(arr) === 'string'){
-      result.set(encode(arr), offset);
-    }else{
-      result.set(arr, offset);
-    }
-    offset += arr.length;
-  }
-  return result;
-}
+
