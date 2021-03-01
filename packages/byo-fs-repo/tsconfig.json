@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outDir": "./es"
+  },
+  "include": [
+    "./ts/**/*.ts"
+  ],
+  "extends": "../../tsconfig.json"
+}
