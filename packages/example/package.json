@@ -39,7 +39,7 @@
     "@es-git/terminal": "^0.10.0",
     "@es-git/walkers-mixin": "^0.10.0",
     "@es-git/zlib-mixin": "^0.10.0",
-    "d3": "^4.10.0",
+    "d3": "^7.6.1",
     "gitgraph.js": "^1.11.4",
     "koa": "^2.3.0",
     "koa-favicon": "^2.0.0",
