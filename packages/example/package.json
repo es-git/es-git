@@ -51,7 +51,7 @@
     "@types/d3": "^4.10.0",
     "@types/node-fetch": "^1.6.7",
     "babel-loader": "^7.1.2",
-    "source-map-loader": "^0.2.1",
+    "source-map-loader": "^0.2.4",
     "ts-loader": "^2.3.3",
     "webpack": "^3.5.5"
   }
